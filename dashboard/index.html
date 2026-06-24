@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Workout | EliteTrack</title>
+  <link rel="stylesheet" href="../styles.css"> <!-- Links global landing design -->
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">EliteTrack Dashboard</div>
+      <div class="nav-links">
+        <span id="userEmail" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+        <!-- Small Upgrade Button: Visible during active trial, hidden once expired or upgraded -->
+        <button id="smallUpgradeBtn" class="btn-primary hidden" style="padding: 6px 12px; font-size: 0.85rem; background-color: var(--accent-neon); color: #000000;">
+          Upgrade Now
+        </button>
+        <button id="logoutBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Logout</button>
+      </div>
+    </nav>
+  </header>
+
+  <main style="padding-top: 3rem;">
+    <!-- Active Trial Expiration Warning/Action Banner -->
+    <div id="trialExpirationBanner" class="expiration-banner hidden">
+      <div>
+        <h4 style="font-weight: 800; margin-bottom: 0.25rem;">Your Free Trial Has Expired</h4>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Sign up for the full program to unlock logging features and continue tracking.</p>
+      </div>
+      <button id="restartTrialBtn" class="btn-primary" style="background-color: var(--accent-neon); color: #000000; font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+        Restart Your Progress
+      </button>
+    </div>
+
+    <!-- Split-Screen Dashboard Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- COLUMN 1: Active Workspace Tracker -->
+      <section id="activeTrackerSection" class="card">
+        <h3>Log Today's Training</h3>
+        
+        <!-- Dropdown 1: Overall Routine Program Split -->
+        <div class="form-group" style="margin-top: 1.5rem;">
+          <label for="routineSelect">Select Your Routine Program</label>
+          <select id="routineSelect" class="program-select-dropdown">
+            <!-- Populated dynamically with program templates -->
+          </select>
+        </div>
+
+        <!-- Dropdown 2: Day Focus Split (Filtered by Dropdown 1 selection) -->
+        <div id="programSelectGroup" class="form-group hidden" style="margin-top: 1.5rem;">
+          <label for="programSelect">Today's Focus Day</label>
+          <select id="programSelect" class="program-select-dropdown">
+            <!-- Filtered sub-days appear here dynamically -->
+          </select>
+        </div>
+
+        <!-- Notification / Status Bar -->
+        <div id="statusMsg" class="hidden" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center;"></div>
+
+        <!-- Dynamic Workspace Logging Form -->
+        <form id="workoutLoggingForm" class="hidden" style="margin-top: 1.5rem;">
+          <div id="exerciseContainer"></div>
+          
+          <!-- Daily Diet Progress Matrix -->
+          <div class="form-group" style="margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+            <label>How was your diet today?</label>
+            <div class="diet-rating-group" id="dietRatingSelector">
+              <label class="diet-btn"><input type="radio" name="dietRating" value="1" required>1 <span>Poor</span></label>
+              <label class="diet-btn"><input type="radio" name="dietRating" value="2">2</label>
+              <label class="diet-btn"><input type="radio" name="dietRating" value="3">3</label>
+              <label class="diet-btn"><input type="radio" name="dietRating" value="4">4</label>
+              <label class="diet-btn"><input type="radio" name="dietRating" value="5">5 <span>Great</span></label>
+            </div>
+          </div>
+
+          <button type="submit" id="saveWorkoutBtn" class="btn-primary" style="margin-top: 2rem; width: 100%;">
+            Save Workout Session
+          </button>
+        </form>
+      </section>
+
+      <!-- COLUMN 2: Historical Archive Grid -->
+      <section class="card" style="align-self: flex-start;">
+        <h3>Your Workout History</h3>
+        <div id="historyGrid" class="workout-history-grid" style="margin-top: 1.5rem;">
+          <p id="noHistoryMsg" style="color: var(--text-muted);">No logged workouts found yet.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="dashboard.js" type="module"></script>
+</body>
+</html>
