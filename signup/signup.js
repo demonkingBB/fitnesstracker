@@ -1,4 +1,4 @@
-/import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 // Replace these template strings with your actual Supabase keys found in Project Settings > API
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
