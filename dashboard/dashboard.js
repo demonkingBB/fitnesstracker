@@ -415,24 +415,32 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
   let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
   // Dynamic filter layer mapping matching left panel focus state
-  // Dynamic filter layer mapping matching left panel focus state
   if (selectedDayFilter && selectedDayFilter !== "") {
     const allowedExercises = PROGRAMS[selectedDayFilter] || [];
     
+    // 🔍 DEBUG LOGS: Let's see what the dropdown clicked vs what's in your file
+    console.log("Selected Dropdown Day:", selectedDayFilter);
+    console.log("Allowed Exercises for this day from programdata.js:", allowedExercises);
+    
     sortedDates = sortedDates.filter(dateKey => {
-      // 🚀 FIX: Create a deep copy of the date group so we don't destroy the original data
       const masterDayGroup = groupedByDate[dateKey];
       
-      // Filter from the original workouts array for this date, NOT the modified group
-      const matchingLifts = workouts.filter(log => 
-        log.log_date === dateKey && 
-        log.category !== 'cardio' && 
-        log.category !== 'diet_rating' && 
-        allowedExercises.includes(log.exercise_name)
-      );
+      const matchingLifts = workouts.filter(log => {
+        const isMatch = log.log_date === dateKey && 
+                        log.category !== 'cardio' && 
+                        log.category !== 'diet_rating' && 
+                        allowedExercises.includes(log.exercise_name);
+        
+        // 🔍 DEBUG LOGS: See why a specific exercise is passing or failing
+        if (log.log_date === dateKey && log.category !== 'cardio' && log.category !== 'diet_rating') {
+          console.log(`Checking DB Exercise: "${log.exercise_name}" against allowed list. Match found?`, allowedExercises.includes(log.exercise_name));
+        }
+        
+        return isMatch;
+      });
       
       if (matchingLifts.length > 0) {
-        masterDayGroup.lifts = matchingLifts; // Safely set all matching push exercises
+        masterDayGroup.lifts = matchingLifts;
         return true;
       }
       return false;
