@@ -415,13 +415,24 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
   let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
   // Dynamic filter layer mapping matching left panel focus state
+  // Dynamic filter layer mapping matching left panel focus state
   if (selectedDayFilter && selectedDayFilter !== "") {
     const allowedExercises = PROGRAMS[selectedDayFilter] || [];
+    
     sortedDates = sortedDates.filter(dateKey => {
-      const dayGroup = groupedByDate[dateKey];
-      const matchingLifts = dayGroup.lifts.filter(l => allowedExercises.includes(l.exercise_name));
+      // 🚀 FIX: Create a deep copy of the date group so we don't destroy the original data
+      const masterDayGroup = groupedByDate[dateKey];
+      
+      // Filter from the original workouts array for this date, NOT the modified group
+      const matchingLifts = workouts.filter(log => 
+        log.log_date === dateKey && 
+        log.category !== 'cardio' && 
+        log.category !== 'diet_rating' && 
+        allowedExercises.includes(log.exercise_name)
+      );
+      
       if (matchingLifts.length > 0) {
-        dayGroup.lifts = matchingLifts; // Only retain this target focus
+        masterDayGroup.lifts = matchingLifts; // Safely set all matching push exercises
         return true;
       }
       return false;
