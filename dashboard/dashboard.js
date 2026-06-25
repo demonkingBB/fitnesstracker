@@ -420,13 +420,42 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
     sortedDates = sortedDates.filter(dateKey => {
       const dayGroup = groupedByDate[dateKey];
       const matchingLifts = dayGroup.lifts.filter(l => allowedExercises.includes(l.exercise_name));
-      if (matchingLifts.length > 0) {
-        dayGroup.lifts = matchingLifts; // Only retain this target focus
-        return true;
-      }
-      return false;
-    });
-  }
+      // 🏋️ COLLAPSIBLE EXERCISE-SPECIFIC PROGRESSIVE OVERLOAD MATRIX
+    if (liftCount > 0) {
+      // Group sets together by exercise name for this specific day
+      const exercisesOnThisDay = {};
+      
+      dayGroup.lifts.forEach(workout => {
+        if (!exercisesOnThisDay[workout.exercise_name]) {
+          exercisesOnThisDay[workout.exercise_name] = [];
+        }
+        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+        exercisesOnThisDay[workout.exercise_name].push(...setsData);
+      });
+
+      // Now loop through EACH unique exercise and calculate its individual top working PR
+      Object.keys(exercisesOnThisDay).forEach(exerciseName => {
+        const allSetsForThisExercise = exercisesOnThisDay[exerciseName];
+        
+        let topLiftingSet = allSetsForThisExercise.reduce((max, current) => {
+          if (!max) return current;
+          if (current.weight > max.weight) return current;
+          if (current.weight === max.weight && current.reps > max.reps) return current;
+          return max;
+        }, null);
+
+        if (topLiftingSet) {
+          detailsHTML += `
+            <div style="margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${exerciseName}</div>
+              <div style="font-size: 0.8rem; color: var(--accent-neon); font-weight: bold; margin-top: 0.1rem;">
+                🔥 Target: ${topLiftingSet.weight} lbs/kg x ${topLiftingSet.reps} reps
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
 
   // Hard cap to the latest 5 days to preserve perfect workspace aspect balance
   const latestDates = sortedDates.slice(0, 5);
