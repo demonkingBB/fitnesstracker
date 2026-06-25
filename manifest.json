@@ -1,0 +1,21 @@
+{
+  "short_name": "EliteTrack",
+  "name": "EliteTrack Workout & Biometric Suite",
+  "icons": [
+    {
+      "src": "/assets/images/fittrack.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/assets/images/fittrack.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#0b111e",
+  "theme_color": "#111a2e",
+  "display": "standalone",
+  "orientation": "portrait"
+}
