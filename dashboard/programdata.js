@@ -3,7 +3,7 @@
 // 1. Core Exercise Day Library
 export const PROGRAMS = {
   "Push Day": [
-    "Barbell Bench Press", "Incline Dumbbell Press", "Overhead Press", 
+    "Chest Press", "Incline Dumbbell Press", "Overhead Press", 
     "Dumbbell Lateral Raise", "Cable Fly", "Chest Dip", 
     "Triceps Pushdown", "Skull Crushers", "Push-Up", "Machine Chest Press"
   ],
