@@ -21,15 +21,15 @@ const statusMsg = document.getElementById('statusMsg');
 const historyGrid = document.getElementById('historyGrid');
 const noHistoryMsg = document.getElementById('noHistoryMsg');
 
+// New Modular Form UI Targets
+const cardioLoggingForm = document.getElementById('cardioLoggingForm');
+const dietLoggingForm = document.getElementById('dietLoggingForm');
+
 // Expiration / Upgrade Selectors
 const trialExpirationBanner = document.getElementById('trialExpirationBanner');
 const restartTrialBtn = document.getElementById('restartTrialBtn');
 const smallUpgradeBtn = document.getElementById('smallUpgradeBtn');
 const saveWorkoutBtn = document.getElementById('saveWorkoutBtn');
-
-// Independent Form Selectors
-const cardioLoggingForm = document.getElementById('cardioLoggingForm');
-const dietLoggingForm = document.getElementById('dietLoggingForm');
 
 let currentUser = null;
 let isTrialExpired = false;
@@ -122,7 +122,7 @@ async function initDashboard() {
   fetchAndRenderHistory();
 }
 
-// Populate Child sub-days matching the selected overall Routine split (No Cardio)
+// Populate Child sub-days matching the selected overall Routine split
 function populateSubDays(routineName) {
   if (!routineName) {
     programSelectGroup.classList.add('hidden');
@@ -146,12 +146,10 @@ function populateSubDays(routineName) {
 routineSelect.addEventListener('change', async (e) => {
   const selectedRoutine = e.target.value;
   
-  // Clear layout fields
   populateSubDays(selectedRoutine);
   workoutLoggingForm.classList.add('hidden');
   exerciseContainer.innerHTML = '';
 
-  // Persist updated Routine Choice directly to Supabase Profile table
   if (selectedRoutine && currentUser) {
     const { data: globalProg } = await supabase
       .from('programs')
@@ -168,13 +166,14 @@ routineSelect.addEventListener('change', async (e) => {
   }
 });
 
-// Watch child sub-day changes to paint input fields
+// Watch child sub-day changes to paint input fields AND filter history sidebar
 programSelect.addEventListener('change', (e) => {
   const selectedDay = e.target.value;
   generateExerciseForm(selectedDay);
+  fetchAndRenderHistory(selectedDay);
 });
 
-// Generate dynamic Input Fields (Weight training and Calisthenics reps/weights)
+// Generate dynamic Weight Training Input Fields (Required Removed)
 function generateExerciseForm(selectedDay) {
   if (!selectedDay) {
     workoutLoggingForm.classList.add('hidden');
@@ -184,7 +183,7 @@ function generateExerciseForm(selectedDay) {
   workoutLoggingForm.classList.remove('hidden');
   exerciseContainer.innerHTML = '';
 
-  const exerciseList = PROGRAMS[selectedDay];
+  const exerciseList = PROGRAMS[selectedDay] || [];
 
   exerciseList.forEach((exerciseName, exIndex) => {
     const exerciseWrapper = document.createElement('div');
@@ -196,8 +195,8 @@ function generateExerciseForm(selectedDay) {
       <div class="sets-list-container" id="setsContainer-${exIndex}">
         <div class="set-row">
           <span>Set 1</span>
-          <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" required min="0">
-          <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" required min="0" step="any">
+          <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0" step="any">
+          <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
         </div>
       </div>
       <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
@@ -208,7 +207,7 @@ function generateExerciseForm(selectedDay) {
   });
 }
 
-// Manage dynamically appended training sets
+// Manage dynamically appended training sets (Required Removed)
 exerciseContainer.addEventListener('click', (e) => {
   if (e.target.classList.contains('add-set-btn')) {
     const exIndex = e.target.getAttribute('data-index');
@@ -219,16 +218,17 @@ exerciseContainer.addEventListener('click', (e) => {
     setRow.className = "set-row";
     setRow.innerHTML = `
       <span>Set ${currentSetCount}</span>
-      <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" required min="0">
-      <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" required min="0" step="any">
+      <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0" step="any">
+      <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
     `;
     container.appendChild(setRow);
   }
 });
 
-// Configure Diet Radio Group selections
+// Configure Diet Radio Group selections visual classes
 function setupDietRatingListeners() {
   const container = document.getElementById('dietRatingSelector');
+  if (!container) return;
   const labels = container.querySelectorAll('.diet-btn');
 
   labels.forEach(label => {
@@ -239,14 +239,10 @@ function setupDietRatingListeners() {
   });
 }
 
-// Submit Module 1: Workout Splitting (Completely removes cardio and diet payloads)
+// PUSH WEIGHT TRAINING ONLY
 workoutLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  if (isTrialExpired) {
-    showStatus("Your trial has expired. You must sign up to submit logs.", "error");
-    return;
-  }
+  if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   showStatus("", "");
 
@@ -274,58 +270,46 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
     });
 
     if (structuredSetsArray.length > 0) {
-      const logCategory = (selectedDay === "Calisthenics") ? "calisthenics" : "weight_training";
+      let logCategory = 'weight_training';
+      if (selectedDay === "Calisthenics") logCategory = 'calisthenics';
 
       payloadRows.push({
         user_id: currentUser.id,
         log_date: todayDateString,
         category: logCategory,
         exercise_name: exName,
-        metrics: {
-          sets: structuredSetsArray
-        }
+        metrics: { sets: structuredSetsArray }
       });
     }
   });
 
   if (payloadRows.length === 0) {
-    showStatus("Please fill out at least one exercise set before saving.", "error");
+    showStatus("Please fill out at least one exercise step to submit progress.", "error");
     return;
   }
 
   try {
-    const { error } = await supabase
-      .from('workout_logs')
-      .insert(payloadRows);
-
+    const { error } = await supabase.from('workout_logs').insert(payloadRows);
     if (error) throw error;
-
-    showStatus("Success! Workout saved.", "success");
+    showStatus("Success! Progress saved.", "success");
     workoutLoggingForm.reset();
     workoutLoggingForm.classList.add('hidden');
-    fetchAndRenderHistory();
-
+    fetchAndRenderHistory(selectedDay);
   } catch (err) {
     showStatus(`Failed to save: ${err.message}`, "error");
   }
 });
 
-// Submit Module 2: Independent Cardio Logging
+// PUSH CARDIO STANDALONE
 cardioLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  if (isTrialExpired) {
-    showStatus("Trial expired. Please sign up to track cardio.", "error");
-    return;
-  }
-
-  showStatus("", "");
+  if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   const durationVal = parseFloat(document.getElementById('cardioDuration').value);
   const distanceVal = parseFloat(document.getElementById('cardioDistance').value);
 
   if (isNaN(durationVal) || isNaN(distanceVal)) {
-    showStatus("Please fill out both duration and distance.", "error");
+    showStatus("Please complete both Cardio metrics before saving.", "error");
     return;
   }
 
@@ -343,61 +327,49 @@ cardioLoggingForm.addEventListener('submit', async (e) => {
   try {
     const { error } = await supabase.from('workout_logs').insert(payload);
     if (error) throw error;
-    
-    showStatus("Success! Cardio metrics recorded.", "success");
+    showStatus("Cardio milestone recorded!", "success");
     cardioLoggingForm.reset();
-    fetchAndRenderHistory();
+    fetchAndRenderHistory(programSelect.value);
   } catch (err) {
     showStatus(`Cardio save failure: ${err.message}`, "error");
   }
 });
 
-// Submit Module 3: Independent Daily Diet Rating
+// PUSH DIET STANDALONE
 dietLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  if (isTrialExpired) {
-    showStatus("Trial expired. Please sign up to record diet logs.", "error");
-    return;
-  }
-
-  showStatus("", "");
+  if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   const selectedDietInput = document.querySelector('input[name="dietRating"]:checked');
   if (!selectedDietInput) {
-    showStatus("Please choose a rating from 1 to 5.", "error");
+    showStatus("Please pick a rating value from 1 to 5.", "error");
     return;
   }
 
   const dietRating = parseInt(selectedDietInput.value, 10);
   const todayDateString = new Date().toISOString().split('T')[0];
-
-  // Note: category must stay inside check constraints ('weight_training' is used to avoid DB insertion failures)
   const payload = [{
     user_id: currentUser.id,
     log_date: todayDateString,
-    category: 'weight_training',
+    category: 'diet_rating',
     exercise_name: 'Daily Nutritional Matrix',
-    metrics: { 
-      diet_rating: dietRating 
-    }
+    metrics: { diet_rating: dietRating }
   }];
 
   try {
     const { error } = await supabase.from('workout_logs').insert(payload);
     if (error) throw error;
-    
-    showStatus("Success! Daily diet rating stored.", "success");
+    showStatus("Diet metrics stored!", "success");
     document.querySelectorAll('.diet-btn').forEach(btn => btn.classList.remove('selected'));
     dietLoggingForm.reset();
-    fetchAndRenderHistory();
+    fetchAndRenderHistory(programSelect.value);
   } catch (err) {
     showStatus(`Diet save failure: ${err.message}`, "error");
   }
 });
 
-// Render Archive Content Cards (Parses cardio, diet, and training layouts cleanly)
-async function fetchAndRenderHistory() {
+// COLLAPSIBLE PROGRESSIVE OVERLOAD DAILY SUMMARY MATRIX
+async function fetchAndRenderHistory(selectedDayFilter = null) {
   const { data: workouts, error } = await supabase
     .from('workout_logs')
     .select('*')
@@ -409,65 +381,136 @@ async function fetchAndRenderHistory() {
     return;
   }
 
-  if (workouts && workouts.length > 0) {
-    noHistoryMsg.style.display = 'none';
-    historyGrid.innerHTML = '';
+  historyGrid.innerHTML = '';
 
-    workouts.forEach(workout => {
-      const card = document.createElement('div');
-      card.className = 'workout-card';
-
-      let innerSetsHTML = '';
-      
-      if (workout.exercise_name === 'Daily Nutritional Matrix') {
-        const dietVal = workout.metrics.diet_rating;
-        innerSetsHTML = `
-          <div style="font-size: 1rem; font-weight: 700; color: var(--accent-neon); margin-bottom: 0.25rem;">
-            Diet Quality: ${dietVal}/5
-          </div>
-          <div style="font-size: 0.85rem; color: var(--text-muted);">
-            Nutritional progress logged.
-          </div>`;
-      } else if (workout.category === 'cardio') {
-        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-        setsData.forEach(item => {
-          innerSetsHTML += `
-            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-              Duration: <strong>${item.duration}</strong> mins | Distance: <strong>${item.distance}</strong> miles/km
-            </div>`;
-        });
-      } else {
-        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-        setsData.forEach(item => {
-          innerSetsHTML += `
-            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-              Set ${item.set}: <strong>${item.reps}</strong> reps @ <strong>${item.weight}</strong> lbs/kg
-            </div>`;
-        });
-      }
-
-      // Convert displayed category tag for the UI
-      const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' 
-        ? 'NUTRITION' 
-        : workout.category.toUpperCase().replace('_', ' ');
-
-      card.innerHTML = `
-        <div class="card-header">
-          <span class="category-tag">${displayTag}</span>
-          <span class="card-date">${workout.log_date}</span>
-        </div>
-        <h3 class="exercise-title">${workout.exercise_name}</h3>
-        <div style="margin-top: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-          ${innerSetsHTML}
-        </div>
-      `;
-      historyGrid.appendChild(card);
-    });
-  } else {
+  if (!workouts || workouts.length === 0) {
     noHistoryMsg.style.display = 'block';
-    historyGrid.innerHTML = '';
     historyGrid.appendChild(noHistoryMsg);
+    return;
   }
+
+  noHistoryMsg.style.display = 'none';
+
+  // Group logs together by standard calendar date
+  const groupedByDate = {};
+  workouts.forEach(log => {
+    if (!groupedByDate[log.log_date]) {
+      groupedByDate[log.log_date] = {
+        date: log.log_date,
+        lifts: [],
+        cardio: null,
+        diet: null
+      };
+    }
+    
+    if (log.category === 'cardio') {
+      groupedByDate[log.log_date].cardio = log;
+    } else if (log.category === 'diet_rating') {
+      groupedByDate[log.log_date].diet = log;
+    } else {
+      groupedByDate[log.log_date].lifts.push(log);
+    }
+  });
+
+  let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+  // Dynamic filter layer mapping matching left panel focus state
+  if (selectedDayFilter && selectedDayFilter !== "") {
+    const allowedExercises = PROGRAMS[selectedDayFilter] || [];
+    sortedDates = sortedDates.filter(dateKey => {
+      const dayGroup = groupedByDate[dateKey];
+      const matchingLifts = dayGroup.lifts.filter(l => allowedExercises.includes(l.exercise_name));
+      if (matchingLifts.length > 0) {
+        dayGroup.lifts = matchingLifts; // Only retain this target focus
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // Hard cap to the latest 5 days to preserve perfect workspace aspect balance
+  const latestDates = sortedDates.slice(0, 5);
+
+  if (latestDates.length === 0) {
+    historyGrid.innerHTML = `<p style="color: var(--text-muted); padding: 1rem;">No matching session logs target found for ${selectedDayFilter || 'this filter'}.</p>`;
+    return;
+  }
+
+  latestDates.forEach(dateStr => {
+    const dayGroup = groupedByDate[dateStr];
+    const dayCard = document.createElement('div');
+    dayCard.className = 'history-day-card';
+    dayCard.style.cssText = `background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.2s ease;`;
+
+    const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
+    const liftCount = dayGroup.lifts.length;
+    const cardioLogged = dayGroup.cardio ? "🏃 Cardio" : "";
+    
+    const headerHTML = `
+      <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <div>
+          <span style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${dateStr}</span>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+            ${liftCount > 0 ? `🏋️ ${liftCount} Lifts` : ''} ${cardioLogged}
+          </div>
+        </div>
+        ${dietVal ? `<span style="font-size: 0.75rem; background: rgba(57, 255, 20, 0.1); color: #39ff14; padding: 4px 8px; border-radius: 4px; font-weight: bold;">🍏 Diet: ${dietVal}/5</span>` : '<span style="color:var(--text-muted); font-size:0.8rem;">▼</span>'}
+      </div>
+    `;
+
+    let detailsHTML = `<div class="day-card-details hidden" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">`;
+
+    if (liftCount > 0) {
+      dayGroup.lifts.forEach(workout => {
+        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+        let topLiftingSet = setsData.reduce((max, current) => {
+          if (!max) return current;
+          if (current.weight > max.weight) return current;
+          if (current.weight === max.weight && current.reps > max.reps) return current;
+          return max;
+        }, null);
+
+        if (topLiftingSet) {
+          detailsHTML += `
+            <div style="margin-bottom: 0.75rem;">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${workout.exercise_name}</div>
+              <div style="font-size: 0.8rem; color: var(--accent-neon); font-weight: bold; margin-top: 0.1rem;">
+                🔥 PR Target: ${topLiftingSet.weight} lbs/kg x ${topLiftingSet.reps} reps
+              </div>
+            </div>`;
+        }
+      });
+    }
+
+    if (dayGroup.cardio) {
+      const cardioSets = Array.isArray(dayGroup.cardio.metrics.sets) ? dayGroup.cardio.metrics.sets : [];
+      const topCardio = cardioSets[0] || { duration: 0, distance: 0 };
+      detailsHTML += `
+        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🏃 Cardio Session</div>
+          <div style="font-size: 0.8rem; color: #38bdf8;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
+        </div>`;
+    }
+
+    detailsHTML += `</div>`;
+    dayCard.innerHTML = headerHTML + detailsHTML;
+
+    dayCard.addEventListener('click', () => {
+      const detailsBlock = dayCard.querySelector('.day-card-details');
+      const isHidden = detailsBlock.classList.contains('hidden');
+      document.querySelectorAll('.day-card-details').forEach(el => el.classList.add('hidden'));
+      
+      if (isHidden) {
+        detailsBlock.classList.remove('hidden');
+        dayCard.style.borderColor = "var(--accent-neon)";
+      } else {
+        detailsBlock.classList.add('hidden');
+        dayCard.style.borderColor = "var(--border-subtle)";
+      }
+    });
+
+    historyGrid.appendChild(dayCard);
+  });
 }
 
 // Redirect client to Stripe Payment checkout portal
