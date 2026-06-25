@@ -194,18 +194,18 @@ function generateExerciseForm(selectedDay) {
     const inputClass2 = isCardio ? "distance-input" : "weight-input";
 
     exerciseWrapper.innerHTML = `
-      <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
-      <div class="sets-list-container" id="setsContainer-${exIndex}">
-        <div class="set-row">
-          <span>Set 1</span>
-          <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" required min="0" step="any">
-          <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" required min="0" step="any">
-        </div>
-      </div>
-      <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
-        + Add Extra Set
-      </button>
-    `;
+  <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
+  <div class="sets-list-container" id="setsContainer-${exIndex}">
+    <div class="set-row">
+      <span>Set 1</span>
+      <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" min="0" step="any">
+      <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" min="0" step="any">
+    </div>
+  </div>
+  <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
+    + Add Extra Set
+  </button>
+`;
     exerciseContainer.appendChild(exerciseWrapper);
   });
 }
@@ -223,14 +223,14 @@ exerciseContainer.addEventListener('click', (e) => {
     const inputClass1 = isCardio ? "duration-input" : "reps-input";
     const inputClass2 = isCardio ? "distance-input" : "weight-input";
 
-    const setRow = document.createElement('div');
-    setRow.className = "set-row";
-    setRow.innerHTML = `
-      <span>Set ${currentSetCount}</span>
-      <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" required min="0" step="any">
-      <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" required min="0" step="any">
-    `;
-    container.appendChild(setRow);
+   const setRow = document.createElement('div');
+setRow.className = "set-row";
+setRow.innerHTML = `
+  <span>Set ${currentSetCount}</span>
+  <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" min="0" step="any">
+  <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" min="0" step="any">
+`;
+container.appendChild(setRow);
   }
 });
 
