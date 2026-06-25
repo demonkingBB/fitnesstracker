@@ -240,13 +240,14 @@ function setupDietRatingListeners() {
 }
 
 // PUSH WEIGHT TRAINING ONLY
+// 🏋️ UNIVERSAL WEIGHT TRAINING & CALISTHENICS SUBMISSION
 workoutLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   showStatus("", "");
 
-  const selectedDay = programSelect.value;
+  const selectedDay = programSelect.value; // 🚀 Automatically grabs "Push Day", "Upper Body", "Bro Split Day", etc.
   const blocks = document.querySelectorAll('.exercise-log-block');
   const payloadRows = [];
   const todayDateString = new Date().toISOString().split('T')[0];
@@ -271,13 +272,16 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
 
     if (structuredSetsArray.length > 0) {
       let logCategory = 'weight_training';
-      if (selectedDay === "Calisthenics") logCategory = 'calisthenics';
+      if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
+        logCategory = 'calisthenics';
+      }
 
       payloadRows.push({
         user_id: currentUser.id,
         log_date: todayDateString,
         category: logCategory,
         exercise_name: exName,
+        routine_focus: selectedDay, // 🚀 Saves the exact active split day into your new database column!
         metrics: { sets: structuredSetsArray }
       });
     }
@@ -300,13 +304,14 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   }
 });
 
-// PUSH CARDIO STANDALONE
+// 🏃 UNIVERSAL CARDIO SUBMISSION
 cardioLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   const durationVal = parseFloat(document.getElementById('cardioDuration').value);
   const distanceVal = parseFloat(document.getElementById('cardioDistance').value);
+  const selectedDay = programSelect.value || "Cardio Focus"; // Falls back if no layout day is selected
 
   if (isNaN(durationVal) || isNaN(distanceVal)) {
     showStatus("Please complete both Cardio metrics before saving.", "error");
@@ -319,6 +324,7 @@ cardioLoggingForm.addEventListener('submit', async (e) => {
     log_date: todayDateString,
     category: 'cardio',
     exercise_name: 'Cardio Session',
+    routine_focus: selectedDay, // 🚀 Ties cardio to the active split day context
     metrics: {
       sets: [{ set: 1, duration: durationVal, distance: distanceVal }]
     }
@@ -329,18 +335,20 @@ cardioLoggingForm.addEventListener('submit', async (e) => {
     if (error) throw error;
     showStatus("Cardio milestone recorded!", "success");
     cardioLoggingForm.reset();
-    fetchAndRenderHistory(programSelect.value);
+    fetchAndRenderHistory(selectedDay);
   } catch (err) {
     showStatus(`Cardio save failure: ${err.message}`, "error");
   }
 });
 
-// PUSH DIET STANDALONE
+// 🍏 UNIVERSAL DIET SUBMISSION
 dietLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   const selectedDietInput = document.querySelector('input[name="dietRating"]:checked');
+  const selectedDay = programSelect.value || "Nutrition Logging";
+
   if (!selectedDietInput) {
     showStatus("Please pick a rating value from 1 to 5.", "error");
     return;
@@ -353,6 +361,7 @@ dietLoggingForm.addEventListener('submit', async (e) => {
     log_date: todayDateString,
     category: 'diet_rating',
     exercise_name: 'Daily Nutritional Matrix',
+    routine_focus: selectedDay, // 🚀 Ties nutrition score to the active split day context
     metrics: { diet_rating: dietRating }
   }];
 
@@ -362,7 +371,7 @@ dietLoggingForm.addEventListener('submit', async (e) => {
     showStatus("Diet metrics stored!", "success");
     document.querySelectorAll('.diet-btn').forEach(btn => btn.classList.remove('selected'));
     dietLoggingForm.reset();
-    fetchAndRenderHistory(programSelect.value);
+    fetchAndRenderHistory(selectedDay);
   } catch (err) {
     showStatus(`Diet save failure: ${err.message}`, "error");
   }
