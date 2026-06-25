@@ -1,11 +1,4 @@
-/* Specific Centering and Card Rules for the Authentication Wall */
-/* Ensure inputs and buttons inherit the premium typography settings */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
+
 
 input, button {
   font-family: inherit;
