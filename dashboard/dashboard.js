@@ -876,6 +876,36 @@ if (timeframeSelect) {
   });
 }
 
+// ==========================================================================
+// ⚡ CHART TOGGLE WATCHER ROUTINE
+// ==========================================================================
+document.addEventListener('click', function (e) {
+  // Check if what the user clicked is one of our chart buttons
+  if (e.target && e.target.classList.contains('chart-toggle-btn')) {
+    e.preventDefault();
+
+    // 1. Remove active neon styles from all chart buttons
+    document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.style.background = "none";
+      btn.style.borderColor = "var(--border-subtle)";
+      btn.style.color = "var(--text-muted)";
+    });
+
+    // 2. Add active neon styling to the clicked button
+    e.target.classList.add('active');
+    e.target.style.background = "rgba(57,255,20,0.1)";
+    e.target.style.borderColor = "#39ff14";
+    e.target.style.color = "#39ff14";
+
+    // 3. Swap the active view tracking variable ('body' or 'volume')
+    activeChartType = e.target.getAttribute('data-chart');
+    
+    // 4. Redraw the canvas line chart with the fresh database filter
+    renderAnalyticsChart();
+  }
+});
+
 // Make sure analytics load on dashboard boot sequence
 window.addEventListener('load', () => {
   fetchAndRenderBiometricHistory();
