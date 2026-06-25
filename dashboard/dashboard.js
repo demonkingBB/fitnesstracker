@@ -582,4 +582,5 @@ logoutBtn.addEventListener('click', async () => {
   window.location.href = '/login/';
 });
 
+//init//
 initDashboard();
