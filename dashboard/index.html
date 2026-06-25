@@ -37,49 +37,84 @@
     <!-- Split-Screen Dashboard Grid -->
     <div class="dashboard-grid">
       
-      <!-- COLUMN 1: Active Workspace Tracker -->
-      <section id="activeTrackerSection" class="card">
-        <h3>Log Today's Training</h3>
+      <!-- COLUMN 1: Active Workspace Trackers -->
+      <section id="activeTrackerSection" style="display: flex; flex-direction: column; gap: 2rem;">
         
-        <!-- Dropdown 1: Overall Routine Program Split -->
-        <div class="form-group" style="margin-top: 1.5rem;">
-          <label for="routineSelect">Select Your Routine Program</label>
-          <select id="routineSelect" class="program-select-dropdown">
-            <!-- Populated dynamically with program templates -->
-          </select>
-        </div>
-
-        <!-- Dropdown 2: Day Focus Split (Filtered by Dropdown 1 selection) -->
-        <div id="programSelectGroup" class="form-group hidden" style="margin-top: 1.5rem;">
-          <label for="programSelect">Today's Focus Day</label>
-          <select id="programSelect" class="program-select-dropdown">
-            <!-- Filtered sub-days appear here dynamically -->
-          </select>
-        </div>
-
-        <!-- Notification / Status Bar -->
-        <div id="statusMsg" class="hidden" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center;"></div>
-
-        <!-- Dynamic Workspace Logging Form -->
-        <form id="workoutLoggingForm" class="hidden" style="margin-top: 1.5rem;">
-          <div id="exerciseContainer"></div>
+        <!-- MODULE 1: Workout Split Logging -->
+        <div class="card">
+          <h3 style="margin-bottom: 0.5rem;">Log Today's Training</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Track weight training and calisthenics progressions.</p>
           
-          <!-- Daily Diet Progress Matrix -->
-          <div class="form-group" style="margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
-            <label>How was your diet today?</label>
-            <div class="diet-rating-group" id="dietRatingSelector">
-              <label class="diet-btn"><input type="radio" name="dietRating" value="1" required>1 <span>Poor</span></label>
-              <label class="diet-btn"><input type="radio" name="dietRating" value="2">2</label>
-              <label class="diet-btn"><input type="radio" name="dietRating" value="3">3</label>
-              <label class="diet-btn"><input type="radio" name="dietRating" value="4">4</label>
-              <label class="diet-btn"><input type="radio" name="dietRating" value="5">5 <span>Great</span></label>
-            </div>
+          <div class="form-group">
+            <label for="routineSelect">Select Your Routine Program</label>
+            <select id="routineSelect" class="program-select-dropdown">
+              <!-- Populated dynamically with program templates -->
+            </select>
           </div>
 
-          <button type="submit" id="saveWorkoutBtn" class="btn-primary" style="margin-top: 2rem; width: 100%;">
-            Save Workout Session
-          </button>
-        </form>
+          <div id="programSelectGroup" class="form-group hidden" style="margin-top: 1.5rem;">
+            <label for="programSelect">Today's Focus Day</label>
+            <select id="programSelect" class="program-select-dropdown">
+              <!-- Filtered sub-days appear here dynamically -->
+            </select>
+          </div>
+
+          <!-- Dynamic Workspace Logging Form (No Cardio or Diet inside) -->
+          <form id="workoutLoggingForm" class="hidden" style="margin-top: 1.5rem;">
+            <div id="exerciseContainer"></div>
+            <button type="submit" id="saveWorkoutBtn" class="btn-primary" style="margin-top: 1.5rem; width: 100%;">
+              Save Workout Session
+            </button>
+          </form>
+        </div>
+
+        <!-- MODULE 2: Independent Cardio Logging -->
+        <div class="card">
+          <h3 style="margin-bottom: 0.5rem;">Log Cardio Session</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Record cardio milestones separately.</p>
+          
+          <form id="cardioLoggingForm">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                <label for="cardioDuration">Duration (Minutes)</label>
+                <input type="number" id="cardioDuration" class="workout-input" placeholder="e.g., 30" required min="0" step="any">
+              </div>
+              <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                <label for="cardioDistance">Distance (Miles/Km)</label>
+                <input type="number" id="cardioDistance" class="workout-input" placeholder="e.g., 3.1" required min="0" step="any">
+              </div>
+            </div>
+            <button type="submit" class="btn-secondary" style="width: 100%;">
+              Record Cardio Session
+            </button>
+          </form>
+        </div>
+
+        <!-- MODULE 3: Independent Daily Diet Rating -->
+        <div class="card">
+          <h3 style="margin-bottom: 0.5rem;">Log Daily Diet</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Track your overall daily nutritional quality.</p>
+          
+          <form id="dietLoggingForm">
+            <div class="form-group">
+              <label>How was your diet today?</label>
+              <div class="diet-rating-group" id="dietRatingSelector">
+                <label class="diet-btn"><input type="radio" name="dietRating" value="1" required>1 <span>Poor</span></label>
+                <label class="diet-btn"><input type="radio" name="dietRating" value="2">2</label>
+                <label class="diet-btn"><input type="radio" name="dietRating" value="3">3</label>
+                <label class="diet-btn"><input type="radio" name="dietRating" value="4">4</label>
+                <label class="diet-btn"><input type="radio" name="dietRating" value="5">5 <span>Great</span></label>
+              </div>
+            </div>
+            <button type="submit" class="btn-secondary" style="width: 100%; margin-top: 1rem;">
+              Record Daily Diet
+            </button>
+          </form>
+        </div>
+
+        <!-- Shared Status Notification Bar -->
+        <div id="statusMsg" class="hidden" style="padding: 1rem; border-radius: 8px; text-align: center;"></div>
+
       </section>
 
       <!-- COLUMN 2: Historical Archive Grid -->

@@ -27,6 +27,10 @@ const restartTrialBtn = document.getElementById('restartTrialBtn');
 const smallUpgradeBtn = document.getElementById('smallUpgradeBtn');
 const saveWorkoutBtn = document.getElementById('saveWorkoutBtn');
 
+// Independent Form Selectors
+const cardioLoggingForm = document.getElementById('cardioLoggingForm');
+const dietLoggingForm = document.getElementById('dietLoggingForm');
+
 let currentUser = null;
 let isTrialExpired = false;
 
@@ -118,7 +122,7 @@ async function initDashboard() {
   fetchAndRenderHistory();
 }
 
-// Populate Child sub-days matching the selected overall Routine split
+// Populate Child sub-days matching the selected overall Routine split (No Cardio)
 function populateSubDays(routineName) {
   if (!routineName) {
     programSelectGroup.classList.add('hidden');
@@ -170,7 +174,7 @@ programSelect.addEventListener('change', (e) => {
   generateExerciseForm(selectedDay);
 });
 
-// Generate dynamic Input Fields
+// Generate dynamic Input Fields (Weight training and Calisthenics reps/weights)
 function generateExerciseForm(selectedDay) {
   if (!selectedDay) {
     workoutLoggingForm.classList.add('hidden');
@@ -181,31 +185,25 @@ function generateExerciseForm(selectedDay) {
   exerciseContainer.innerHTML = '';
 
   const exerciseList = PROGRAMS[selectedDay];
-  const isCardio = (selectedDay === "Cardio");
 
   exerciseList.forEach((exerciseName, exIndex) => {
     const exerciseWrapper = document.createElement('div');
     exerciseWrapper.className = 'exercise-log-block';
     exerciseWrapper.setAttribute('data-exercise-name', exerciseName);
 
-    const unit1Placeholder = isCardio ? "Minutes" : "Reps";
-    const unit2Placeholder = isCardio ? "Miles / Km" : "lbs / kg";
-    const inputClass1 = isCardio ? "duration-input" : "reps-input";
-    const inputClass2 = isCardio ? "distance-input" : "weight-input";
-
     exerciseWrapper.innerHTML = `
-  <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
-  <div class="sets-list-container" id="setsContainer-${exIndex}">
-    <div class="set-row">
-      <span>Set 1</span>
-      <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" min="0" step="any">
-      <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" min="0" step="any">
-    </div>
-  </div>
-  <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
-    + Add Extra Set
-  </button>
-`;
+      <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
+      <div class="sets-list-container" id="setsContainer-${exIndex}">
+        <div class="set-row">
+          <span>Set 1</span>
+          <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" required min="0">
+          <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" required min="0" step="any">
+        </div>
+      </div>
+      <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
+        + Add Extra Set
+      </button>
+    `;
     exerciseContainer.appendChild(exerciseWrapper);
   });
 }
@@ -216,21 +214,15 @@ exerciseContainer.addEventListener('click', (e) => {
     const exIndex = e.target.getAttribute('data-index');
     const container = document.getElementById(`setsContainer-${exIndex}`);
     const currentSetCount = container.children.length + 1;
-    const isCardio = (programSelect.value === "Cardio");
 
-    const unit1Placeholder = isCardio ? "Minutes" : "Reps";
-    const unit2Placeholder = isCardio ? "Miles / Km" : "lbs / kg";
-    const inputClass1 = isCardio ? "duration-input" : "reps-input";
-    const inputClass2 = isCardio ? "distance-input" : "weight-input";
-
-   const setRow = document.createElement('div');
-setRow.className = "set-row";
-setRow.innerHTML = `
-  <span>Set ${currentSetCount}</span>
-  <input type="number" placeholder="${unit1Placeholder}" class="workout-input ${inputClass1}" style="width: 100px;" min="0" step="any">
-  <input type="number" placeholder="${unit2Placeholder}" class="workout-input ${inputClass2}" style="width: 110px;" min="0" step="any">
-`;
-container.appendChild(setRow);
+    const setRow = document.createElement('div');
+    setRow.className = "set-row";
+    setRow.innerHTML = `
+      <span>Set ${currentSetCount}</span>
+      <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" required min="0">
+      <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" required min="0" step="any">
+    `;
+    container.appendChild(setRow);
   }
 });
 
@@ -247,7 +239,7 @@ function setupDietRatingListeners() {
   });
 }
 
-// Push Logged Form Payload to Supabase
+// Submit Module 1: Workout Splitting (Completely removes cardio and diet payloads)
 workoutLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -259,13 +251,9 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   showStatus("", "");
 
   const selectedDay = programSelect.value;
-  const isCardio = (selectedDay === "Cardio");
   const blocks = document.querySelectorAll('.exercise-log-block');
   const payloadRows = [];
   const todayDateString = new Date().toISOString().split('T')[0];
-
-  const selectedDietInput = document.querySelector('input[name="dietRating"]:checked');
-  const dietRating = selectedDietInput ? parseInt(selectedDietInput.value, 10) : null;
 
   blocks.forEach(block => {
     const exName = block.getAttribute('data-exercise-name');
@@ -273,35 +261,20 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
     const structuredSetsArray = [];
 
     setRows.forEach((row, rowIndex) => {
-      if (isCardio) {
-        const durationVal = parseFloat(row.querySelector('.duration-input').value);
-        const distanceVal = parseFloat(row.querySelector('.distance-input').value);
+      const repsVal = parseInt(row.querySelector('.reps-input').value, 10);
+      const weightVal = parseFloat(row.querySelector('.weight-input').value);
 
-        if (!isNaN(durationVal) && !isNaN(distanceVal)) {
-          structuredSetsArray.push({
-            set: rowIndex + 1,
-            duration: durationVal,
-            distance: distanceVal
-          });
-        }
-      } else {
-        const repsVal = parseInt(row.querySelector('.reps-input').value, 10);
-        const weightVal = parseFloat(row.querySelector('.weight-input').value);
-
-        if (!isNaN(repsVal) && !isNaN(weightVal)) {
-          structuredSetsArray.push({
-            set: rowIndex + 1,
-            reps: repsVal,
-            weight: weightVal
-          });
-        }
+      if (!isNaN(repsVal) && !isNaN(weightVal)) {
+        structuredSetsArray.push({
+          set: rowIndex + 1,
+          reps: repsVal,
+          weight: weightVal
+        });
       }
     });
 
     if (structuredSetsArray.length > 0) {
-      let logCategory = 'weight_training';
-      if (selectedDay === "Calisthenics") logCategory = 'calisthenics';
-      if (selectedDay === "Cardio") logCategory = 'cardio';
+      const logCategory = (selectedDay === "Calisthenics") ? "calisthenics" : "weight_training";
 
       payloadRows.push({
         user_id: currentUser.id,
@@ -309,15 +282,14 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
         category: logCategory,
         exercise_name: exName,
         metrics: {
-          sets: structuredSetsArray,
-          diet_rating: dietRating
+          sets: structuredSetsArray
         }
       });
     }
   });
 
   if (payloadRows.length === 0) {
-    showStatus("Please fill out at least one exercise step to submit progress.", "error");
+    showStatus("Please fill out at least one exercise set before saving.", "error");
     return;
   }
 
@@ -328,12 +300,8 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
 
     if (error) throw error;
 
-    showStatus("Success! Progress saved.", "success");
+    showStatus("Success! Workout saved.", "success");
     workoutLoggingForm.reset();
-    
-    // Reset diet rating classes
-    document.querySelectorAll('.diet-btn').forEach(btn => btn.classList.remove('selected'));
-    
     workoutLoggingForm.classList.add('hidden');
     fetchAndRenderHistory();
 
@@ -342,7 +310,93 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Render Archive Content Cards
+// Submit Module 2: Independent Cardio Logging
+cardioLoggingForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (isTrialExpired) {
+    showStatus("Trial expired. Please sign up to track cardio.", "error");
+    return;
+  }
+
+  showStatus("", "");
+
+  const durationVal = parseFloat(document.getElementById('cardioDuration').value);
+  const distanceVal = parseFloat(document.getElementById('cardioDistance').value);
+
+  if (isNaN(durationVal) || isNaN(distanceVal)) {
+    showStatus("Please fill out both duration and distance.", "error");
+    return;
+  }
+
+  const todayDateString = new Date().toISOString().split('T')[0];
+  const payload = [{
+    user_id: currentUser.id,
+    log_date: todayDateString,
+    category: 'cardio',
+    exercise_name: 'Cardio Session',
+    metrics: {
+      sets: [{ set: 1, duration: durationVal, distance: distanceVal }]
+    }
+  }];
+
+  try {
+    const { error } = await supabase.from('workout_logs').insert(payload);
+    if (error) throw error;
+    
+    showStatus("Success! Cardio metrics recorded.", "success");
+    cardioLoggingForm.reset();
+    fetchAndRenderHistory();
+  } catch (err) {
+    showStatus(`Cardio save failure: ${err.message}`, "error");
+  }
+});
+
+// Submit Module 3: Independent Daily Diet Rating
+dietLoggingForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (isTrialExpired) {
+    showStatus("Trial expired. Please sign up to record diet logs.", "error");
+    return;
+  }
+
+  showStatus("", "");
+
+  const selectedDietInput = document.querySelector('input[name="dietRating"]:checked');
+  if (!selectedDietInput) {
+    showStatus("Please choose a rating from 1 to 5.", "error");
+    return;
+  }
+
+  const dietRating = parseInt(selectedDietInput.value, 10);
+  const todayDateString = new Date().toISOString().split('T')[0];
+
+  // Note: category must stay inside check constraints ('weight_training' is used to avoid DB insertion failures)
+  const payload = [{
+    user_id: currentUser.id,
+    log_date: todayDateString,
+    category: 'weight_training',
+    exercise_name: 'Daily Nutritional Matrix',
+    metrics: { 
+      diet_rating: dietRating 
+    }
+  }];
+
+  try {
+    const { error } = await supabase.from('workout_logs').insert(payload);
+    if (error) throw error;
+    
+    showStatus("Success! Daily diet rating stored.", "success");
+    document.querySelectorAll('.diet-btn').forEach(btn => btn.classList.remove('selected'));
+    dietLoggingForm.reset();
+    fetchAndRenderHistory();
+  } catch (err) {
+    showStatus(`Diet save failure: ${err.message}`, "error");
+  }
+});
+
+// Render Archive Content Cards (Parses cardio, diet, and training layouts cleanly)
 async function fetchAndRenderHistory() {
   const { data: workouts, error } = await supabase
     .from('workout_logs')
@@ -365,39 +419,47 @@ async function fetchAndRenderHistory() {
 
       let innerSetsHTML = '';
       
-      const setsData = Array.isArray(workout.metrics.sets) 
-        ? workout.metrics.sets 
-        : (Array.isArray(workout.metrics) ? workout.metrics : []);
-
-      setsData.forEach(item => {
-        if (workout.category === 'cardio') {
+      if (workout.exercise_name === 'Daily Nutritional Matrix') {
+        const dietVal = workout.metrics.diet_rating;
+        innerSetsHTML = `
+          <div style="font-size: 1rem; font-weight: 700; color: var(--accent-neon); margin-bottom: 0.25rem;">
+            Diet Quality: ${dietVal}/5
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Nutritional progress logged.
+          </div>`;
+      } else if (workout.category === 'cardio') {
+        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+        setsData.forEach(item => {
           innerSetsHTML += `
             <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-              Set ${item.set}: <strong>${item.duration}</strong> mins @ <strong>${item.distance}</strong> miles/km
+              Duration: <strong>${item.duration}</strong> mins | Distance: <strong>${item.distance}</strong> miles/km
             </div>`;
-        } else {
+        });
+      } else {
+        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+        setsData.forEach(item => {
           innerSetsHTML += `
             <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
               Set ${item.set}: <strong>${item.reps}</strong> reps @ <strong>${item.weight}</strong> lbs/kg
             </div>`;
-        }
-      });
+        });
+      }
 
-      const dietVal = workout.metrics.diet_rating;
-      const dietBadgeHTML = dietVal 
-        ? `<div style="margin-top: 0.50rem; font-size: 0.75rem; font-weight: 700; color: #39ff14;">DIET RATING: ${dietVal}/5</div>` 
-        : '';
+      // Convert displayed category tag for the UI
+      const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' 
+        ? 'NUTRITION' 
+        : workout.category.toUpperCase().replace('_', ' ');
 
       card.innerHTML = `
         <div class="card-header">
-          <span class="category-tag">${workout.category.toUpperCase().replace('_', ' ')}</span>
+          <span class="category-tag">${displayTag}</span>
           <span class="card-date">${workout.log_date}</span>
         </div>
         <h3 class="exercise-title">${workout.exercise_name}</h3>
         <div style="margin-top: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
           ${innerSetsHTML}
         </div>
-        ${dietBadgeHTML}
       `;
       historyGrid.appendChild(card);
     });

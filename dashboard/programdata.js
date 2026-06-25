@@ -37,10 +37,6 @@ export const PROGRAMS = {
     "Walking Lunge", "Plank", "Hollow Hold", "Inverted Row", 
     "Pike Push-Up", "Mountain Climber"
   ],
-  "Cardio": [
-    "Outdoor Run", "Treadmill Run", "Cycling", "Rowing Machine",
-    "Elliptical", "Stair Climber", "Jump Rope", "Swimming"
-  ],
   "Chest-Biceps Day": [
     "Chest Press", "Incline Chest Press", "Chest Fly", "DB Chest Press", 
     "Overhead Press", "Cable Curls", "DB Curls", 
@@ -61,10 +57,10 @@ export const PROGRAMS = {
   ]
 };
 
-// 2. Parent-to-Child Mapping Matrix
+// 2. Parent-to-Child Mapping Matrix (Cardio is removed to run as a separate form)
 export const ROUTINES = {
-  "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day", "Cardio"],
-  "Upper Lower Body": ["Upper Body Day", "Lower Body Day", "Cardio"],
-  "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day", "Cardio"],
-  "Total Body & Calisthenics": ["Total Body Day", "Calisthenics", "Cardio"]
+  "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day"],
+  "Upper Lower Body": ["Upper Body Day", "Lower Body Day"],
+  "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day"],
+  "Total Body & Calisthenics": ["Total Body Day", "Calisthenics"]
 };
