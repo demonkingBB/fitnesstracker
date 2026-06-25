@@ -766,6 +766,114 @@ async function fetchAndRenderBiometricHistory() {
 }
 
 // ==========================================================================
+// TIME-AWARE SWAPPABLE ANALYTICS GRAPH ENGINE
+// ==========================================================================
+let analyticsChartInstance = null;
+let activeChartType = 'body'; 
+
+async function renderAnalyticsChart() {
+  if (!currentUser) return;
+  const ctx = document.getElementById('analyticsChart');
+  if (!ctx) return;
+
+  if (analyticsChartInstance) {
+    analyticsChartInstance.destroy();
+  }
+
+  // 🗓️ Calculate cutoff date based on the selector value
+  const timeframeDays = parseInt(document.getElementById('chartTimeframe').value, 10);
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - timeframeDays);
+  const cutoffDateString = cutoffDate.toISOString().split('T')[0];
+
+  if (activeChartType === 'body') {
+    // FETCH BODY SNAPSHOTS
+    const { data: records, error } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('exercise_name', 'Biometric Snapshot Engine')
+      .gte('log_date', cutoffDateString) // 🚀 Only fetch rows within our timeframe!
+      .order('log_date', { ascending: true });
+
+    if (error || !records || records.length === 0) {
+      drawEmptyChartPlaceholder(ctx, `No biometric history in the last ${timeframeDays} days.`);
+      return;
+    }
+
+    const labels = records.map(r => r.log_date);
+    const weightData = records.map(r => r.metrics?.weight || 0);
+    const waistData = records.map(r => r.metrics?.waist || 0);
+    const bmiData = records.map(r => r.metrics?.bmi || 0);
+
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Weight (lbs)', data: weightData, borderColor: '#39ff14', backgroundColor: 'transparent', borderWidth: 2, tension: 0.2 },
+          { label: 'Waist (in)', data: waistData, borderColor: '#00d2ff', backgroundColor: 'transparent', borderWidth: 2, tension: 0.2 },
+          { label: 'BMI Target', data: bmiData, borderColor: '#ff9f43', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 5], tension: 0.2 }
+        ]
+      },
+      options: getCommonChartOptions(true)
+    });
+
+  } else {
+    // FETCH WEIGHT TRAINING LOGS
+    const { data: logs, error } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('category', 'weight_training')
+      .gte('log_date', cutoffDateString) // 🚀 Only fetch rows within our timeframe!
+      .order('log_date', { ascending: true });
+
+    if (error || !logs || logs.length === 0) {
+      drawEmptyChartPlaceholder(ctx, `No training volume logs in the last ${timeframeDays} days.`);
+      return;
+    }
+
+    const volumeByDate = {};
+    logs.forEach(log => {
+      const sets = log.metrics?.sets || [];
+      let sessionVolume = 0;
+      sets.forEach(s => {
+        sessionVolume += ((parseInt(s.reps, 10) || 0) * (parseFloat(s.weight) || 0));
+      });
+      if (sessionVolume > 0) {
+        volumeByDate[log.log_date] = (volumeByDate[log.log_date] || 0) + sessionVolume;
+      }
+    });
+
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Object.keys(volumeByDate),
+        datasets: [{
+          label: 'Accumulated Volume (lbs)',
+          data: Object.values(volumeByDate),
+          borderColor: '#39ff14',
+          backgroundColor: 'rgba(57, 255, 20, 0.03)',
+          borderWidth: 2,
+          tension: 0.25,
+          fill: true
+        }]
+      },
+      options: getCommonChartOptions(false)
+    });
+  }
+}
+
+// 🚀 EVENT LISTENER FOR THE TIMEFRAME DROPDOWN CHANGE
+const timeframeSelect = document.getElementById('chartTimeframe');
+if (timeframeSelect) {
+  timeframeSelect.addEventListener('change', () => {
+    renderAnalyticsChart();
+  });
+}
+
+// ==========================================================================
 // UNIFIED SWAPPABLE ANALYTICS GRAPH ENGINE
 // ==========================================================================
 let analyticsChartInstance = null;
