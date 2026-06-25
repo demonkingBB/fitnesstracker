@@ -632,5 +632,307 @@ tabButtons.forEach(button => {
   });
 });
 
+// ==========================================================================
+// BIOMETRIC ENGINE MATH & PROGRESSIVE OVERLOAD VISUALS
+// ==========================================================================
+const biometricForm = document.getElementById('biometricForm');
+const biometricResults = document.getElementById('biometricResults');
+const biometricHistoryList = document.getElementById('biometricHistoryList');
+let volumeChartInstance = null;
+
+// Handle Biometric Computations Form Submission
+if (biometricForm) {
+  biometricForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isTrialExpired) return showStatus("Trial expired.", "error");
+
+    const sex = document.getElementById('bioSex').value;
+    const age = parseInt(document.getElementById('bioAge').value, 10);
+    const weightLbs = parseFloat(document.getElementById('bioWeight').value);
+    const heightInches = parseFloat(document.getElementById('bioHeight').value);
+    const waist = parseFloat(document.getElementById('bioWaist').value);
+    const hips = parseFloat(document.getElementById('bioHips').value);
+    const activityMultiplier = parseFloat(document.getElementById('bioActivity').value);
+    const goal = document.getElementById('bioGoal').value;
+
+    // 🧮 1. BMI Calculation
+    const bmi = (weightLbs / (heightInches * heightInches)) * 703;
+
+    // 🧮 2. BMR Calculation (Mifflin-St Jeor Equation)
+    const weightKg = weightLbs / 2.20462;
+    const heightCm = heightInches * 2.54;
+    let bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
+    bmr = (sex === "male") ? bmr + 5 : bmr - 161;
+
+    // 🧮 3. TDEE Calculation
+    const tdee = bmr * activityMultiplier;
+
+    // 🧮 4. Waist-To-Hip Ratio
+    const whr = waist / hips;
+
+    // 🧮 5. Dynamic Diet Target Calorie Adjustments
+    let targetCalories = Math.round(tdee);
+    if (goal === 'loss') {
+      targetCalories = Math.round(tdee - 500);
+    } else if (goal === 'hypertrophy') {
+      if (bmi < 18.5) {
+        targetCalories = Math.round(tdee + 500); // Low BMI: Add 500
+      } else if (bmi >= 18.5 && bmi < 25) {
+        targetCalories = Math.round(tdee + 250); // Normal BMI: Add 250
+      } else {
+        targetCalories = Math.round(tdee); // High BMI: Recomp at baseline maintenance
+      }
+    }
+
+    // 🏁 6. Determine Abdominal Obesity Risks
+    let riskText = "Low Abdominal Risk";
+    let riskColor = "rgba(57, 255, 20, 0.15)";
+    let fontColor = "#39ff14";
+
+    if (sex === "male" && whr >= 0.90) {
+      riskText = "Increased Abdominal Obesity Risk (WHR ≥ 0.90)";
+      riskColor = "rgba(239, 68, 68, 0.15)";
+      fontColor = "#ef4444";
+    } else if (sex === "female" && whr >= 0.85) {
+      riskText = "Increased Abdominal Obesity Risk (WHR ≥ 0.85)";
+      riskColor = "rgba(239, 68, 68, 0.15)";
+      fontColor = "#ef4444";
+    }
+
+    // Paint Calculated Matrix safely onto user UI view
+    document.getElementById('resBMI').textContent = bmi.toFixed(1);
+    document.getElementById('resBMR').textContent = `${Math.round(bmr)} kcal`;
+    document.getElementById('resTDEE').textContent = `${Math.round(tdee)} kcal`;
+    document.getElementById('resWHR').textContent = whr.toFixed(2);
+    
+    const riskContainer = document.getElementById('resRisk');
+    riskContainer.textContent = riskText;
+    riskContainer.style.backgroundColor = riskColor;
+    riskContainer.style.color = fontColor;
+
+    document.getElementById('resDietTarget').textContent = `${targetCalories} Calories / day`;
+    biometricResults.classList.remove('hidden');
+
+    // Pack Biometrics as a structured object and push directly to your workout_logs table!
+    const todayDateString = new Date().toISOString().split('T')[0];
+    const payload = [{
+      user_id: currentUser.id,
+      log_date: todayDateString,
+      category: 'diet_rating', // Groups cleanly with nutritional compliance analytics
+      exercise_name: 'Biometric Snapshot Engine',
+      routine_focus: programSelect.value || 'Biometrics Log',
+      metrics: {
+        bmi: bmi, bmr: bmr, tdee: tdee, whr: whr, target_calories: targetCalories, weight: weightLbs, waist: waist
+      }
+    }];
+
+    try {
+      const { error } = await supabase.from('workout_logs').insert(payload);
+      if (error) throw error;
+      showStatus("Biometrics logged successfully!", "success");
+      fetchAndRenderBiometricHistory();
+    } catch (err) {
+      showStatus(`Biometric save failure: ${err.message}`, "error");
+    }
+  });
+}
+
+// Fetch and render calculated snapshots into historical scroll list
+async function fetchAndRenderBiometricHistory() {
+  if (!currentUser) return;
+  const { data: records, error } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .eq('exercise_name', 'Biometric Snapshot Engine')
+    .order('log_date', { ascending: false });
+
+  if (error || !records || records.length === 0) return;
+
+  biometricHistoryList.innerHTML = '';
+  records.forEach(rec => {
+    const m = rec.metrics;
+    const logItem = document.createElement('div');
+    logItem.style.cssText = "background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;";
+    logItem.innerHTML = `
+      <div>
+        <strong style="color:#ffffff;">${rec.log_date}</strong> 
+        <span style="color:var(--text-muted); margin-left: 0.5rem;">Scale: ${m.weight} lbs | Waist: ${m.waist}"</span>
+      </div>
+      <span style="color: var(--accent-neon); font-weight: bold;">Target: ${m.target_calories} cal</span>
+    `;
+    biometricHistoryList.appendChild(logItem);
+  });
+}
+
+// ==========================================================================
+// UNIFIED SWAPPABLE ANALYTICS GRAPH ENGINE
+// ==========================================================================
+let analyticsChartInstance = null;
+let activeChartType = 'body'; // Default starting layout view
+
+// Main function to query Supabase and draw the active graph mode
+async function renderAnalyticsChart() {
+  if (!currentUser) return;
+  const ctx = document.getElementById('analyticsChart');
+  if (!ctx) return;
+
+  // Kill old chart instance completely to prevent hover ghosts
+  if (analyticsChartInstance) {
+    analyticsChartInstance.destroy();
+  }
+
+  if (activeChartType === 'body') {
+    // 👤 MODE A: FETCH AND GRAPH SCALE WEIGHT, WAISTLINE & BMI HISTORY
+    const { data: records, error } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('exercise_name', 'Biometric Snapshot Engine')
+      .order('log_date', { ascending: true });
+
+    if (error || !records || records.length === 0) {
+      drawEmptyChartPlaceholder(ctx, "No biometric history entries saved yet.");
+      return;
+    }
+
+    const labels = records.map(r => r.log_date);
+    const weightData = records.map(r => r.metrics?.weight || 0);
+    const waistData = records.map(r => r.metrics?.waist || 0);
+    const bmiData = records.map(r => r.metrics?.bmi || 0);
+
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Weight (lbs)',
+            data: weightData,
+            borderColor: '#39ff14', // Gold or Neon Green
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            tension: 0.2
+          },
+          {
+            label: 'Waist (in)',
+            data: waistData,
+            borderColor: '#00d2ff', // Sleek Navy/Ice Blue accent
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            tension: 0.2
+          },
+          {
+            label: 'BMI Target',
+            data: bmiData,
+            borderColor: '#ff9f43', 
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [5, 5], // Dashed line for index targets
+            tension: 0.2
+          }
+        ]
+      },
+      options: getCommonChartOptions(true)
+    });
+
+  } else {
+    // 💪 MODE B: FETCH AND GRAPH PROGRESSIVE TRAINING VOLUME LOAD
+    const { data: logs, error } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .eq('category', 'weight_training')
+      .order('log_date', { ascending: true });
+
+    if (error || !logs || logs.length === 0) {
+      drawEmptyChartPlaceholder(ctx, "No training logs saved yet.");
+      return;
+    }
+
+    const volumeByDate = {};
+    logs.forEach(log => {
+      const sets = log.metrics?.sets || [];
+      let sessionVolume = 0;
+      sets.forEach(s => {
+        sessionVolume += ((parseInt(s.reps, 10) || 0) * (parseFloat(s.weight) || 0));
+      });
+      if (sessionVolume > 0) {
+        volumeByDate[log.log_date] = (volumeByDate[log.log_date] || 0) + sessionVolume;
+      }
+    });
+
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Object.keys(volumeByDate),
+        datasets: [{
+          label: 'Accumulated Volume (lbs)',
+          data: Object.values(volumeByDate),
+          borderColor: '#39ff14',
+          backgroundColor: 'rgba(57, 255, 20, 0.03)',
+          borderWidth: 2,
+          tension: 0.25,
+          fill: true
+        }]
+      },
+      options: getCommonChartOptions(false)
+    });
+  }
+}
+
+// Chart Styling Presets Block
+function getCommonChartOptions(showLegend) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { 
+      legend: { 
+        display: showLegend,
+        labels: { color: '#94a3b8', font: { size: 10 } }
+      } 
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+    }
+  };
+}
+
+function drawEmptyChartPlaceholder(ctx, message) {
+  // Gracefully handles empty states instead of crashing Chart.js
+  analyticsChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: [message], datasets: [] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+}
+
+// Attach sub-nav click handlers to change active views instantly
+document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.chart-toggle-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = "none";
+      b.style.borderColor = "var(--border-subtle)";
+      b.style.color = "var(--text-muted)";
+    });
+
+    btn.classList.add('active');
+    btn.style.background = "rgba(57,255,20,0.1)";
+    btn.style.borderColor = "#39ff14";
+    btn.style.color = "#39ff14";
+
+    activeChartType = btn.getAttribute('data-chart');
+    renderAnalyticsChart();
+  });
+});
+
+// Make sure analytics load on dashboard boot sequence
+window.addEventListener('load', () => {
+  fetchAndRenderBiometricHistory();
+  renderVolumeOverloadChart();
+});
+
 //init//
 initDashboard();
