@@ -210,3 +210,19 @@
 .hidden {
   display: none !important;
 }
+
+/* 📱 RESPONSIVE GRIDS FOR THE ANALYTICS TAB */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Default: Side-by-side on desktop */
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* When the screen width is 768px or smaller (Mobile & Tablets) */
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr; /* Stacks columns cleanly on top of each other */
+    gap: 1rem;
+  }
+}
