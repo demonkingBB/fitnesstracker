@@ -1,4 +1,4 @@
-// dashboard/programdata.js
+
 
 // 1. Core Exercise Day Library
 export const PROGRAMS = {
