@@ -10,15 +10,17 @@
 <body>
   <header>
     <nav>
-      <div class="logo">EliteTrack Dashboard</div>
-      <div class="nav-links">
-        <span id="userEmail" style="color: var(--text-muted); font-size: 0.9rem;"></span>
-        <!-- Small Upgrade Button: Visible during active trial, hidden once expired or upgraded -->
-        <button id="smallUpgradeBtn" class="btn-primary hidden" style="padding: 6px 12px; font-size: 0.85rem; background-color: var(--accent-neon); color: #000000;">
-          Upgrade Now
-        </button>
-        <button id="logoutBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Logout</button>
-      </div>
+      <div class="main-app-header">
+  <div class="header-branding">
+    <h2>🚀 EliteTrack Dashboard</h2>
+    <span class="user-email-display" id="userEmail">loading_user@email.com</span>
+  </div>
+  
+  <div class="header-actions">
+    <button class="btn-upgrade" style="background: var(--accent-gold); color: #000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">👑 Upgrade Now</button>
+    <button id="logoutBtn" class="btn-logout" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: #ffffff; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🚪 Log Out</button>
+  </div>
+</div>
     </nav>
   </header>
 
@@ -137,7 +139,7 @@
     
     <div id="calculatorTab" class="tab-content hidden" style="display: none;">
   <div class="analytics-grid">
-     
+
    <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; display: block; visibility: visible;">
   <h3 style="color: #ffffff; margin-bottom: 0.5rem;">🧮 Biometric Engine</h3>
   <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Update your current stats to calculate metabolic benchmarks and macro targets.</p>

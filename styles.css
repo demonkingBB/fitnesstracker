@@ -340,3 +340,65 @@ footer h2 {
   h2 { font-size: 1.5rem; }
   h3 { font-size: 1.25rem; }
 }
+
+/* --- DESKTOP DEFAULT STYLES --- */
+.main-app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.header-branding {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.header-branding h2 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.user-email-display {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+
+/* --- 📱 MOBILE RESPONSIVE OVERRIDES (768px and smaller) --- */
+@media (max-width: 768px) {
+  .main-app-header {
+    flex-direction: column;    /* Stacks the branding group on top of the button group */
+    align-items: flex-start;  /* Aligns everything smoothly to the left wall */
+    gap: 1.25rem;
+    padding: 1rem 0;
+  }
+
+  .header-actions {
+    width: 100%;              /* Forces the button container to take up full mobile width */
+    display: flex;
+    justify-content: flex-start; /* Keeps buttons snug on the left */
+    gap: 0.75rem;
+  }
+  
+  /* Optional: If you want buttons stacked on top of each other on tiny screens, uncomment below */
+  /*
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .header-actions button {
+    width: 100%;
+  }
+  */
+}
