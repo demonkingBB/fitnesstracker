@@ -168,10 +168,13 @@ routineSelect.addEventListener('change', async (e) => {
   }
 });
 
-// Watch child sub-day changes to paint input fields
+// Watch child sub-day changes to paint input fields AND filter history
 programSelect.addEventListener('change', (e) => {
   const selectedDay = e.target.value;
   generateExerciseForm(selectedDay);
+  
+  // 🚀 NEW: Pass the selected day (e.g., "Push Day") to filter the sidebar!
+  fetchAndRenderHistory(selectedDay);
 });
 
 // Generate dynamic Input Fields (Weight training and Calisthenics reps/weights)
@@ -396,8 +399,7 @@ dietLoggingForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Render Archive Content Cards (Parses cardio, diet, and training layouts cleanly)
-async function fetchAndRenderHistory() {
+async function fetchAndRenderHistory(selectedDayFilter = null) {
   const { data: workouts, error } = await supabase
     .from('workout_logs')
     .select('*')
@@ -409,61 +411,145 @@ async function fetchAndRenderHistory() {
     return;
   }
 
-  if (workouts && workouts.length > 0) {
-    noHistoryMsg.style.display = 'none';
-    historyGrid.innerHTML = '';
+  historyGrid.innerHTML = '';
 
-    workouts.forEach(workout => {
-      const card = document.createElement('div');
-      card.className = 'workout-card';
+  if (!workouts || workouts.length === 0) {
+    noHistoryMsg.style.display = 'block';
+    historyGrid.appendChild(noHistoryMsg);
+    return;
+  }
 
-      let innerSetsHTML = '';
-      
-      if (workout.exercise_name === 'Daily Nutritional Matrix') {
-        const dietVal = workout.metrics.diet_rating;
-        innerSetsHTML = `
-          <div style="font-size: 1rem; font-weight: 700; color: var(--accent-neon); margin-bottom: 0.25rem;">
-            Diet Quality: ${dietVal}/5
+  noHistoryMsg.style.display = 'none';
+
+  // 1. GROUP LOGS BY DATE
+  const groupedByDate = {};
+  workouts.forEach(log => {
+    if (!groupedByDate[log.log_date]) {
+      groupedByDate[log.log_date] = {
+        date: log.log_date,
+        lifts: [],
+        cardio: null,
+        diet: null
+      };
+    }
+    
+    if (log.category === 'cardio') {
+      groupedByDate[log.log_date].cardio = log;
+    } else if (log.category === 'diet_rating') {
+      groupedByDate[log.log_date].diet = log;
+    } else {
+      groupedByDate[log.log_date].lifts.push(log);
+    }
+  });
+
+  // 2. CONVERT TO ARRAY AND LIMIT TO THE LATEST 5 DAYS
+  const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+  const latestDates = sortedDates.slice(0, 5); // 💡 Hard limit to 5 days max length
+
+  latestDates.forEach(dateStr => {
+    const dayGroup = groupedByDate[dateStr];
+    
+    // Create the main wrapper card
+    const dayCard = document.createElement('div');
+    dayCard.className = 'history-day-card';
+    dayCard.style.cssText = `
+      background: #111a2e;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    `;
+
+    // Extract values for the summary preview line
+    const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
+    const liftCount = dayGroup.lifts.length;
+    const cardioLogged = dayGroup.cardio ? "🏃 Cardio" : "";
+    
+    // Beautiful Header Row (The Summary Preview)
+    const headerHTML = `
+      <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+        <div>
+          <span style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${dateStr}</span>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+            ${liftCount > 0 ? `🏋️ ${liftCount} Lifts` : ''} ${cardioLogged}
           </div>
-          <div style="font-size: 0.85rem; color: var(--text-muted);">
-            Nutritional progress logged.
-          </div>`;
-      } else if (workout.category === 'cardio') {
-        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-        setsData.forEach(item => {
-          innerSetsHTML += `
-            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-              Duration: <strong>${item.duration}</strong> mins | Distance: <strong>${item.distance}</strong> miles/km
-            </div>`;
-        });
-      } else {
-        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-        setsData.forEach(item => {
-          innerSetsHTML += `
-            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-              Set ${item.set}: <strong>${item.reps}</strong> reps @ <strong>${item.weight}</strong> lbs/kg
-            </div>`;
-        });
-      }
-
-      // Convert displayed category tag for the UI
-      const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' 
-        ? 'NUTRITION' 
-        : workout.category.toUpperCase().replace('_', ' ');
-
-      card.innerHTML = `
-        <div class="card-header">
-          <span class="category-tag">${displayTag}</span>
-          <span class="card-date">${workout.log_date}</span>
         </div>
-        <h3 class="exercise-title">${workout.exercise_name}</h3>
-        <div style="margin-top: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-          ${innerSetsHTML}
+        ${dietVal ? `<span style="font-size: 0.75rem; background: rgba(57, 255, 20, 0.1); color: #39ff14; padding: 4px 8px; border-radius: 4px; font-weight: bold;">🍏 Diet: ${dietVal}/5</span>` : '<span style="color:var(--text-muted); font-size:0.8rem;">▼</span>'}
+      </div>
+    `;
+
+    // Hidden Details Body (Expands when clicked)
+    let detailsHTML = `<div class="day-card-details hidden" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">`;
+
+    // Populate Lifts inside the expansion panel
+    if (liftCount > 0) {
+      dayGroup.lifts.forEach(workout => {
+        const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+        let topLiftingSet = setsData.reduce((max, current) => {
+          if (!max) return current;
+          if (current.weight > max.weight) return current;
+          if (current.weight === max.weight && current.reps > max.reps) return current;
+          return max;
+        }, null);
+
+        if (topLiftingSet) {
+          detailsHTML += `
+            <div style="margin-bottom: 0.75rem;">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${workout.exercise_name}</div>
+              <div style="font-size: 0.8rem; color: var(--accent-neon); font-weight: bold; margin-top: 0.1rem;">
+                🔥 PR Target: ${topLiftingSet.weight} lbs/kg x ${topLiftingSet.reps} reps
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+
+    // Populate Cardio inside expansion panel
+    if (dayGroup.cardio) {
+      const cardioSets = Array.isArray(dayGroup.cardio.metrics.sets) ? dayGroup.cardio.metrics.sets : [];
+      const topCardio = cardioSets[0] || { duration: 0, distance: 0 };
+      detailsHTML += `
+        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🏃 Cardio Session</div>
+          <div style="font-size: 0.8rem; color: #38bdf8;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
         </div>
       `;
-      historyGrid.appendChild(card);
+    }
+
+    if (liftCount === 0 && !dayGroup.cardio) {
+      detailsHTML += `<div style="font-size: 0.8rem; color: var(--text-muted);">Only nutritional info saved for this date.</div>`;
+    }
+
+    detailsHTML += `</div>`;
+
+    // Stitch together and append
+    dayCard.innerHTML = headerHTML + detailsHTML;
+
+    // 3. ADD CLICK INTERACTION TO EXPAND/COLLAPSE
+    dayCard.addEventListener('click', () => {
+      const detailsBlock = dayCard.querySelector('.day-card-details');
+      const isHidden = detailsBlock.classList.contains('hidden');
+      
+      // Close all other open history blocks first to maintain size constraints
+      document.querySelectorAll('.day-card-details').forEach(el => el.classList.add('hidden'));
+      
+      if (isHidden) {
+        detailsBlock.classList.remove('hidden');
+        dayCard.style.borderColor = "var(--accent-neon)";
+      } else {
+        detailsBlock.classList.add('hidden');
+        dayCard.style.borderColor = "var(--border-subtle)";
+      }
     });
-  } else {
+
+    historyGrid.appendChild(dayCard);
+  });
+}
+      
+  else {
     noHistoryMsg.style.display = 'block';
     historyGrid.innerHTML = '';
     historyGrid.appendChild(noHistoryMsg);
