@@ -597,5 +597,40 @@ logoutBtn.addEventListener('click', async () => {
   window.location.href = '/login/';
 });
 
+// ==========================================================================
+// UNIVERSAL DASHBOARD INTERFACE VIEW CONTROLLER (TABS)
+// ==========================================================================
+const tabButtons = document.querySelectorAll('.tab-nav-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const targetTabId = button.getAttribute('data-target');
+
+    // 1. Reset all navigation items to inactive state layout
+    tabButtons.forEach(btn => {
+      btn.classList.remove('active');
+      btn.style.color = "var(--text-muted)";
+    });
+    
+    // 2. Set currently selected target tab to active styling
+    button.classList.add('active');
+    button.style.color = "#ffffff";
+
+    // 3. Hide all tab panels completely from layout view
+    tabContents.forEach(content => {
+      content.classList.add('hidden');
+      content.style.display = "none";
+    });
+
+    // 4. Reveal the targeted panel workspace cleanly
+    const activeContent = document.getElementById(targetTabId);
+    if (activeContent) {
+      activeContent.classList.remove('hidden');
+      activeContent.style.display = "block";
+    }
+  });
+});
+
 //init//
 initDashboard();
