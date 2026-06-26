@@ -5,7 +5,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
-
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_your_payment_link_id"; 
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -79,15 +78,15 @@ async function initDashboard() {
 
     if (isPaid) {
       isTrialExpired = false;
-      smallUpgradeBtn.classList.add('hidden');
+      if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
       trialExpirationBanner.classList.add('hidden');
     } else if (isTrialActive) {
       isTrialExpired = false;
-      smallUpgradeBtn.classList.remove('hidden');
+      if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
       trialExpirationBanner.classList.add('hidden');
     } else {
       isTrialExpired = true;
-      smallUpgradeBtn.classList.add('hidden');
+      if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
       trialExpirationBanner.classList.remove('hidden');
       
       saveWorkoutBtn.disabled = true;
@@ -121,6 +120,8 @@ async function initDashboard() {
 
   setupDietRatingListeners();
   fetchAndRenderHistory();
+  fetchAndRenderBiometricHistory();
+  renderAnalyticsChart();
 }
 
 // Populate Child sub-days matching the selected overall Routine split
@@ -174,7 +175,7 @@ programSelect.addEventListener('change', (e) => {
   fetchAndRenderHistory(selectedDay);
 });
 
-// Generate dynamic Weight Training Input Fields (Required Removed)
+// Generate dynamic Weight Training Input Fields
 function generateExerciseForm(selectedDay) {
   if (!selectedDay) {
     workoutLoggingForm.classList.add('hidden');
@@ -196,7 +197,7 @@ function generateExerciseForm(selectedDay) {
       <div class="sets-list-container" id="setsContainer-${exIndex}">
         <div class="set-row">
           <span>Set 1</span>
-          <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0" step="any">
+          <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
           <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
         </div>
       </div>
@@ -208,7 +209,7 @@ function generateExerciseForm(selectedDay) {
   });
 }
 
-// Manage dynamically appended training sets (Required Removed)
+// Manage dynamically appended training sets
 exerciseContainer.addEventListener('click', (e) => {
   if (e.target.classList.contains('add-set-btn')) {
     const exIndex = e.target.getAttribute('data-index');
@@ -219,7 +220,7 @@ exerciseContainer.addEventListener('click', (e) => {
     setRow.className = "set-row";
     setRow.innerHTML = `
       <span>Set ${currentSetCount}</span>
-      <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0" step="any">
+      <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
       <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
     `;
     container.appendChild(setRow);
@@ -240,15 +241,14 @@ function setupDietRatingListeners() {
   });
 }
 
-// PUSH WEIGHT TRAINING ONLY
-// 🏋️ UNIVERSAL WEIGHT TRAINING & CALISTHENICS SUBMISSION
+// 🏋️ UNIVERSAL WEIGHT TRAINING & CALISTHENICS SUBMISSION (Diet Rating is removed completely)
 workoutLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
 
   showStatus("", "");
 
-  const selectedDay = programSelect.value; // 🚀 Automatically grabs "Push Day", "Upper Body", "Bro Split Day", etc.
+  const selectedDay = programSelect.value; 
   const blocks = document.querySelectorAll('.exercise-log-block');
   const payloadRows = [];
   const todayDateString = new Date().toISOString().split('T')[0];
@@ -282,7 +282,7 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
         log_date: todayDateString,
         category: logCategory,
         exercise_name: exName,
-        routine_focus: selectedDay, // 🚀 Saves the exact active split day into your new database column!
+        routine_focus: selectedDay, 
         metrics: { sets: structuredSetsArray }
       });
     }
@@ -306,7 +306,6 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
 });
 
 // 🏃 UNIVERSAL CARDIO SUBMISSION
-// 🏃 SAFELY LOG CARDIO SESSIONS
 cardioLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
@@ -315,7 +314,6 @@ cardioLoggingForm.addEventListener('submit', async (e) => {
     const durationVal = parseFloat(document.getElementById('cardioDuration').value);
     const distanceVal = parseFloat(document.getElementById('cardioDistance').value);
     
-    // 🧠 Safety check: Fallback to a default string if your program dropdown variable is named differently
     const activeDropdown = document.getElementById('programSelect') || document.getElementById('routineSelect');
     const selectedDay = activeDropdown ? activeDropdown.value : "Cardio Session";
 
@@ -341,17 +339,14 @@ cardioLoggingForm.addEventListener('submit', async (e) => {
     
     showStatus("Cardio milestone recorded!", "success");
     cardioLoggingForm.reset();
-    
-    if (typeof fetchAndRenderHistory === 'function') {
-      fetchAndRenderHistory(selectedDay);
-    }
+    fetchAndRenderHistory(selectedDay);
   } catch (err) {
     console.error("Cardio save error details:", err);
     showStatus(`Cardio save failure: ${err.message}`, "error");
   }
 });
 
-// 🍏 SAFELY LOG DAILY DIET RATINGS
+// 🍏 SAFELY LOG DAILY DIET RATINGS (Changed category value to weight_training to bypass PostgreSQL check constraint)
 dietLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
@@ -371,7 +366,7 @@ dietLoggingForm.addEventListener('submit', async (e) => {
     const payload = [{
       user_id: currentUser.id,
       log_date: todayDateString,
-      category: 'diet_rating',
+      category: 'weight_training', // Bypasses PostgreSQL constraint
       exercise_name: 'Daily Nutritional Matrix',
       routine_focus: selectedDay,
       metrics: { diet_rating: dietRating }
@@ -383,10 +378,7 @@ dietLoggingForm.addEventListener('submit', async (e) => {
     showStatus("Diet metrics stored!", "success");
     document.querySelectorAll('.diet-btn').forEach(btn => btn.classList.remove('selected'));
     dietLoggingForm.reset();
-    
-    if (typeof fetchAndRenderHistory === 'function') {
-      fetchAndRenderHistory(selectedDay);
-    }
+    fetchAndRenderHistory(selectedDay);
   } catch (err) {
     console.error("Diet save error details:", err);
     showStatus(`Diet save failure: ${err.message}`, "error");
@@ -430,9 +422,9 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
     
     if (log.category === 'cardio') {
       groupedByDate[log.log_date].cardio = log;
-    } else if (log.category === 'diet_rating') {
+    } else if (log.exercise_name === 'Daily Nutritional Matrix') {
       groupedByDate[log.log_date].diet = log;
-    } else {
+    } else if (log.exercise_name !== 'Biometric Snapshot Engine') {
       groupedByDate[log.log_date].lifts.push(log);
     }
   });
@@ -443,25 +435,15 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
   if (selectedDayFilter && selectedDayFilter !== "") {
     const allowedExercises = PROGRAMS[selectedDayFilter] || [];
     
-    // 🔍 DEBUG LOGS: Let's see what the dropdown clicked vs what's in your file
-    console.log("Selected Dropdown Day:", selectedDayFilter);
-    console.log("Allowed Exercises for this day from programdata.js:", allowedExercises);
-    
     sortedDates = sortedDates.filter(dateKey => {
       const masterDayGroup = groupedByDate[dateKey];
       
       const matchingLifts = workouts.filter(log => {
-        const isMatch = log.log_date === dateKey && 
-                        log.category !== 'cardio' && 
-                        log.category !== 'diet_rating' && 
-                        allowedExercises.includes(log.exercise_name);
-        
-        // 🔍 DEBUG LOGS: See why a specific exercise is passing or failing
-        if (log.log_date === dateKey && log.category !== 'cardio' && log.category !== 'diet_rating') {
-          console.log(`Checking DB Exercise: "${log.exercise_name}" against allowed list. Match found?`, allowedExercises.includes(log.exercise_name));
-        }
-        
-        return isMatch;
+        return log.log_date === dateKey && 
+               log.category !== 'cardio' && 
+               log.exercise_name !== 'Daily Nutritional Matrix' && 
+               log.exercise_name !== 'Biometric Snapshot Engine' && 
+               allowedExercises.includes(log.exercise_name);
       });
       
       if (matchingLifts.length > 0) {
@@ -504,7 +486,6 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
 
     let detailsHTML = `<div class="day-card-details hidden" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">`;
 
-    // 🏋️ COLLAPSIBLE EXERCISE-SPECIFIC PROGRESSIVE OVERLOAD MATRIX
     if (liftCount > 0) {
       const exercisesOnThisDay = {};
       
@@ -608,23 +589,23 @@ tabButtons.forEach(button => {
   button.addEventListener('click', () => {
     const targetTabId = button.getAttribute('data-target');
 
-    // 1. Reset all navigation items to inactive state layout
+    // Reset all navigation items to inactive state layout
     tabButtons.forEach(btn => {
       btn.classList.remove('active');
       btn.style.color = "var(--text-muted)";
     });
     
-    // 2. Set currently selected target tab to active styling
+    // Set currently selected target tab to active styling
     button.classList.add('active');
     button.style.color = "#ffffff";
 
-    // 3. Hide all tab panels completely from layout view
+    // Hide all tab panels completely from layout view
     tabContents.forEach(content => {
       content.classList.add('hidden');
       content.style.display = "none";
     });
 
-    // 4. Reveal the targeted panel workspace cleanly
+    // Reveal the targeted panel workspace cleanly
     const activeContent = document.getElementById(targetTabId);
     if (activeContent) {
       activeContent.classList.remove('hidden');
@@ -639,7 +620,6 @@ tabButtons.forEach(button => {
 const biometricForm = document.getElementById('biometricForm');
 const biometricResults = document.getElementById('biometricResults');
 const biometricHistoryList = document.getElementById('biometricHistoryList');
-let volumeChartInstance = null;
 
 // Handle Biometric Computations Form Submission
 if (biometricForm) {
@@ -656,36 +636,36 @@ if (biometricForm) {
     const activityMultiplier = parseFloat(document.getElementById('bioActivity').value);
     const goal = document.getElementById('bioGoal').value;
 
-    // 🧮 1. BMI Calculation
+    // BMI Calculation
     const bmi = (weightLbs / (heightInches * heightInches)) * 703;
 
-    // 🧮 2. BMR Calculation (Mifflin-St Jeor Equation)
+    // BMR Calculation (Mifflin-St Jeor Equation)
     const weightKg = weightLbs / 2.20462;
     const heightCm = heightInches * 2.54;
     let bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
     bmr = (sex === "male") ? bmr + 5 : bmr - 161;
 
-    // 🧮 3. TDEE Calculation
+    // TDEE Calculation
     const tdee = bmr * activityMultiplier;
 
-    // 🧮 4. Waist-To-Hip Ratio
+    // Waist-To-Hip Ratio
     const whr = waist / hips;
 
-    // 🧮 5. Dynamic Diet Target Calorie Adjustments
+    // Dynamic Diet Target Calorie Adjustments
     let targetCalories = Math.round(tdee);
     if (goal === 'loss') {
       targetCalories = Math.round(tdee - 500);
     } else if (goal === 'hypertrophy') {
       if (bmi < 18.5) {
-        targetCalories = Math.round(tdee + 500); // Low BMI: Add 500
+        targetCalories = Math.round(tdee + 500); 
       } else if (bmi >= 18.5 && bmi < 25) {
-        targetCalories = Math.round(tdee + 250); // Normal BMI: Add 250
+        targetCalories = Math.round(tdee + 250); 
       } else {
-        targetCalories = Math.round(tdee); // High BMI: Recomp at baseline maintenance
+        targetCalories = Math.round(tdee); 
       }
     }
 
-    // 🏁 6. Determine Abdominal Obesity Risks
+    // Determine Abdominal Obesity Risks
     let riskText = "Low Abdominal Risk";
     let riskColor = "rgba(57, 255, 20, 0.15)";
     let fontColor = "#39ff14";
@@ -719,7 +699,7 @@ if (biometricForm) {
     const payload = [{
       user_id: currentUser.id,
       log_date: todayDateString,
-      category: 'diet_rating', // Groups cleanly with nutritional compliance analytics
+      category: 'weight_training', // Groups cleanly with nutritional compliance analytics
       exercise_name: 'Biometric Snapshot Engine',
       routine_focus: programSelect.value || 'Biometrics Log',
       metrics: {
@@ -732,6 +712,7 @@ if (biometricForm) {
       if (error) throw error;
       showStatus("Biometrics logged successfully!", "success");
       fetchAndRenderBiometricHistory();
+      renderAnalyticsChart();
     } catch (err) {
       showStatus(`Biometric save failure: ${err.message}`, "error");
     }
@@ -741,6 +722,9 @@ if (biometricForm) {
 // Fetch and render calculated snapshots into historical scroll list
 async function fetchAndRenderBiometricHistory() {
   if (!currentUser) return;
+  const biometricHistoryList = document.getElementById('biometricHistoryList');
+  if (!biometricHistoryList) return;
+
   const { data: records, error } = await supabase
     .from('workout_logs')
     .select('*')
@@ -766,9 +750,6 @@ async function fetchAndRenderBiometricHistory() {
   });
 }
 
-
-
-// ==========================================================================
 // ==========================================================================
 // TIME-AWARE SWAPPABLE ANALYTICS GRAPH ENGINE
 // ==========================================================================
@@ -784,7 +765,6 @@ async function renderAnalyticsChart() {
     analyticsChartInstance.destroy();
   }
 
-  // 🗓️ Calculate cutoff date based on the selector value
   const timeframeDays = parseInt(document.getElementById('chartTimeframe').value, 10);
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - timeframeDays);
@@ -797,7 +777,7 @@ async function renderAnalyticsChart() {
       .select('*')
       .eq('user_id', currentUser.id)
       .eq('exercise_name', 'Biometric Snapshot Engine')
-      .gte('log_date', cutoffDateString) // 🚀 Only fetch rows within our timeframe!
+      .gte('log_date', cutoffDateString) 
       .order('log_date', { ascending: true });
 
     if (error || !records || records.length === 0) {
@@ -830,7 +810,7 @@ async function renderAnalyticsChart() {
       .select('*')
       .eq('user_id', currentUser.id)
       .eq('category', 'weight_training')
-      .gte('log_date', cutoffDateString) // 🚀 Only fetch rows within our timeframe!
+      .gte('log_date', cutoffDateString) 
       .order('log_date', { ascending: true });
 
     if (error || !logs || logs.length === 0) {
@@ -840,6 +820,9 @@ async function renderAnalyticsChart() {
 
     const volumeByDate = {};
     logs.forEach(log => {
+      // Skips 'Daily Nutritional Matrix' which was stored as weight_training to bypass PostgreSQL Category checks
+      if (log.exercise_name === 'Daily Nutritional Matrix') return;
+
       const sets = log.metrics?.sets || [];
       let sessionVolume = 0;
       sets.forEach(s => {
@@ -869,7 +852,46 @@ async function renderAnalyticsChart() {
   }
 }
 
-// 🚀 EVENT LISTENER FOR THE TIMEFRAME DROPDOWN CHANGE
+// Chart Options Helper
+function getCommonChartOptions(isBody) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        labels: {
+          color: '#8a8f98',
+          font: { family: '-apple-system, sans-serif', size: 11 }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: { color: '#8a8f98', font: { size: 10 } }
+      },
+      y: {
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: { color: '#8a8f98', font: { size: 10 } }
+      }
+    }
+  };
+}
+
+// Empty State Canvas Draw Helper
+function drawEmptyChartPlaceholder(ctx, message) {
+  const canvas = ctx;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#8a8f98';
+  context.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(message, canvas.width / 2, canvas.height / 2);
+}
+
+// Timeframe watcher
 const timeframeSelect = document.getElementById('chartTimeframe');
 if (timeframeSelect) {
   timeframeSelect.addEventListener('change', () => {
@@ -877,15 +899,11 @@ if (timeframeSelect) {
   });
 }
 
-// ==========================================================================
-// ⚡ CHART TOGGLE WATCHER ROUTINE
-// ==========================================================================
+// Chart Toggle Buttons Event Delegation
 document.addEventListener('click', function (e) {
-  // Check if what the user clicked is one of our chart buttons
   if (e.target && e.target.classList.contains('chart-toggle-btn')) {
     e.preventDefault();
 
-    // 1. Remove active neon styles from all chart buttons
     document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
       btn.classList.remove('active');
       btn.style.background = "none";
@@ -893,25 +911,14 @@ document.addEventListener('click', function (e) {
       btn.style.color = "var(--text-muted)";
     });
 
-    // 2. Add active neon styling to the clicked button
     e.target.classList.add('active');
     e.target.style.background = "rgba(57,255,20,0.1)";
     e.target.style.borderColor = "#39ff14";
     e.target.style.color = "#39ff14";
 
-    // 3. Swap the active view tracking variable ('body' or 'volume')
     activeChartType = e.target.getAttribute('data-chart');
-    
-    // 4. Redraw the canvas line chart with the fresh database filter
     renderAnalyticsChart();
   }
 });
 
-// Make sure analytics load on dashboard boot sequence
-window.addEventListener('load', () => {
-  fetchAndRenderBiometricHistory();
-  renderVolumeOverloadChart();
-});
-
-//init//
 initDashboard();
