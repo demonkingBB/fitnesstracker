@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up | EliteTrack</title>
   <link rel="stylesheet" href="../styles.css"> <!-- Links global landing design -->
-  <link rel="stylesheet" href="/signup/signup.css">    <!-- Custom signup overrides -->
+  <link rel="stylesheet" href="signup.css">   <!-- Custom signup overrides -->
 </head>
 <body>
   <main class="auth-container">
@@ -21,17 +21,27 @@
 
       <form id="signupForm" class="auth-form">
         <div class="input-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" required placeholder="name@example.com" autocomplete="email">
+          <label for="regName">Full Name</label>
+          <input type="text" id="regName" required placeholder="Enter your full name" autocomplete="name">
+        </div>
+
+        <div class="input-group">
+          <label for="regPhone">Phone Number</label>
+          <input type="tel" id="regPhone" required placeholder="(555) 555-5555" autocomplete="tel">
+        </div>
+
+        <div class="input-group">
+          <label for="regEmail">Email Address</label>
+          <input type="email" id="regEmail" required placeholder="name@example.com" autocomplete="email">
         </div>
         
         <div class="input-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" required placeholder="Minimum 6 characters" autocomplete="new-password">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" required placeholder="Minimum 6 characters" autocomplete="new-password">
         </div>
 
         <button type="submit" id="submitBtn" class="btn-primary auth-submit">
-          <span id="btnText">Create Account</span>
+          <span id="btnText">Start Free Trial</span>
           <div id="spinner" class="spinner hidden"></div>
         </button>
       </form>
@@ -42,6 +52,6 @@
     </div>
   </main>
 
-  <script src="/signup/signup.js" type="module"></script>
+  <script src="signup.js" type="module"></script>
 </body>
 </html>

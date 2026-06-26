@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password | EliteTrack</title>
+  <link rel="stylesheet" href="../styles.css"> <!-- Links global landing design -->
+  <link rel="stylesheet" href="reset.css">     <!-- Custom resets overrides -->
+</head>
+<body>
+  <main class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <a href="/" class="logo-link">EliteTrack</a>
+        <h1>Create New Password</h1>
+        <p>Set a new, secure password for your workspace account.</p>
+      </div>
+
+      <!-- Live Error Output Banner -->
+      <div id="errorBanner" class="error-banner hidden"></div>
+
+      <form id="resetForm" class="auth-form">
+        <div class="input-group">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" required placeholder="Minimum 6 characters" autocomplete="new-password">
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-primary auth-submit">
+          <span id="btnText">Save Password</span>
+          <div id="spinner" class="spinner hidden"></div>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script src="reset.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+/* Reset Password Layout Specific Overrides */
+input, button {
+  font-family: inherit;
+}
+
+/* Shadow alignment matching the Obsidian look and feel */
+.auth-card {
+  box-shadow: 0 0 0 1px var(--border-subtle), 0 8px 30px rgba(0, 0, 0, 0.35);
+}

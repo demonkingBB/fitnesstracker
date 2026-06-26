@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | EliteTrack</title>
   <link rel="stylesheet" href="../styles.css"> <!-- Inherits global landing aesthetic -->
-  <link rel="stylesheet" href="/login/login.css">    <!-- Custom login page layout -->
+  <link rel="stylesheet" href="login.css">    <!-- Custom login page layout -->
 </head>
 <body>
   <main class="auth-container">
@@ -26,7 +26,10 @@
         </div>
         
         <div class="input-group">
-          <label for="password">Password</label>
+          <div class="label-wrapper">
+            <label for="password">Password</label>
+            <a href="#" id="forgotPasswordBtn" class="forgot-link">Forgot Password?</a>
+          </div>
           <input type="password" id="password" required placeholder="Enter your password" autocomplete="current-password">
         </div>
 

@@ -1,4 +1,5 @@
 /* Ensure form controls inherit global obsidian styling */
+/* Ensure form controls inherit global obsidian styling */
 input, button {
   font-family: inherit;
 }
@@ -60,6 +61,25 @@ input, button {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.label-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: var(--accent-neon);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  color: var(--accent-hover);
 }
 
 .input-group label {
