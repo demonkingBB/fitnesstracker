@@ -5,6 +5,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
+
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_your_payment_link_id"; 
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
