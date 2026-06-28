@@ -10,9 +10,9 @@ const SUPABASE_ANON_KEY =
   "VCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl" +
   "ZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRp" +
   "Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3" +
-  "ODIzMTUzNTYsImV4cCI6Mj957901356n" +
-  "0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wq" +
-  "tR27z_Q_EWyHxQ";
+  "ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1" +
+  "Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5w" +
+  "qtR27z_Q_EWyHxQ";
 const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
@@ -50,7 +50,7 @@ const trialNotice =
     'trialNotice'
   );
 let incomingCoachId = null;
-function checkInviteLink() {
+async function checkInviteLink() {
   const urlParams =
     new URLSearchParams(
       window.location.search
@@ -63,9 +63,63 @@ function checkInviteLink() {
       regRole.value = "client";
       regRole.disabled = true;
     }
-    if (coachBadge) {
-      coachBadge.classList.remove(
-        'hidden'
+    try {
+      const { data: coach, error } =
+        await supabase
+          .from('profiles')
+          .select(
+            'full_name, ' +
+            'theme_primary_color, ' +
+            'theme_secondary_color, ' +
+            'logo_url'
+          )
+          .eq('id', coachParam)
+          .single();
+      if (!error && coach) {
+        if (coach.theme_primary_color) {
+          document.documentElement
+            .style.setProperty(
+              '--accent-neon',
+              coach.theme_primary_color
+            );
+        }
+        if (coach.theme_secondary_color) {
+          document.documentElement
+            .style.setProperty(
+              '--accent-hover',
+              coach.theme_secondary_color
+            );
+        }
+        const logoLink =
+          document.querySelector(
+            '.logo-link'
+          );
+        if (logoLink) {
+          if (coach.logo_url) {
+            logoLink.innerHTML =
+              `<img src="${coach.logo_url}" ` +
+              `alt="${coach.full_name}" ` +
+              `style="max-height: 40px; ` +
+              `width: auto; ` +
+              `object-fit: contain;">`;
+          } else {
+            logoLink.textContent =
+              `${coach.full_name || 'Coach'}` +
+              ` Track`;
+          }
+        }
+        if (coachBadge) {
+          coachBadge.classList
+            .remove('hidden');
+          coachBadge.textContent =
+            `Joining ${coach.full_name ||` +
+            ` 'Coach'}'s Team`;
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "Invite query failed:",
+        err.message
       );
     }
     if (trialNotice) {
@@ -74,11 +128,6 @@ function checkInviteLink() {
         "directly with your trainer " +
         "and start tracking.";
     }
-    showSuccessNotification(
-      "Coach referral code " +
-      "detected. Account will " +
-      "connect immediately."
-    );
   }
 }
 if (regRole) {
