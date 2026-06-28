@@ -1,53 +1,44 @@
-/* ==========================================================================
-   1. Design System & Variables (Premium Dark Aesthetic)
-   ========================================================================== */
-:root {
-  --bg-main: #0c0d10;         /* Deep obsidian background */
-  --bg-surface: #16181d;      /* Slightly lighter card surface */
-  --border-subtle: #242730;   /* Clean, low-contrast borders */
-  --text-primary: #f3f4f6;    /* Crisp off-white for maximum legibility */
-  --text-muted: #8a8f98;      /* Slate grey for secondary descriptions */
-  --accent-neon: #39ff14;     /* Premium functional green accent */
-  --accent-hover: #29d609;    /* Hover state for buttons */
-}
 
-/* ==========================================================================
-   2. Global Reset & Body Setup
-   ========================================================================== */
+  :root {
+  --bg-main: #0c0d10;
+  --bg-surface: #16181d;
+  --border-subtle: #242730;
+  --text-primary: #f3f4f6;
+  --text-muted: #8a8f98;
+  --accent-neon: #39ff14;
+  --accent-hover: #29d609;
+}
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system,
+    BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing:
+    antialiased;
 }
-
-/* Container Constraint for Content Scannability */
 main {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
 }
-
-/* ==========================================================================
-   3. Navigation Bar (Header)
-   ========================================================================== */
 header {
-  border-bottom: 1px solid var(--border-subtle);
-  background-color: rgba(12, 13, 16, 0.8);
+  border-bottom: 1px solid
+    var(--border-subtle);
+  background-color:
+    rgba(12, 13, 16, 0.8);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
 }
-
 nav {
   max-width: 1200px;
   margin: 0 auto;
@@ -56,22 +47,22 @@ nav {
   align-items: center;
   padding: 1.25rem 2rem;
 }
-
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(90deg, #ffffff, var(--text-muted));
+  background: linear-gradient(
+    90deg, #ffffff, var(--text-muted)
+  );
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  -webkit-text-fill-color:
+    transparent;
 }
-
 .nav-links {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
-
 .nav-links a:not(.btn-primary) {
   color: var(--text-muted);
   text-decoration: none;
@@ -79,14 +70,9 @@ nav {
   font-size: 0.95rem;
   transition: color 0.2s ease;
 }
-
 .nav-links a:not(.btn-primary):hover {
   color: var(--text-primary);
 }
-
-/* ==========================================================================
-   4. Hero Section (Centered Layout)
-   ========================================================================== */
 .hero {
   display: flex;
   flex-direction: column;
@@ -98,7 +84,6 @@ nav {
   max-width: 800px;
   margin: 0 auto;
 }
-
 .hero h1 {
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 800;
@@ -106,14 +91,12 @@ nav {
   letter-spacing: -1.5px;
   margin-bottom: 1.5rem;
 }
-
 .hero p {
   font-size: clamp(1.1rem, 2vw, 1.3rem);
   color: var(--text-muted);
   max-width: 600px;
   margin-bottom: 2.5rem;
 }
-
 .hero-actions {
   display: flex;
   align-items: center;
@@ -121,10 +104,6 @@ nav {
   gap: 1rem;
   width: 100%;
 }
-
-/* ==========================================================================
-   5. Functional Typography & Components (Buttons)
-   ========================================================================== */
 .btn-primary {
   background-color: var(--accent-neon);
   color: #000000;
@@ -133,102 +112,91 @@ nav {
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
   display: inline-block;
   border: none;
   cursor: pointer;
 }
-
 .btn-primary:hover {
   background-color: var(--accent-hover);
   transform: translateY(-1px);
 }
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
 .btn-secondary {
   background-color: transparent;
   color: var(--text-primary);
   padding: 0.85rem 1.75rem;
   border-radius: 8px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid
+    var(--border-subtle);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
   display: inline-block;
   cursor: pointer;
 }
-
 .btn-secondary:hover {
   background-color: var(--bg-surface);
   border-color: var(--text-muted);
 }
-
-/* ==========================================================================
-   6. Features Grid Section
-   ========================================================================== */
 .features {
   padding: 5rem 0;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid
+    var(--border-subtle);
 }
-
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(
+    auto-fit, minmax(300px, 1fr)
+  );
   gap: 2rem;
 }
-
 .card {
   background-color: var(--bg-surface);
   padding: 2.5rem;
   border-radius: 12px;
-  border: 1px solid var(--border-subtle);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  border: 1px solid
+    var(--border-subtle);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
-
 .card:hover {
   transform: translateY(-4px);
   border-color: rgba(57, 255, 20, 0.3);
 }
-
 .card h3 {
   font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
   letter-spacing: -0.3px;
 }
-
 .card p {
   color: var(--text-muted);
   font-size: 1rem;
 }
-
-/* ==========================================================================
-   7. How It Works Section
-   ========================================================================== */
 .how-it-works {
   padding: 6rem 0;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid
+    var(--border-subtle);
   text-align: center;
 }
-
 .how-it-works h2 {
   font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.8px;
   margin-bottom: 4rem;
 }
-
 .steps {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 3rem;
 }
-
 .step {
   flex: 1;
   display: flex;
@@ -236,13 +204,14 @@ nav {
   align-items: center;
   text-align: center;
 }
-
 .step span {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-neon);
-  background-color: rgba(57, 255, 20, 0.08);
-  border: 1px solid rgba(57, 255, 20, 0.2);
+  background-color:
+    rgba(57, 255, 20, 0.08);
+  border: 1px solid
+    rgba(57, 255, 20, 0.2);
   width: 48px;
   height: 48px;
   display: flex;
@@ -251,66 +220,66 @@ nav {
   border-radius: 50%;
   margin-bottom: 1.25rem;
 }
-
 .step p {
   font-size: 1.15rem;
   font-weight: 500;
   color: var(--text-primary);
 }
-
-/* ==========================================================================
-   8. Footer / CTA Callout
-   ========================================================================== */
 footer {
   padding: 7rem 0;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid
+    var(--border-subtle);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
-
 footer h2 {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -1px;
   margin-bottom: 2rem;
 }
-
-/* ==========================================================================
-   9. Responsive Mobile Breakpoints
-   ========================================================================== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  width: 100%;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+.hidden {
+  display: none !important;
+}
 @media (max-width: 768px) {
   nav {
     padding: 1rem;
   }
-  
   main {
     padding: 0 1.25rem;
   }
-
   .hero {
     min-height: 60vh;
     padding: 3rem 0;
   }
-
   .hero-actions {
     flex-direction: column;
     gap: 0.75rem;
   }
-
   .btn-primary, .btn-secondary {
     width: 100%;
     text-align: center;
   }
-
   .steps {
     flex-direction: column;
     align-items: center;
     gap: 2.5rem;
   }
-
   .step {
     width: 100%;
   }
