@@ -4,22 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up | EliteTrack</title>
-  <link rel="stylesheet" href="/styles.css"> <!-- Links global landing design -->
-  <link rel="stylesheet" href="/signup/styles.css">   <!-- Custom signup overrides -->
+  <link rel="stylesheet" href="/styles.css"> <!-- Absolute path -->
+  <link rel="stylesheet" href="/signup/signup.css"> <!-- Absolute path -->
 </head>
 <body>
-  <main class="auth-container">
+  <!-- Centering Container wrapper -->
+  <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
         <a href="/" class="logo-link">EliteTrack</a>
         <h1>Create your profile</h1>
-        <p>Start your 4-week free trial. No credit card required.</p>
+        <!-- Dynamic welcome badge populated if coach invite parameter is parsed from URL -->
+        <div id="coachBadge" class="coach-badge hidden">Joining Coach's Team</div>
+        <p id="trialNotice">Start your 4-week free trial. No credit card required.</p>
       </div>
 
       <!-- Live User-Facing Error Banner -->
       <div id="errorBanner" class="error-banner hidden"></div>
 
       <form id="signupForm" class="auth-form">
+        <div class="input-group">
+          <label for="regRole">I am registering as a:</label>
+          <select id="regRole" style="padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; outline: none; transition: border-color 0.2s ease;">
+            <option value="client">Client (4-Week Free Trial)</option>
+            <option value="coach">Coach / Personal Trainer</option>
+          </select>
+        </div>
+
         <div class="input-group">
           <label for="regName">Full Name</label>
           <input type="text" id="regName" required placeholder="Enter your full name" autocomplete="name">
@@ -50,8 +61,8 @@
         <p>Already have an account? <a href="/login/">Log in</a></p>
       </div>
     </div>
-  </main>
+  </div>
 
-  <script src="signup.js" type="module"></script>
+  <script src="/signup/signup.js" type="module"></script> <!-- Absolute path -->
 </body>
 </html>

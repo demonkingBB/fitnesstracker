@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Log Workout | EliteTrack</title>
-  <link rel="stylesheet" href="../styles.css"> <!-- Links global styles.css at root -->
-  <link rel="stylesheet" href="./dashboard.css"> <!-- Links client dashboard styleOverrides -->
+  <link rel="stylesheet" href="/styles.css"> <!-- Absolute path -->
+  <link rel="stylesheet" href="/dashboard/dashboard.css"> <!-- Absolute path -->
   <!-- Load Chart.js CDN for Analytics engine rendering -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -99,187 +99,186 @@
             <h3 style="margin-bottom: 0.5rem;">Log Cardio Session</h3>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Record cardio milestones separately.</p>
             
-          <form id="cardioLoggingForm">
-            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-              <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                <label for="cardioDuration">Duration (Minutes)</label>
-                <input type="number" id="cardioDuration" class="workout-input" placeholder="e.g., 30" required min="0" step="any">
+            <form id="cardioLoggingForm">
+              <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label for="cardioDuration">Duration (Minutes)</label>
+                  <input type="number" id="cardioDuration" class="workout-input" placeholder="e.g., 30" required min="0" step="any">
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label for="cardioDistance">Distance (Miles/Km)</label>
+                  <input type="number" id="cardioDistance" class="workout-input" placeholder="e.g., 3.1" required min="0" step="any">
+                </div>
               </div>
-              <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                <label for="cardioDistance">Distance (Miles/Km)</label>
-                <input type="number" id="cardioDistance" class="workout-input" placeholder="e.g., 3.1" required min="0" step="any">
-              </div>
-            </div>
-            <button type="submit" class="btn-secondary" style="width: 100%;">
-              Record Cardio Session
-            </button>
-          </form>
-        </div>
-
-        <!-- MODULE 3: Independent Daily Diet Rating -->
-        <div class="card">
-          <h3 style="margin-bottom: 0.5rem;">Log Daily Diet</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Track your overall daily nutritional quality.</p>
-          
-          <form id="dietLoggingForm">
-            <div class="form-group">
-              <label>How was your diet today?</label>
-              <div class="diet-rating-group" id="dietRatingSelector">
-                <label class="diet-btn"><input type="radio" name="dietRating" value="1" required>1 <span>Poor</span></label>
-                <label class="diet-btn"><input type="radio" name="dietRating" value="2">2</label>
-                <label class="diet-btn"><input type="radio" name="dietRating" value="3">3</label>
-                <label class="diet-btn"><input type="radio" name="dietRating" value="4">4</label>
-                <label class="diet-btn"><input type="radio" name="dietRating" value="5">5 <span>Great</span></label>
-              </div>
-            </div>
-            <button type="submit" class="btn-secondary" style="width: 100%; margin-top: 1rem;">
-              Record Daily Diet
-            </button>
-          </form>
-        </div>
-
-        <!-- Shared Status Notification Bar -->
-        <div id="statusMsg" class="hidden" style="padding: 1rem; border-radius: 8px; text-align: center;"></div>
-
-      </section>
-
-      <!-- COLUMN 2: Historical Archive Grid -->
-      <section class="card" style="align-self: flex-start;">
-        <h3>Your Workout History</h3>
-        <div id="historyGrid" class="workout-history-grid" style="margin-top: 1.5rem;">
-          <p id="noHistoryMsg" style="color: var(--text-muted);">No logged workouts found yet.</p>
-        </div>
-      </section>
-
-    </div>
-  </div>
-    
-  <!-- TAB 2: Calculations and analytics module -->
-  <div id="calculatorTab" class="tab-content hidden" style="display: none;">
-    <div class="analytics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
-
-      <!-- Left Block: Biometric snapshot engine -->
-      <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
-        <h3 style="color: #ffffff; margin-bottom: 0.5rem;">🧮 Biometric Engine</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Update your stats to calculate benchmarks and macronutrient thresholds.</p>
-        
-        <form id="biometricForm">
-          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Biological Sex</label>
-              <select id="bioSex" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Age (Years)</label>
-              <input type="number" id="bioAge" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="e.g., 25" required min="1" max="120">
-            </div>
+              <button type="submit" class="btn-secondary" style="width: 100%;">
+                Record Cardio Session
+              </button>
+            </form>
           </div>
 
-          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Weight (lbs)</label>
-              <input type="number" id="bioWeight" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="lbs" required min="1" step="any">
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Height (Inches)</label>
-              <input type="number" id="bioHeight" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Inches" required min="1" step="any">
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Waist (Inches)</label>
-              <input type="number" id="bioWaist" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Waist" required min="1" step="any">
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Hips (Inches)</label>
-              <input type="number" id="bioHips" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Hips" required min="1" step="any">
-            </div>
-          </div>
-
-          <div style="margin-bottom: 1rem;">
-            <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Activity Frequency Level</label>
-            <select id="bioActivity" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
-              <option value="1.2">Sedentary (Little to no exercise)</option>
-              <option value="1.375">Lightly Active (Light exercise 1-3 days/week)</option>
-              <option value="1.55">Moderately Active (Moderate training 3-5 days/week)</option>
-              <option value="1.725">Very Active (Hard training 6-7 days/week)</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Primary Physical Focus Goal</label>
-            <select id="bioGoal" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
-              <option value="loss">Fat Loss (-500 Calorie Deficit)</option>
-              <option value="hypertrophy">Muscle Hypertrophy (Dynamic Scaling)</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn-secondary" style="width: 100%; font-weight: bold; padding: 0.75rem; background: var(--accent-neon); color: #000; border: none; border-radius: 4px; cursor: pointer;">
-            Calculate Biometrics & Save Log
-          </button>
-        </form>
-
-        <div id="biometricResults" class="hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
-          <h4 style="color: #39ff14; font-size: 1.1rem; margin-bottom: 1rem;">🎯 Target Metrics Matrix</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; font-size: 0.85rem;">
-            <div><strong>BMI:</strong> <span id="resBMI">-</span></div>
-            <div><strong>BMR:</strong> <span id="resBMR">-</span></div>
-            <div><strong>TDEE:</strong> <span id="resTDEE">-</span></div>
-            <div><strong>Waist/Hip Ratio:</strong> <span id="resWHR">-</span></div>
-          </div>
-          <div id="resRisk" style="margin-top: 0.75rem; padding: 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.85rem; text-align: center;"></div>
-          <div style="margin-top: 0.75rem; background: rgba(57, 255, 20, 0.05); border: 1px solid var(--border-subtle); padding: 0.75rem; border-radius: 4px; text-align: center;">
-            <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">DAILY TARGET DIET THRESHOLD</span>
-            <span id="resDietTarget" style="font-size: 1.5rem; font-weight: 900; color: #39ff14;">- Calories</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Right Block: Analytics visualization and logging history -->
-      <div style="display: flex; flex-direction: column; gap: 2rem;">
-        <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.75rem;">
+          <!-- MODULE 3: Independent Daily Diet Rating -->
+          <div class="card">
+            <h3 style="margin-bottom: 0.5rem;">Log Daily Diet</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Track your overall daily nutritional quality.</p>
             
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h3 style="color: #ffffff; margin: 0;">📊 Analytics Matrix</h3>
-              
-              <select id="chartTimeframe" style="background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
-                <option value="7">Weekly View (Last 7 Days)</option>
-                <option value="30" selected>Monthly View (Last 30 Days)</option>
-                <option value="90">Quarterly View (Last 90 Days)</option>
+            <form id="dietLoggingForm">
+              <div class="form-group">
+                <label>How was your diet today?</label>
+                <div class="diet-rating-group" id="dietRatingSelector">
+                  <label class="diet-btn"><input type="radio" name="dietRating" value="1" required>1 <span>Poor</span></label>
+                  <label class="diet-btn"><input type="radio" name="dietRating" value="2">2</label>
+                  <label class="diet-btn"><input type="radio" name="dietRating" value="3">3</label>
+                  <label class="diet-btn"><input type="radio" name="dietRating" value="4">4</label>
+                  <label class="diet-btn"><input type="radio" name="dietRating" value="5">5 <span>Great</span></label>
+                </div>
+              </div>
+              <button type="submit" class="btn-secondary" style="width: 100%; margin-top: 1rem;">
+                Record Daily Diet
+              </button>
+            </form>
+          </div>
+
+          <!-- Shared Status Notification Bar -->
+          <div id="statusMsg" class="hidden" style="padding: 1rem; border-radius: 8px; text-align: center;"></div>
+
+        </section>
+
+        <!-- COLUMN 2: Historical Archive Grid -->
+        <section class="card" style="align-self: flex-start;">
+          <h3>Your Workout History</h3>
+          <div id="historyGrid" class="workout-history-grid" style="margin-top: 1.5rem;">
+            <p id="noHistoryMsg" style="color: var(--text-muted);">No logged workouts found yet.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+    
+    <!-- TAB 2: Calculations and analytics module -->
+    <div id="calculatorTab" class="tab-content hidden" style="display: none;">
+      <div class="analytics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+
+        <!-- Left Block: Biometric snapshot engine -->
+        <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
+          <h3 style="color: #ffffff; margin-bottom: 0.5rem;">🧮 Biometric Engine</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Update your stats to calculate benchmarks and macronutrient thresholds.</p>
+          
+          <form id="biometricForm">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Biological Sex</label>
+                <select id="bioSex" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Age (Years)</label>
+                <input type="number" id="bioAge" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="e.g., 25" required min="1" max="120">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Weight (lbs)</label>
+                <input type="number" id="bioWeight" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="lbs" required min="1" step="any">
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Height (Inches)</label>
+                <input type="number" id="bioHeight" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Inches" required min="1" step="any">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Waist (Inches)</label>
+                <input type="number" id="bioWaist" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Waist" required min="1" step="any">
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Hips (Inches)</label>
+                <input type="number" id="bioHips" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" placeholder="Hips" required min="1" step="any">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Activity Frequency Level</label>
+              <select id="bioActivity" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
+                <option value="1.2">Sedentary (Little to no exercise)</option>
+                <option value="1.375">Lightly Active (Light exercise 1-3 days/week)</option>
+                <option value="1.55">Moderately Active (Moderate training 3-5 days/week)</option>
+                <option value="1.725">Very Active (Hard training 6-7 days/week)</option>
               </select>
             </div>
 
-            <div style="display: flex; gap: 0.5rem;">
-              <button type="button" class="chart-toggle-btn active" data-chart="body" style="background: rgba(57,255,20,0.1); border: 1px solid #39ff14; color: #39ff14; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold;">👤 Body Journey</button>
-              <button type="button" class="chart-toggle-btn" data-chart="volume" style="background: none; border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold;">💪 Training Volume</button>
+            <div style="margin-bottom: 1.5rem;">
+              <label style="display: block; font-size: 0.8rem; color: #ffffff; margin-bottom: 0.25rem;">Primary Physical Focus Goal</label>
+              <select id="bioGoal" class="workout-input" style="width: 100%; background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 4px;" required>
+                <option value="loss">Fat Loss (-500 Calorie Deficit)</option>
+                <option value="hypertrophy">Muscle Hypertrophy (Dynamic Scaling)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-secondary" style="width: 100%; font-weight: bold; padding: 0.75rem; background: var(--accent-neon); color: #000; border: none; border-radius: 4px; cursor: pointer;">
+              Calculate Biometrics & Save Log
+            </button>
+          </form>
+
+          <div id="biometricResults" class="hidden" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+            <h4 style="color: #39ff14; font-size: 1.1rem; margin-bottom: 1rem;">🎯 Target Metrics Matrix</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; font-size: 0.85rem;">
+              <div><strong>BMI:</strong> <span id="resBMI">-</span></div>
+              <div><strong>BMR:</strong> <span id="resBMR">-</span></div>
+              <div><strong>TDEE:</strong> <span id="resTDEE">-</span></div>
+              <div><strong>Waist/Hip Ratio:</strong> <span id="resWHR">-</span></div>
+            </div>
+            <div id="resRisk" style="margin-top: 0.75rem; padding: 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.85rem; text-align: center;"></div>
+            <div style="margin-top: 0.75rem; background: rgba(57, 255, 20, 0.05); border: 1px solid var(--border-subtle); padding: 0.75rem; border-radius: 4px; text-align: center;">
+              <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">DAILY TARGET DIET THRESHOLD</span>
+              <span id="resDietTarget" style="font-size: 1.5rem; font-weight: 900; color: #39ff14;">- Calories</span>
             </div>
           </div>
-          
-          <div style="position: relative; width: 100%; height: 220px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 0.5rem;">
-            <canvas id="analyticsChart"></canvas>
+        </div>
+        
+        <!-- Right Block: Analytics visualization and logging history -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+          <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.75rem;">
+              
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #ffffff; margin: 0;">📊 Analytics Matrix</h3>
+                
+                <select id="chartTimeframe" style="background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
+                  <option value="7">Weekly View (Last 7 Days)</option>
+                  <option value="30" selected>Monthly View (Last 30 Days)</option>
+                  <option value="90">Quarterly View (Last 90 Days)</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="chart-toggle-btn active" data-chart="body" style="background: rgba(57,255,20,0.1); border: 1px solid #39ff14; color: #39ff14; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold;">👤 Body Journey</button>
+                <button type="button" class="chart-toggle-btn" data-chart="volume" style="background: none; border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: bold;">💪 Training Volume</button>
+              </div>
+            </div>
+            
+            <div style="position: relative; width: 100%; height: 220px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 0.5rem;">
+              <canvas id="analyticsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Log list container for previous biometric entries -->
+          <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
+            <h3 style="color: #ffffff; margin-bottom: 1rem;">📋 Biometric Log Entries</h3>
+            <div id="biometricHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto;">
+              <p style="color: var(--text-muted); font-size: 0.85rem;">No historical biometrics logs found.</p>
+            </div>
           </div>
         </div>
 
-        <!-- Log list container for previous biometric entries -->
-        <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
-          <h3 style="color: #ffffff; margin-bottom: 1rem;">📋 Biometric Log Entries</h3>
-          <div id="biometricHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 200px; overflow-y: auto;">
-            <p style="color: var(--text-muted); font-size: 0.85rem;">No historical biometrics logs found.</p>
-          </div>
-        </div>
       </div>
-
     </div>
-  </div>
 
   </main>
 
-  <!-- Point script source cleanly to local file within directory -->
-  <script src="dashboard.js" type="module"></script>
+  <script src="/dashboard/dashboard.js" type="module"></script> <!-- Absolute path -->
 </body>
 </html>
