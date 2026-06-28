@@ -13,8 +13,8 @@
     <div class="auth-card">
       <div class="auth-header">
         <a href="/" class="logo-link">EliteTrack</a>
-        <h1>Create your profile</h1>
-        <!-- Dynamic welcome badge populated if coach invite parameter is parsed from URL -->
+        <h1 id="signupTitle">Create your profile</h1>
+        <!-- Welcome badge populated if coach invite parameter is parsed from URL -->
         <div id="coachBadge" class="coach-badge hidden">Joining Coach's Team</div>
         <p id="trialNotice">Start your 4-week free trial. No credit card required.</p>
       </div>
@@ -26,7 +26,7 @@
         <div class="input-group">
           <label for="regRole">I am registering as a:</label>
           <select id="regRole" style="padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; outline: none; transition: border-color 0.2s ease;">
-            <option value="client">Client (4-Week Free Trial)</option>
+            <option value="client">Client</option>
             <option value="coach">Coach / Personal Trainer</option>
           </select>
         </div>

@@ -1,7 +1,6 @@
-const { createClient } = await import(
-  'https://cdn.jsdelivr.net/npm/' +
-  '@supabase/supabase-js/+esm'
-);
+import {
+  createClient
+} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const SUPABASE_URL =
   "https://eiiwcvxjtnzetky" +
   "jyudi.supabase.co";
@@ -40,6 +39,10 @@ const spinner =
 const regRole =
   document.getElementById(
     'regRole'
+  );
+const signupTitle =
+  document.getElementById(
+    'signupTitle'
   );
 const coachBadge =
   document.getElementById(
@@ -108,12 +111,26 @@ async function checkInviteLink() {
               ` Track`;
           }
         }
+        if (signupTitle) {
+          signupTitle.textContent =
+            "Client Portal Sign Up";
+        }
+        if (trialNotice) {
+          trialNotice.textContent =
+            "Connect directly with Coach " +
+            (coach.full_name || "Trainer");
+        }
+        if (btnText) {
+          btnText.textContent =
+            "Sign Up & Join Team";
+        }
         if (coachBadge) {
+          const nameString =
+            coach.full_name || 'Coach';
           coachBadge.classList
             .remove('hidden');
           coachBadge.textContent =
-            `Joining ${coach.full_name ||` +
-            ` 'Coach'}'s Team`;
+            `Joining ${nameString}'s Team`;
         }
       }
     } catch (err) {
@@ -121,12 +138,6 @@ async function checkInviteLink() {
         "Invite query failed:",
         err.message
       );
-    }
-    if (trialNotice) {
-      trialNotice.textContent =
-        "Sign up below to connect " +
-        "directly with your trainer " +
-        "and start tracking.";
     }
   }
 }
@@ -307,7 +318,7 @@ function setLoading(isLoading) {
   const defaultText =
     selectedRole === 'coach'
       ? "Register as Coach"
-      : "Start Free Trial";
+      : (incomingCoachId ? "Sign Up & Join Team" : "Start Free Trial");
   if (isLoading) {
     submitBtn.disabled = true;
     btnText.textContent =
