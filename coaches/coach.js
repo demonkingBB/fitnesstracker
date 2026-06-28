@@ -1,4 +1,5 @@
 // coaches/coach.js
+// coaches/coach.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // Supabase Configuration
@@ -56,7 +57,7 @@ async function initCoachDashboard() {
   }
 
   currentCoachId = session.user.id;
-  userEmailDisplay.textContent = session.user.email;
+  if (userEmailDisplay) userEmailDisplay.textContent = session.user.email;
 
   // Retrieve coach's subscription status
   const { data: profile, error: profileErr } = await supabase
@@ -71,20 +72,21 @@ async function initCoachDashboard() {
   }
 
   if (profile.role !== 'coach') {
-    // Client sneaked in -> bounce them out to client dashboard
     window.location.href = '/dashboard/';
     return;
   }
 
-  // Check coach trial/billing expiration
-  const trialEndsDate = new Date(profile.trial_ends_at);
+  // Check coach trial/billing expiration with a safe date fallback
+  const trialEndsDate = profile.trial_ends_at 
+    ? new Date(profile.trial_ends_at) 
+    : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000); // 🚀 Safe Fallback
+  
   const now = new Date();
   const isPaid = profile.subscription_status === 'active';
   const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
 
   if (!isPaid && !isTrialActive) {
-    // Coach expired -> show lockout banner
-    coachExpirationBanner.classList.remove('hidden');
+    if (coachExpirationBanner) coachExpirationBanner.classList.remove('hidden');
     if (coachUpgradeBtn) coachUpgradeBtn.classList.add('hidden');
   } else {
     if (coachUpgradeBtn) coachUpgradeBtn.classList.remove('hidden');
@@ -92,21 +94,21 @@ async function initCoachDashboard() {
 
   // Populate invite referral link
   const inviteLink = `${window.location.origin}/signup/?coach=${currentCoachId}`;
-  inviteLinkContainer.textContent = inviteLink;
+  if (inviteLinkContainer) inviteLinkContainer.textContent = inviteLink;
 
   // Populate brand customization form inputs
-  if (profile.theme_primary_color) brandPrimaryColor.value = profile.theme_primary_color;
-  if (profile.theme_secondary_color) brandSecondaryColor.value = profile.theme_secondary_color;
-  if (profile.logo_url) brandLogoUrl.value = profile.logo_url;
-  if (profile.contact_phone) brandPhone.value = profile.contact_phone;
-  if (profile.contact_address) brandAddress.value = profile.contact_address;
+  if (profile.theme_primary_color && brandPrimaryColor) brandPrimaryColor.value = profile.theme_primary_color;
+  if (profile.theme_secondary_color && brandSecondaryColor) brandSecondaryColor.value = profile.theme_secondary_color;
+  if (profile.logo_url && brandLogoUrl) brandLogoUrl.value = profile.logo_url;
+  if (profile.contact_phone && brandPhone) brandPhone.value = profile.contact_phone;
+  if (profile.contact_address && brandAddress) brandAddress.value = profile.contact_address;
 
   // Fetch team roster
   fetchRoster();
   setupRealtimeComments();
 }
 
-// Fetch clients linked to this coach [cite: 99]
+// Fetch clients linked to this coach
 async function fetchRoster() {
   const { data: clients, error } = await supabase
     .from('profiles')
@@ -119,6 +121,7 @@ async function fetchRoster() {
     return;
   }
 
+  if (!athleteList) return;
   athleteList.innerHTML = '';
 
   if (!clients || clients.length === 0) {
@@ -156,12 +159,12 @@ async function inspectAthlete(client) {
   activeClientId = client.id;
   activeClientEmail = client.email;
   
-  inactiveInspector.classList.add('hidden');
-  activeInspector.classList.remove('hidden');
+  if (inactiveInspector) inactiveInspector.classList.add('hidden');
+  if (activeInspector) activeInspector.classList.remove('hidden');
 
-  inspectAthleteName.textContent = client.full_name || 'Anonymous athlete';
-  inspectAthleteEmail.textContent = client.email;
-  athleteStatusSelect.value = client.client_status || 'active';
+  if (inspectAthleteName) inspectAthleteName.textContent = client.full_name || 'Anonymous athlete';
+  if (inspectAthleteEmail) inspectAthleteEmail.textContent = client.email;
+  if (athleteStatusSelect) athleteStatusSelect.value = client.client_status || 'active';
 
   // Load latest biometrics
   const { data: bRec } = await supabase
@@ -174,34 +177,36 @@ async function inspectAthlete(client) {
     .maybeSingle();
 
   if (bRec && bRec.metrics) {
-    inspectBiometricsBlock.classList.remove('hidden');
-    inspectBioWeight.textContent = bRec.metrics.weight || '-';
-    inspectBioWaist.textContent = bRec.metrics.waist || '-';
-    inspectBioCal.textContent = bRec.metrics.target_calories || '-';
+    if (inspectBiometricsBlock) inspectBiometricsBlock.classList.remove('hidden');
+    if (inspectBioWeight) inspectBioWeight.textContent = bRec.metrics.weight || '-';
+    if (inspectBioWaist) inspectBioWaist.textContent = bRec.metrics.waist || '-';
+    if (inspectBioCal) inspectBioCal.textContent = bRec.metrics.target_calories || '-';
   } else {
-    inspectBiometricsBlock.classList.add('hidden');
+    if (inspectBiometricsBlock) inspectBiometricsBlock.classList.add('hidden');
   }
 
   fetchAthleteHistory();
 }
 
-// Save status updates (suspend or closed/archived accounts) [cite: 99]
-athleteStatusSelect.addEventListener('change', async (e) => {
-  if (!activeClientId) return;
-  const newStatus = e.target.value;
+// Save status updates (suspend or closed/archived accounts)
+if (athleteStatusSelect) {
+  athleteStatusSelect.addEventListener('change', async (e) => {
+    if (!activeClientId) return;
+    const newStatus = e.target.value;
 
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ client_status: newStatus })
-      .eq('id', activeClientId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ client_status: newStatus })
+        .eq('id', activeClientId);
 
-    if (error) throw error;
-    fetchRoster(); // Refresh status badges on Left column
-  } catch (err) {
-    alert("Could not update status: " + err.message);
-  }
-});
+      if (error) throw error;
+      fetchRoster(); // Refresh status badges on Left column
+    } catch (err) {
+      alert("Could not update status: " + err.message);
+    }
+  });
+}
 
 // Fetch workout history logs of the inspected client
 async function fetchAthleteHistory() {
@@ -214,10 +219,11 @@ async function fetchAthleteHistory() {
     .order('log_date', { ascending: false });
 
   if (error) {
-    console.error("Athlete history logs query failed:", error.message);
+    console.error("Athlete history query failed:", error.message);
     return;
   }
 
+  if (!athleteHistoryGrid) return;
   athleteHistoryGrid.innerHTML = '';
 
   if (!workouts || workouts.length === 0) {
@@ -280,8 +286,6 @@ async function fetchAthleteHistory() {
         <div style="font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
           ${innerSetsHTML}
         </div>
-
-        <!-- Real-Time Workout Comments section -->
         <div class="workout-comments-feed">
           <div class="comments-list" id="inspectComments-${workout.id}" style="max-height: 120px; overflow-y: auto; margin-bottom: 0.5rem; display: flex; flex-direction: column;">
             <!-- Comments rendering -->
@@ -294,7 +298,6 @@ async function fetchAthleteHistory() {
       </div>
     `;
 
-    // Populate comments instantly
     const feedContainer = card.querySelector('.comments-list');
     const workoutComments = commentsMap[workout.id] || [];
     workoutComments.forEach(comment => {
@@ -402,39 +405,44 @@ tabButtons.forEach(button => {
 });
 
 // Update Branding custom settings
-brandForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  brandStatusMsg.className = "hidden";
-  brandStatusMsg.textContent = "";
+if (brandForm) {
+  brandForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (brandStatusMsg) {
+      brandStatusMsg.className = "hidden";
+      brandStatusMsg.textContent = "";
+    }
 
-  const primary = brandPrimaryColor.value;
-  const secondary = brandSecondaryColor.value;
-  const logo = brandLogoUrl.value.trim();
-  const phone = brandPhone.value.trim();
-  const address = brandAddress.value.trim();
+    const primary = brandPrimaryColor.value;
+    const secondary = brandSecondaryColor.value;
+    const logo = brandLogoUrl.value.trim();
+    const phone = brandPhone.value.trim();
+    const address = brandAddress.value.trim();
 
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        theme_primary_color: primary,
-        theme_secondary_color: secondary,
-        logo_url: logo ? logo : null,
-        contact_phone: phone ? phone : null,
-        contact_address: address ? address : null
-      })
-      .eq('id', currentCoachId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          theme_primary_color: primary,
+          theme_secondary_color: secondary,
+          logo_url: logo ? logo : null,
+          contact_phone: phone ? phone : null,
+          contact_address: address ? address : null
+        })
+        .eq('id', currentCoachId);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    showBrandStatus("Brand configurations updated successfully!", "success");
-  } catch (err) {
-    showBrandStatus("Failed to update configurations: " + err.message, "error");
-  }
-});
+      showBrandStatus("Brand configurations updated successfully!", "success");
+    } catch (err) {
+      showBrandStatus("Failed to update configurations: " + err.message, "error");
+    }
+  });
+}
 
 function showBrandStatus(text, type) {
+  if (!brandStatusMsg) return;
   brandStatusMsg.textContent = text;
   brandStatusMsg.className = "error-banner";
   brandStatusMsg.style.backgroundColor = type === "success" ? "rgba(57, 255, 20, 0.1)" : "rgba(239, 68, 68, 0.1)";
@@ -449,14 +457,14 @@ function handleCoachStripeRedirect() {
   window.location.href = checkoutUrl;
 }
 
-restartCoachBtn.addEventListener('click', handleCoachStripeRedirect);
-if (coachUpgradeBtn) {
-  coachUpgradeBtn.addEventListener('click', handleCoachStripeRedirect);
-}
+if (restartCoachBtn) restartCoachBtn.addEventListener('click', handleCoachStripeRedirect);
+if (coachUpgradeBtn) coachUpgradeBtn.addEventListener('click', handleCoachStripeRedirect);
 
-logoutBtn.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  window.location.href = '/login/';
-});
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login/';
+  });
+}
 
 initCoachDashboard();
