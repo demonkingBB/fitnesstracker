@@ -1,6 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// Supabase URL & Key Configuration
+// Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
 
@@ -12,12 +12,35 @@ const errorBanner = document.getElementById('errorBanner');
 const submitBtn = document.getElementById('submitBtn');
 const btnText = document.getElementById('btnText');
 const spinner = document.getElementById('spinner');
+const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
 
 // Route Guard: Redirect already authenticated users away from the login page
 async function checkExistingSession() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    window.location.href = '/dashboard/';
+    routeUserByRole(session.user.id);
+  }
+}
+
+// Redirect Traffic Cop based on Database User Role
+async function routeUserByRole(userId) {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+
+    if (profile.role === 'coach') {
+      window.location.href = '/coaches/';
+    } else {
+      window.location.href = '/'; // Root Client Dashboard
+    }
+  } catch (err) {
+    console.error("Routing error:", err.message);
+    window.location.href = '/'; // Default fallback
   }
 }
 
@@ -25,73 +48,88 @@ async function checkExistingSession() {
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Reset UI alert banners
   errorBanner.classList.add('hidden');
   errorBanner.textContent = '';
 
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  setLoading(true);
+  setLoading(true, "Verifying...");
 
   try {
-    // 1. Authenticate user session with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     });
-  
 
     if (error) throw error;
 
     if (data.session && data.user) {
-      // 2. Query user profile to verify membership status
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('subscription_status, trial_ends_at')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profileError) {
-        console.warn("Could not retrieve membership profile details:", profileError.message);
-      } else if (profile) {
-        const trialEnds = new Date(profile.trial_ends_at);
-        const now = new Date();
-        const isPaid = profile.subscription_status === 'active';
-        
-        // Log status to browser debugger to verify mapping works
-        if (isPaid) {
-          console.log(`Status Check: Active Paid Program Member`);
-        } else if (trialEnds > now) {
-          console.log(`Status Check: Active Trial. Ends on: ${profile.trial_ends_at}`);
-        } else {
-          console.log(`Status Check: Trial Expired. Access Restricted.`);
-        }
-      }
-
-      // 3. Route user to their secure dashboard workspace
-      window.location.href = '/dashboard/';
+      routeUserByRole(data.user.id);
     }
 
-  } 
-  
-  catch (err) {
+  } catch (err) {
     console.error("Login attempt logging exception: ", err.message);
     showError(err.message || "Invalid credentials or authentication error occurred.");
     setLoading(false);
   }
 });
 
+// Intercept Forgot Password Reset Email Request
+forgotPasswordBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  errorBanner.classList.add('hidden');
+  errorBanner.textContent = '';
+
+  const email = document.getElementById('email').value.trim();
+
+  if (!email) {
+    showError("Please enter your email address first, then click 'Forgot?' to receive a reset link.");
+    return;
+  }
+
+  setLoading(true, "Sending...");
+
+  try {
+    const redirectUrl = `${window.location.origin}/reset-password/`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) throw error;
+
+    showSuccess("Password reset email sent! Check your inbox.");
+  } catch (err) {
+    console.error("Forgot password dispatch issue:", err.message);
+    showError(err.message || "An error occurred while sending the reset link.");
+  } finally {
+    setLoading(false);
+  }
+});
+
 // UI Modifier utilities
 function showError(message) {
+  errorBanner.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+  errorBanner.style.borderColor = "rgba(239, 68, 68, 0.2)";
+  errorBanner.style.color = "#ef4444";
   errorBanner.textContent = message;
   errorBanner.classList.remove('hidden');
 }
 
-function setLoading(isLoading) {
+function showSuccess(message) {
+  errorBanner.style.backgroundColor = "rgba(57, 255, 20, 0.1)";
+  errorBanner.style.borderColor = "rgba(57, 255, 20, 0.2)";
+  errorBanner.style.color = "var(--accent-neon)";
+  errorBanner.textContent = message;
+  errorBanner.classList.remove('hidden');
+}
+
+function setLoading(isLoading, text = "Log In") {
   if (isLoading) {
     submitBtn.disabled = true;
-    btnText.textContent = "Verifying...";
+    btnText.textContent = text;
     spinner.classList.remove('hidden');
   } else {
     submitBtn.disabled = false;
