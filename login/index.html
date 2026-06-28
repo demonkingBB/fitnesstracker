@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up | EliteTrack</title>
+  <title>Login | EliteTrack</title>
   <link rel="stylesheet" href="/styles.css"> <!-- Absolute path -->
-  <link rel="stylesheet" href="/signup/signup.css"> <!-- Absolute path -->
+  <link rel="stylesheet" href="/login/login.css"> <!-- Absolute path -->
 </head>
 <body>
   <!-- Centering Container wrapper -->
@@ -13,56 +13,39 @@
     <div class="auth-card">
       <div class="auth-header">
         <a href="/" class="logo-link">EliteTrack</a>
-        <h1>Create your profile</h1>
-        <!-- Dynamic welcome badge populated if coach invite parameter is parsed from URL -->
-        <div id="coachBadge" class="coach-badge hidden">Joining Coach's Team</div>
-        <p id="trialNotice">Start your 4-week free trial. No credit card required.</p>
+        <h1>Welcome Back</h1>
+        <p>Access your training workspace and metrics.</p>
       </div>
 
-      <!-- Live User-Facing Error Banner -->
+      <!-- Live Error/Success Output Banner -->
       <div id="errorBanner" class="error-banner hidden"></div>
 
-      <form id="signupForm" class="auth-form">
+      <form id="loginForm" class="auth-form">
         <div class="input-group">
-          <label for="regRole">I am registering as a:</label>
-          <select id="regRole" style="padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; outline: none; transition: border-color 0.2s ease;">
-            <option value="client">Client (4-Week Free Trial)</option>
-            <option value="coach">Coach / Personal Trainer</option>
-          </select>
-        </div>
-
-        <div class="input-group">
-          <label for="regName">Full Name</label>
-          <input type="text" id="regName" required placeholder="Enter your full name" autocomplete="name">
-        </div>
-
-        <div class="input-group">
-          <label for="regPhone">Phone Number</label>
-          <input type="tel" id="regPhone" required placeholder="(555) 555-5555" autocomplete="tel">
-        </div>
-
-        <div class="input-group">
-          <label for="regEmail">Email Address</label>
-          <input type="email" id="regEmail" required placeholder="name@example.com" autocomplete="email">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" required placeholder="name@example.com" autocomplete="email">
         </div>
         
         <div class="input-group">
-          <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" required placeholder="Minimum 6 characters" autocomplete="new-password">
+          <div class="label-wrapper">
+            <label for="password">Password</label>
+            <a href="#" id="forgotPasswordBtn" class="forgot-link">Forgot?</a>
+          </div>
+          <input type="password" id="password" required placeholder="Enter your password" autocomplete="current-password">
         </div>
 
         <button type="submit" id="submitBtn" class="btn-primary auth-submit">
-          <span id="btnText">Start Free Trial</span>
+          <span id="btnText">Log In</span>
           <div id="spinner" class="spinner hidden"></div>
         </button>
       </form>
 
       <div class="auth-footer">
-        <p>Already have an account? <a href="/login/">Log in</a></p>
+        <p>New to EliteTrack? <a href="/signup/">Start Free Trial</a></p>
       </div>
     </div>
   </div>
 
-  <script src="/signup/signup.js" type="module"></script> <!-- Absolute path -->
+  <script src="/login/login.js" type="module"></script> <!-- Absolute path -->
 </body>
 </html>
