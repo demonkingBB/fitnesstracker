@@ -36,11 +36,11 @@ async function routeUserByRole(userId) {
     if (profile.role === 'coach') {
       window.location.href = '/coaches/';
     } else {
-      window.location.href = '/'; // Root Client Dashboard
+      window.location.href = '/dashboard/'; // 🚀 MOVED: Clean URL pointing to /dashboard/index.html
     }
   } catch (err) {
     console.error("Routing error:", err.message);
-    window.location.href = '/'; // Default fallback
+    window.location.href = '/dashboard/'; // Default fallback
   }
 }
 

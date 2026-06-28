@@ -71,8 +71,8 @@ async function initCoachDashboard() {
   }
 
   if (profile.role !== 'coach') {
-    // Client sneaked in -> bounce them out to client root
-    window.location.href = '/';
+    // Client sneaked in -> bounce them out to client dashboard
+    window.location.href = '/dashboard/';
     return;
   }
 

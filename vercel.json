@@ -5,6 +5,7 @@
     { "source": "/login", "destination": "/login/index.html" },
     { "source": "/signup", "destination": "/signup/index.html" },
     { "source": "/reset-password", "destination": "/reset-password/index.html" },
+    { "source": "/dashboard", "destination": "/dashboard/index.html" },
     { "source": "/coaches", "destination": "/coaches/index.html" }
   ]
 }

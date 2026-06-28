@@ -1,87 +1,278 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-// Initialize Supabase using environment credentials
-const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// DOM Target Selectors
-const signupForm = document.getElementById('signupForm');
-const errorBanner = document.getElementById('errorBanner');
-const submitBtn = document.getElementById('submitBtn');
-const btnText = document.getElementById('btnText');
-const spinner = document.getElementById('spinner');
-
-// Form Submission Event Interceptor
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  // Reset UI State
-  errorBanner.classList.add('hidden');
-  errorBanner.textContent = '';
-  
-  const fullName = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-
-  // Simple Validation Checks
-  if (password.length < 6) {
-    showError("Password must be at least 6 characters long.");
-    return;
+const { createClient } = await import(
+  'https://cdn.jsdelivr.net/npm/' +
+  '@supabase/supabase-js/+esm'
+);
+const SUPABASE_URL =
+  "https://eiiwcvxjtnzetky" +
+  "jyudi.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX" +
+  "VCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl" +
+  "ZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRp" +
+  "Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3" +
+  "ODIzMTUzNTYsImV4cCI6Mj957901356n" +
+  "0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wq" +
+  "tR27z_Q_EWyHxQ";
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+const signupForm =
+  document.getElementById(
+    'signupForm'
+  );
+const errorBanner =
+  document.getElementById(
+    'errorBanner'
+  );
+const submitBtn =
+  document.getElementById(
+    'submitBtn'
+  );
+const btnText =
+  document.getElementById(
+    'btnText'
+  );
+const spinner =
+  document.getElementById(
+    'spinner'
+  );
+const regRole =
+  document.getElementById(
+    'regRole'
+  );
+const coachBadge =
+  document.getElementById(
+    'coachBadge'
+  );
+const trialNotice =
+  document.getElementById(
+    'trialNotice'
+  );
+let incomingCoachId = null;
+function checkInviteLink() {
+  const urlParams =
+    new URLSearchParams(
+      window.location.search
+    );
+  const coachParam =
+    urlParams.get('coach');
+  if (coachParam) {
+    incomingCoachId = coachParam;
+    if (regRole) {
+      regRole.value = "client";
+      regRole.disabled = true;
+    }
+    if (coachBadge) {
+      coachBadge.classList.remove(
+        'hidden'
+      );
+    }
+    if (trialNotice) {
+      trialNotice.textContent =
+        "Sign up below to connect " +
+        "directly with your trainer " +
+        "and start tracking.";
+    }
+    showSuccessNotification(
+      "Coach referral code " +
+      "detected. Account will " +
+      "connect immediately."
+    );
   }
-
-  // Activate Loading Spinner UX
-  setLoading(true);
-
-  try {
-    // Fire user creation directly to Supabase Auth engine with custom user metadata
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone: phone
+}
+if (regRole) {
+  regRole.addEventListener(
+    'change',
+    (e) => {
+      if (e.target.value === 'coach') {
+        btnText.textContent =
+          "Register as Coach";
+        if (trialNotice) {
+          trialNotice.textContent =
+            "Create an account to " +
+            "manage client workout " +
+            "plans, metrics, and " +
+            "real-time chat.";
+        }
+      } else {
+        btnText.textContent =
+          "Start Free Trial";
+        if (trialNotice) {
+          trialNotice.textContent =
+            "Start your 4-week free " +
+            "trial. No credit card " +
+            "required.";
         }
       }
-    });
-
-    if (error) throw error;
-
-    if (data.user) {
-      if (data.session) {
-        // If email confirmation is disabled, user is immediately signed in.
-        window.location.href = '/dashboard/';
-      } else {
-        // If email confirmation is enabled, redirect to login page.
-        alert("Registration successful! Please check your email inbox to verify your account.");
-        window.location.href = '/login/';
+    }
+  );
+}
+if (signupForm) {
+  signupForm.addEventListener(
+    'submit',
+    async (e) => {
+      e.preventDefault();
+      errorBanner.classList.add(
+        'hidden'
+      );
+      errorBanner.textContent = '';
+      const selectedRole = regRole
+        ? regRole.value
+        : 'client';
+      const fullName =
+        document.getElementById(
+          'regName'
+        ).value.trim();
+      const phone =
+        document.getElementById(
+          'regPhone'
+        ).value.trim();
+      const email =
+        document.getElementById(
+          'regEmail'
+        ).value.trim();
+      const password =
+        document.getElementById(
+          'regPassword'
+        ).value;
+      if (password.length < 6) {
+        showError(
+          "Password must be at " +
+          "least 6 characters long."
+        );
+        return;
+      }
+      setLoading(true);
+      const signupOptions = {
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phone,
+            role: selectedRole
+          }
+        }
+      };
+      if (selectedRole === 'client' &&
+          incomingCoachId) {
+        signupOptions.options
+          .data.coach_id =
+          incomingCoachId;
+      }
+      try {
+        const { data, error } =
+          await supabase.auth
+            .signUp(signupOptions);
+        if (error) throw error;
+        if (data.user) {
+          if (data.session) {
+            routeUserByRole(
+              data.user.id
+            );
+          } else {
+            alert(
+              "Registration " +
+              "successful! Please " +
+              "check your email " +
+              "inbox to verify your " +
+              "account."
+            );
+            window.location.href =
+              '/login/';
+          }
+        }
+      } catch (err) {
+        console.error(
+          "Signup exception: ",
+          err.message
+        );
+        showError(
+          err.message ||
+          "An unexpected error " +
+          "occurred during signup."
+        );
+        setLoading(false);
       }
     }
-
-  } catch (err) {
-    console.error("Signup build logging exception: ", err.message);
-    showError(err.message || "An unexpected error occurred during signup.");
-    setLoading(false);
-  }
-});
-
-// UI State Modifiers
-function showError(message) {
-  errorBanner.textContent = message;
-  errorBanner.classList.remove('hidden');
+  );
 }
-
+async function routeUserByRole(
+  userId
+) {
+  try {
+    const { data: profile } =
+      await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    if (profile &&
+        profile.role === 'coach') {
+      window.location.href =
+        '/coaches/';
+    } else {
+      window.location.href =
+        '/dashboard/';
+    }
+  } catch (err) {
+    window.location.href =
+      '/dashboard/';
+  }
+}
+function showError(message) {
+  errorBanner.style
+    .backgroundColor =
+    "rgba(239, 68, 68, 0.1)";
+  errorBanner.style
+    .borderColor =
+    "rgba(239, 68, 68, 0.2)";
+  errorBanner.style.color =
+    "#ef4444";
+  errorBanner.textContent = message;
+  errorBanner.classList.remove(
+    'hidden'
+  );
+}
+function showSuccessNotification(
+  message
+) {
+  errorBanner.style
+    .backgroundColor =
+    "rgba(57, 255, 20, 0.1)";
+  errorBanner.style
+    .borderColor =
+    "rgba(57, 255, 20, 0.2)";
+  errorBanner.style.color =
+    "var(--accent-neon)";
+  errorBanner.textContent = message;
+  errorBanner.classList.remove(
+    'hidden'
+  );
+}
 function setLoading(isLoading) {
+  const selectedRole = regRole
+    ? regRole.value
+    : 'client';
+  const defaultText =
+    selectedRole === 'coach'
+      ? "Register as Coach"
+      : "Start Free Trial";
   if (isLoading) {
     submitBtn.disabled = true;
-    btnText.textContent = "Creating Account...";
-    spinner.classList.remove('hidden');
+    btnText.textContent =
+      "Creating Account...";
+    spinner.classList.remove(
+      'hidden'
+    );
   } else {
     submitBtn.disabled = false;
-    btnText.textContent = "Start Free Trial";
-    spinner.classList.add('hidden');
+    btnText.textContent =
+      defaultText;
+    spinner.classList.add(
+      'hidden'
+    );
   }
 }
+checkInviteLink();
