@@ -930,21 +930,30 @@ if (biometricForm) {
       fontColor = "#ef4444";
     }
 
-    document.getElementById('resBMI').textContent = bmi.toFixed(1);
-    document.getElementById('resBMR').textContent = `${Math.round(bmr)} kcal`;
-    document.getElementById('resTDEE').textContent = `${Math.round(tdee)} kcal`;
-    document.getElementById('resWHR').textContent = whr.toFixed(2);
-
     
-    const riskContainer = document.getElementById('resRisk');
-    if (riskContainer) {
-      riskContainer.textContent = riskText;
-      riskContainer.style.backgroundColor = riskColor;
-      riskContainer.style.color = fontColor;
-    }
+    function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
-    document.getElementById('resDietTarget').textContent = `${targetCalories} Calories / day`;
-    biometricResults.classList.remove('hidden');
+setText('resBMI', bmi.toFixed(1));
+setText('resBMR', `${Math.round(bmr)} kcal`);
+setText('resTDEE', `${Math.round(tdee)} kcal`);
+setText('resWHR', whr.toFixed(2));
+
+const riskContainer = document.getElementById('resRisk');
+if (riskContainer) {
+  riskContainer.textContent = riskText;
+  riskContainer.style.backgroundColor = riskColor;
+  riskContainer.style.color = fontColor;
+}
+
+setText('resDietTarget', `${targetCalories} Calories / day`);
+
+if (biometricResults) {
+  biometricResults.classList.remove('hidden');
+}
+    
 
     const todayDateString = new Date().toISOString().split('T')[0];
     const payload = [{
