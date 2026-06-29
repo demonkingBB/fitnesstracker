@@ -1,6 +1,10 @@
 // coaches/coach.js
+### File 4: Create `/coaches/coach.js`
+*(The updated Coach controller. Aligned to fetch client datasets securely and render a customizable Coach Analytics Matrix. Allows the coach to dynamically switch the graph between Strength Overload volume, Cardio mileage trends, or dual-axis BMI vs. Diet Quality charts).*
+
+```javascript
 // coaches/coach.js
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
 // Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
@@ -43,9 +47,13 @@ const brandPhone = document.getElementById('brandPhone');
 const brandAddress = document.getElementById('brandAddress');
 const brandStatusMsg = document.getElementById('brandStatusMsg');
 
+// Coach Chart Selector
+const coachChartSelector = document.getElementById('coachChartSelector');
+
 let currentCoachId = null;
 let activeClientId = null;
 let activeClientEmail = null;
+let coachChartInstance = null;
 
 // Routing Security Guard: Only allow valid coaches in this directory
 async function initCoachDashboard() {
@@ -79,7 +87,7 @@ async function initCoachDashboard() {
   // Check coach trial/billing expiration with a safe date fallback
   const trialEndsDate = profile.trial_ends_at 
     ? new Date(profile.trial_ends_at) 
-    : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000); // 🚀 Safe Fallback
+    : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000); // Safe Fallback
   
   const now = new Date();
   const isPaid = profile.subscription_status === 'active';
@@ -106,6 +114,12 @@ async function initCoachDashboard() {
   // Fetch team roster
   fetchRoster();
   setupRealtimeComments();
+
+  if (coachChartSelector) {
+    coachChartSelector.addEventListener('change', () => {
+      renderCoachChart();
+    });
+  }
 }
 
 // Fetch clients linked to this coach
@@ -186,6 +200,180 @@ async function inspectAthlete(client) {
   }
 
   fetchAthleteHistory();
+  renderCoachChart();
+}
+
+// Render dynamic customizable coach charts based on dropdown selection
+async function renderCoachChart() {
+  if (!activeClientId) return;
+  const ctx = document.getElementById('coachAnalyticsChart');
+  if (!ctx) return;
+
+  if (coachChartInstance) coachChartInstance.destroy();
+
+  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
+
+  if (selectedChartType === 'volume') {
+    // 1. Plot Strength Volumes
+    const { data: logs } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', activeClientId)
+      .eq('category', 'weight_training')
+      .order('log_date', { ascending: true });
+
+    if (!logs || logs.length === 0) {
+      drawEmptyChartPlaceholder(ctx, "No strength volume data available.");
+      return;
+    }
+
+    const volumeByDate = {};
+    logs.forEach(log => {
+      if (log.exercise_name === 'Daily Nutritional Matrix') return;
+      const sets = log.metrics?.sets || [];
+      let sessionVolume = 0;
+      sets.forEach(s => {
+        sessionVolume += ((parseInt(s.reps, 10) || 0) * (parseFloat(s.weight) || 0));
+      });
+      if (sessionVolume > 0) {
+        volumeByDate[log.log_date] = (volumeByDate[log.log_date] || 0) + sessionVolume;
+      }
+    });
+
+    coachChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Object.keys(volumeByDate),
+        datasets: [{
+          label: 'Strength Volume (lbs)',
+          data: Object.values(volumeByDate),
+          borderColor: '#39ff14',
+          backgroundColor: 'rgba(57, 255, 20, 0.03)',
+          borderWidth: 2,
+          tension: 0.25,
+          fill: true
+        }]
+      },
+      options: getCommonChartOptions()
+    });
+
+  } else if (selectedChartType === 'cardio') {
+    // 2. Plot Cardio Outputs (Dual-axis Grouped metrics)
+    const { data: logs } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', activeClientId)
+      .eq('category', 'cardio')
+      .order('log_date', { ascending: true });
+
+    if (!logs || logs.length === 0) {
+      drawEmptyChartPlaceholder(ctx, "No cardio history logs available.");
+      return;
+    }
+
+    const labels = logs.map(l => l.log_date);
+    const distanceData = logs.map(l => l.metrics?.sets?.[0]?.distance || 0);
+    const durationData = logs.map(l => l.metrics?.sets?.[0]?.duration || 0);
+
+    coachChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Distance (miles/km)', data: distanceData, borderColor: '#38bdf8', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y' },
+          { label: 'Duration (mins)', data: durationData, borderColor: '#f43f5e', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } },
+          y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+
+  } else {
+    // 3. Plot Behavioral Diagnostics (BMI vs. Diet Quality ratings side-by-side)
+    const { data: bioLogs } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', activeClientId)
+      .eq('exercise_name', 'Biometric Snapshot Engine')
+      .order('log_date', { ascending: true });
+
+    const { data: dietLogs } = await supabase
+      .from('workout_logs')
+      .select('*')
+      .eq('user_id', activeClientId)
+      .eq('exercise_name', 'Daily Nutritional Matrix')
+      .order('log_date', { ascending: true });
+
+    if ((!bioLogs || bioLogs.length === 0) && (!dietLogs || dietLogs.length === 0)) {
+      drawEmptyChartPlaceholder(ctx, "No metrics available for Diet comparisons.");
+      return;
+    }
+
+    // Merge dates for accurate alignment
+    const allDates = Array.from(new Set([
+      ...bioLogs.map(b => b.log_date),
+      ...dietLogs.map(d => d.log_date)
+    ])).sort();
+
+    const bmiByDate = {};
+    bioLogs.forEach(b => bmiByDate[b.log_date] = b.metrics?.bmi || 0);
+
+    const dietByDate = {};
+    dietLogs.forEach(d => dietByDate[d.log_date] = d.metrics?.diet_rating || 0);
+
+    const bmiData = allDates.map(date => bmiByDate[date] || null);
+    const dietData = allDates.map(date => dietByDate[date] || null);
+
+    coachChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: allDates,
+        datasets: [
+          { label: 'BMI Progress', data: bmiData, borderColor: '#e11d48', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y', spanGaps: true },
+          { label: 'Diet Rating (1-5)', data: dietData, borderColor: '#39ff14', backgroundColor: 'rgba(57, 255, 20, 0.05)', borderWidth: 2, yAxisID: 'y1', spanGaps: true, fill: true, showLine: true }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'BMI Score', color: '#fff' } },
+          y1: { type: 'linear', display: true, position: 'right', min: 1, max: 5, ticks: { stepSize: 1 }, title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+}
+
+function getCommonChartOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, labels: { color: '#8a8f98' } }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8a8f98' } },
+      y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8a8f98' } }
+    }
+  };
+}
+
+function drawEmptyChartPlaceholder(ctx, message) {
+  const canvas = ctx;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#8a8f98';
+  context.font = '13px -apple-system, sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(message, canvas.width / 2, canvas.height / 2);
 }
 
 // Save status updates (suspend or closed/archived accounts)
@@ -250,8 +438,6 @@ async function fetchAthleteHistory() {
   }
 
   workouts.forEach(workout => {
-    if (workout.exercise_name === 'Biometric Snapshot Engine') return; // Skip biometrics rows
-
     const card = document.createElement('div');
     card.className = 'history-day-card';
     card.style.cssText = `background: #1c2742; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;`;
@@ -259,7 +445,13 @@ async function fetchAthleteHistory() {
     let innerSetsHTML = '';
     
     if (workout.exercise_name === 'Daily Nutritional Matrix') {
-      innerSetsHTML = `<strong>Diet rating: ${workout.metrics.diet_rating}/5</strong>`;
+      innerSetsHTML = `<strong>Diet Quality Rating: ${workout.metrics.diet_rating}/5</strong>`;
+    } else if (workout.exercise_name === 'Biometric Snapshot Engine') {
+      const m = workout.metrics;
+      innerSetsHTML = `
+        <div>Scale Weight: <strong>${m.weight}</strong> lbs | Waist: <strong>${m.waist}</strong>"</div>
+        <div style="margin-top: 0.15rem;">BMI: <strong>${m.bmi ? m.bmi.toFixed(1) : '-'}</strong> | Daily TDEE Target: <strong>${Math.round(m.tdee)}</strong> kcal</div>
+      `;
     } else if (workout.category === 'cardio') {
       const sets = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
       sets.forEach(item => {
@@ -272,7 +464,9 @@ async function fetchAthleteHistory() {
       });
     }
 
-    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' ? 'NUTRITION' : workout.category.toUpperCase().replace('_', ' ');
+    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' 
+      ? 'NUTRITION' 
+      : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
 
     card.innerHTML = `
       <div style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.04);">
@@ -291,7 +485,7 @@ async function fetchAthleteHistory() {
             <!-- Comments rendering -->
           </div>
           <div class="comment-input-row" style="display: flex; gap: 0.5rem;">
-            <input type="text" id="inspectCommentInput-${workout.id}" placeholder="Type feedback message..." style="flex: 1; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-main); color: #fff; font-size: 0.8rem;">
+            <input type="text" id="inspectCommentInput-${workoutId = workout.id}" placeholder="Type feedback message..." style="flex: 1; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-main); color: #fff; font-size: 0.8rem;">
             <button type="button" class="btn-primary post-comment-btn" data-workout-id="${workout.id}" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 4px;">Comment</button>
           </div>
         </div>
@@ -308,7 +502,7 @@ async function fetchAthleteHistory() {
   });
 }
 
-// Handle Posting comment replies
+
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('post-comment-btn')) {
     const workoutId = e.target.getAttribute('data-workout-id');
