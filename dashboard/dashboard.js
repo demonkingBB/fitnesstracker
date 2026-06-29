@@ -934,6 +934,10 @@ if (biometricForm) {
     document.getElementById('resBMR').textContent = `${Math.round(bmr)} kcal`;
     document.getElementById('resTDEE').textContent = `${Math.round(tdee)} kcal`;
     document.getElementById('resWHR').textContent = whr.toFixed(2);
+
+    const resultElement = document.getElementById('resultElement');
+if (!resultElement) return;
+resultElement.textContent = '...';
     
     const riskContainer = document.getElementById('resRisk');
     if (riskContainer) {
