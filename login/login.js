@@ -16,32 +16,28 @@ const spinner = document.getElementById('spinner');
 const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
 
 // Route Guard: Redirect already authenticated users away from the login page
-async function checkExistingSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    routeUserByRole(session.user.id);
-  }
-}
-
-// Redirect Traffic Cop based on Database User Role
 async function routeUserByRole(userId) {
   try {
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
-    if (profile.role === 'coach') {
+    console.log('Profile lookup result:', profile);
+
+    if (profile?.role === 'coach') {
       window.location.href = '/coaches/';
-    } else {
-      window.location.href = '/dashboard/'; // 🚀 MOVED: Clean URL pointing to /dashboard/index.html
+      return;
     }
+
+    window.location.href = '/dashboard/';
   } catch (err) {
-    console.error("Routing error:", err.message);
-    window.location.href = '/dashboard/'; // Default fallback
+    console.error('Routing error:', err);
+    // Keep fallback, but now you'll know why it happened
+    window.location.href = '/dashboard/';
   }
 }
 
@@ -66,8 +62,8 @@ loginForm.addEventListener('submit', async (e) => {
     if (error) throw error;
 
     if (data.session && data.user) {
-      routeUserByRole(data.user.id);
-    }
+  await routeUserByRole(data.user.id);
+}
 
   } catch (err) {
     console.error("Login attempt logging exception: ", err.message);
