@@ -1,4 +1,5 @@
 // dashboard/dashboard.js
+// dashboard/dashboard.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
 // Supabase Configuration
