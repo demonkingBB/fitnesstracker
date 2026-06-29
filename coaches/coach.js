@@ -1,8 +1,4 @@
-// coaches/coach.js
-### File 4: Create `/coaches/coach.js`
-*(The updated Coach controller. Aligned to fetch client datasets securely and render a customizable Coach Analytics Matrix. Allows the coach to dynamically switch the graph between Strength Overload volume, Cardio mileage trends, or dual-axis BMI vs. Diet Quality charts).*
 
-```javascript
 // coaches/coach.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
