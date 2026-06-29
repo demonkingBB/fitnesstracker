@@ -1,8 +1,9 @@
 // dashboard/dashboard.js
-const { createClient } = await import(
-  'https://cdn.jsdelivr.net/npm/' +
-  '@supabase/supabase-js/+esm'
-);
+// dashboard/dashboard.js
+import {
+  createClient
+} from
+'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const SUPABASE_URL =
   "https://eiiwcvxjtnzetky" +
   "jyudi.supabase.co";
@@ -14,9 +15,6 @@ const SUPABASE_ANON_KEY =
   "ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1" +
   "Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5w" +
   "qtR27z_Q_EWyHxQ";
-const STRIPE_PAYMENT_LINK =
-  "https://buy.stripe.com/" +
-  "test_your_payment_link_id"; 
 const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
@@ -231,9 +229,20 @@ const coachCardPhone =
   document.getElementById('coachCardPhone');
 const coachCardAddress =
   document.getElementById('coachCardAddress');
+const strengthPRContainer =
+  document.getElementById(
+    'strengthPRContainer'
+  );
+const cardioPRContainer =
+  document.getElementById(
+    'cardioPRContainer'
+  );
 let currentUser = null;
 let isTrialExpired = false;
 let activeCoachProfile = null;
+let cachedWorkouts = [];
+let strengthPRs = {};
+let cardioPR = { distance: 0, duration: 0 };
 async function initDashboard() {
   const { data: { session }, error } =
     await supabase.auth.getSession();
@@ -245,32 +254,6 @@ async function initDashboard() {
   if (userEmailDisplay) {
     userEmailDisplay.textContent =
       currentUser.email;
-  }
-  const urlParams =
-    new URLSearchParams(
-      window.location.search
-    );
-  if (urlParams.get('checkout') ===
-      'success') {
-    const { error: updateError } =
-      await supabase
-        .from('profiles')
-        .update({
-          subscription_status: 'active'
-        })
-        .eq('id', currentUser.id);
-    if (!updateError) {
-      alert(
-        "Payment successful! " +
-        "Welcome to the EliteTrack " +
-        "program."
-      );
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname
-      );
-    }
   }
   const { data: profile, error: pErr } =
     await supabase
@@ -472,6 +455,7 @@ async function initDashboard() {
   }
   setupDietRatingListeners();
   setupContactCardListeners();
+  await fetchWorkoutCache();
   fetchAndRenderHistory();
   fetchAndRenderBiometricHistory();
   renderAnalyticsChart();
@@ -581,6 +565,92 @@ function setupContactCardListeners() {
     (e) => e.stopPropagation()
   );
 }
+// Cache all user logs on startup to process PR targets and cardio metrics
+async function fetchWorkoutCache() {
+  const { data, error } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('user_id', currentUser.id);
+  if (!error && data) {
+    cachedWorkouts = data;
+    computePRMatrix();
+  }
+}
+// Process historical data to find exercise PRs and cardio milestones
+function computePRMatrix() {
+  strengthPRs = {};
+  cardioPR = { distance: 0, duration: 0 };
+  cachedWorkouts.forEach(workout => {
+    if (workout.category === 'cardio') {
+      const sets = workout.metrics?.sets || [];
+      sets.forEach(s => {
+        if (s.distance > cardioPR.distance) {
+          cardioPR.distance = s.distance;
+        }
+        if (s.duration > cardioPR.duration) {
+          cardioPR.duration = s.duration;
+        }
+      });
+    } else if (workout.exercise_name !==
+               'Daily Nutritional Matrix' &&
+               workout.exercise_name !==
+               'Biometric Snapshot Engine') {
+      const sets = workout.metrics?.sets || [];
+      sets.forEach(s => {
+        const currentBest =
+          strengthPRs[workout.exercise_name];
+        if (!currentBest ||
+            s.weight > currentBest.weight) {
+          strengthPRs[workout.exercise_name] = {
+            weight: s.weight,
+            reps: s.reps
+          };
+        }
+      });
+    }
+  });
+  renderPRSidebars();
+}
+// Render the target sidebars
+function renderPRSidebars(selectedDay = null) {
+  if (!strengthPRContainer ||
+      !cardioPRContainer) return;
+  strengthPRContainer.innerHTML = '';
+  cardioPRContainer.innerHTML = '';
+  // Build Cardio milestones output
+  if (cardioPR.distance > 0 ||
+      cardioPR.duration > 0) {
+    cardioPRContainer.innerHTML = `
+      <div style="font-size: 0.8rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-subtle);">
+        <div>🏃 Max Distance: <strong>${cardioPR.distance}</strong> miles/km</div>
+        <div style="margin-top: 0.15rem;">⏱️ Max Duration: <strong>${cardioPR.duration}</strong> mins</div>
+      </div>
+    `;
+  } else {
+    cardioPRContainer.innerHTML =
+      '<p style="font-size: 0.8rem; color: var(--text-muted);">No cardio PR logs.</p>';
+  }
+  // Build filtered Strength PR output based on active routine
+  const filterList = selectedDay ? PROGRAMS[selectedDay] : null;
+  let matchesCount = 0;
+  Object.keys(strengthPRs).forEach(exName => {
+    if (filterList && !filterList.includes(exName)) return;
+    matchesCount++;
+    const prObj = strengthPRs[exName];
+    const row = document.createElement('div');
+    row.style.cssText =
+      "font-size: 0.8rem; background: rgba(255,255,255,0.02); " +
+      "padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-subtle);";
+    row.innerHTML = `
+      <strong>${exName}</strong>: ${prObj.weight} lbs/kg x ${prObj.reps} reps
+    `;
+    strengthPRContainer.appendChild(row);
+  });
+  if (matchesCount === 0) {
+    strengthPRContainer.innerHTML =
+      '<p style="font-size: 0.8rem; color: var(--text-muted);">No logs match this filter.</p>';
+  }
+}
 function populateSubDays(routineName) {
   if (!routineName) {
     if (programSelectGroup) {
@@ -661,9 +731,11 @@ if (programSelect) {
       const selectedDay = e.target.value;
       generateExerciseForm(selectedDay);
       fetchAndRenderHistory(selectedDay);
+      renderPRSidebars(selectedDay); // Dynamically filter sidebars to show ONLY routine PRs!
     }
   );
 }
+// Generate dynamic Weight Training Input Fields with inline target PR displays!
 function generateExerciseForm(selectedDay) {
   if (!selectedDay) {
     if (workoutLoggingForm) {
@@ -690,8 +762,15 @@ function generateExerciseForm(selectedDay) {
           'data-exercise-name',
           exerciseName
         );
+        // Find existing PR for target label
+        const prObj = strengthPRs[exerciseName];
+        const prText = prObj 
+          ? `Target PR: <strong>${prObj.weight}</strong> lbs/kg x <strong>${prObj.reps}</strong> reps`
+          : `No previous lifts recorded.`;
+
         exerciseWrapper.innerHTML = `
-          <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
+          <h4 style="margin-bottom: 0.25rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
+          <p style="font-size: 0.8rem; color: var(--accent-neon); margin-bottom: 1rem;">${prText}</p>
           <div class="sets-list-container" id="setsContainer-${exIndex}">
             <div class="set-row">
               <span>Set 1</span>
@@ -871,6 +950,7 @@ if (workoutLoggingForm) {
         workoutLoggingForm.reset();
         workoutLoggingForm.classList
           .add('hidden');
+        await fetchWorkoutCache();
         fetchAndRenderHistory(
           selectedDay
         );
@@ -958,6 +1038,7 @@ if (cardioLoggingForm) {
           "success"
         );
         cardioLoggingForm.reset();
+        await fetchWorkoutCache();
         fetchAndRenderHistory(
           selectedDay
         );
@@ -1047,6 +1128,7 @@ if (dietLoggingForm) {
           );
         });
         dietLoggingForm.reset();
+        await fetchWorkoutCache();
         fetchAndRenderHistory(
           selectedDay
         );
@@ -1127,29 +1209,14 @@ function appendSingleCommentToFeed(
   container.scrollTop =
     container.scrollHeight;
 }
+// Render history grouped by calendar dates
 async function fetchAndRenderHistory(
   selectedDayFilter = null
 ) {
-  const { data: workouts, error } =
-    await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order(
-        'log_date',
-        { ascending: false }
-      );
-  if (error) {
-    console.error(
-      "History query error: ",
-      error.message
-    );
-    return;
-  }
   if (historyGrid) {
     historyGrid.innerHTML = '';
-    if (!workouts ||
-        workouts.length === 0) {
+    if (!cachedWorkouts ||
+        cachedWorkouts.length === 0) {
       if (noHistoryMsg) {
         noHistoryMsg.style.display =
           'block';
@@ -1164,7 +1231,7 @@ async function fetchAndRenderHistory(
         'none';
     }
     const groupedByDate = {};
-    workouts.forEach(log => {
+    cachedWorkouts.forEach(log => {
       if (!groupedByDate[log.log_date]) {
         groupedByDate[log.log_date] = {
           date: log.log_date,
@@ -1205,7 +1272,7 @@ async function fetchAndRenderHistory(
           const masterDayGroup =
             groupedByDate[dateKey];
           const matchingLifts =
-            workouts.filter(log => {
+            cachedWorkouts.filter(log => {
               return log.log_date ===
                      dateKey && 
                      log.category !==
@@ -1246,7 +1313,7 @@ async function fetchAndRenderHistory(
       return;
     }
     const workoutIdsOnScreen =
-      workouts.filter(w =>
+      cachedWorkouts.filter(w =>
         latestDates.includes(
           w.log_date
         )
