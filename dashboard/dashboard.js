@@ -1,9 +1,10 @@
 // dashboard/dashboard.js
 // dashboard/dashboard.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { PROGRAMS, ROUTINES } from './programdata.js'
 
 // Ensure this is at the top level of dashboard.js, not inside initDashboard or others
-export function generateExerciseForm(selectedDay) {
+function generateExerciseForm(selectedDay) {
   const container = document.getElementById('exerciseContainer');
   const form = document.getElementById('workoutLoggingForm');
   
@@ -49,68 +50,7 @@ const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_your_payment_link_id";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const PROGRAMS = {
-  "Push Day": [
-    "Barbell Bench Press", "Incline Dumbbell Press", "Overhead Press", 
-    "Dumbbell Lateral Raise", "Cable Fly", "Chest Dip", 
-    "Triceps Pushdown", "Skull Crushers", "Push-Up", "Machine Chest Press"
-  ],
-  "Pull Day": [
-    "Pull-Up", "Lat Pulldown", "Barbell Row", "Seated Cable Row", 
-    "Face Pull", "Dumbbell Curl", "Hammer Curl", "Rear Delt Fly", 
-    "Chest-Supported Row", "Straight-Arm Pulldown"
-  ],
-  "Leg Day": [
-    "Back Squat", "Front Squat", "Romanian Deadlift", "Leg Press", 
-    "Walking Lunge", "Leg Extension", "Leg Curl", "Calf Raise", 
-    "Hip Thrust", "Bulgarian Split Squat"
-  ],
-  "Upper Body Day": [
-    "Bench Press", "Pull-Up", "Overhead Press", "Barbell Row", 
-    "Incline Dumbbell Press", "Seated Cable Row", "Lateral Raise", 
-    "Triceps Extension", "Biceps Curl", "Face Pull"
-  ],
-  "Lower Body Day": [
-    "Back Squat", "Deadlift", "Leg Press", "Romanian Deadlift", 
-    "Walking Lunge", "Leg Extension", "Leg Curl", "Calf Raise", 
-    "Hip Thrust", "Bulgarian Split Squat"
-  ],
-  "Total Body Day": [
-    "Deadlift", "Front Squat", "Bench Press", "Pull-Up", 
-    "Overhead Press", "Barbell Row", "Kettlebell Swing", 
-    "Farmer Carry", "Push Press", "Goblet Squat"
-  ],
-  "Calisthenics": [
-    "Push-Up", "Pull-Up", "Dip", "Bodyweight Squat", 
-    "Walking Lunge", "Plank", "Hollow Hold", "Inverted Row", 
-    "Pike Push-Up", "Mountain Climber"
-  ],
-  "Chest-Biceps Day": [
-    "Chest Press", "Incline Chest Press", "Chest Fly", "DB Chest Press", 
-    "Overhead Press", "Cable Curls", "DB Curls", 
-    "DB Hammer Curls", "Barbell Curls"
-  ],
-  "Back-Triceps Day": [
-    "Bent Over Row", "Lat Pulldown", "Back Row", "DB Row", 
-    "Rear Delt Fly", "Tricep Press Down", "OH Tricep Press", 
-    "DB Tricep Kickbacks", "Tricep Dips"
-  ],
-  "Leg-Quad-Dom Day": [
-    "Squat", "Leg Press", "Hack Squat", "Lunges", 
-    "Leg Extensions", "Hip Abductor"
-  ],
-  "Leg-Ham-Dom Day": [
-    "Stiff Leg Deadlift", "Dead Lift", "Seated Leg Curl", "Prone Leg Curl", 
-    "Step Ups", "Hip Adductor", "Wide leg far leg press"
-  ]
-};
 
-const ROUTINES = {
-  "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day"],
-  "Upper Lower Body": ["Upper Body Day", "Lower Body Day"],
-  "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day"],
-  "Total Body & Calisthenics": ["Total Body Day", "Calisthenics"]
-};
 
 // DOM Elements
 const userEmailDisplay = document.getElementById('userEmail');
@@ -499,7 +439,6 @@ function setupDietRatingListeners() {
   });
 }
 
-if (workoutLoggingForm) {
 if (workoutLoggingForm) {
   workoutLoggingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
