@@ -500,51 +500,74 @@ function setupDietRatingListeners() {
 }
 
 if (workoutLoggingForm) {
+if (workoutLoggingForm) {
   workoutLoggingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (isTrialExpired) return showStatus("Trial expired.", "error");
     showStatus("", "");
+    
     const selectedDay = programSelect ? programSelect.value : ''; 
-    const blocks = document.querySelectorAll('.exercise-block'); // Changed to match the new container
+    const blocks = document.querySelectorAll('.exercise-block'); 
     const payloadRows = [];
     const todayDateString = new Date().toISOString().split('T')[0];
 
-    // --- REPLACE THE CODE BELOW THIS LINE ---
+    // THIS IS THE CORRECT LOOP
     blocks.forEach(block => {
-      // Add these to dashboard.js
+      const exName = block.getAttribute('data-exercise-name');
+      const setRows = block.querySelectorAll('.set-row');
+      const structuredSetsArray = [];
 
-// 1. Generate the accordion structure
-function generateExerciseForm(selectedDay) {
-  if (!selectedDay) {
-    if (workoutLoggingForm) workoutLoggingForm.classList.add('hidden');
-    return;
-  }
-  workoutLoggingForm.classList.remove('hidden');
-  exerciseContainer.innerHTML = '';
-  
-  const exerciseList = PROGRAMS[selectedDay] || [];
-  exerciseList.forEach((exerciseName, exIndex) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'exercise-block';
-    wrapper.setAttribute('data-exercise-name', exerciseName);
-    
-    wrapper.innerHTML = `
-      <div class="accordion-header">
-        <span>${exIndex + 1}. ${exerciseName}</span>
-        <span>▼</span>
-      </div>
-      <div class="accordion-content">
-        <div class="sets-list-container" id="sets-${exIndex}">
-          <div class="set-row">
-            <span>Set 1</span>
-            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
-            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
-          </div>
-        </div>
-        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
-      </div>
-    `;
-    exerciseContainer.appendChild(wrapper);
+      setRows.forEach((currentRow) => {
+        const repsInput = currentRow.querySelector('.reps-input');
+        const weightInput = currentRow.querySelector('.weight-input');
+        
+        if (repsInput && weightInput) {
+          const repsVal = repsInput.value;
+          const weightVal = weightInput.value;
+
+          if (repsVal !== '' && weightVal !== '') {
+            structuredSetsArray.push({
+              set: structuredSetsArray.length + 1,
+              reps: parseInt(repsVal, 10),
+              weight: parseFloat(weightVal)
+            });
+          }
+        }
+      });
+
+      if (structuredSetsArray.length > 0) {
+        let logCategory = 'weight_training';
+        if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
+          logCategory = 'calisthenics';
+        }
+        
+        payloadRows.push({
+          user_id: currentUser.id,
+          log_date: todayDateString,
+          category: logCategory,
+          exercise_name: exName,
+          routine_focus: selectedDay, 
+          metrics: { sets: structuredSetsArray }
+        });
+      }
+    });
+
+    if (payloadRows.length === 0) {
+      showStatus("Please fill out at least one exercise step to submit progress.", "error");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('workout_logs').insert(payloadRows);
+      if (error) throw error;
+      showStatus("Success! Progress saved.", "success");
+      workoutLoggingForm.reset();
+      workoutLoggingForm.classList.add('hidden');
+      await fetchWorkoutCache();
+      fetchAndRenderHistory(selectedDay);
+    } catch (err) {
+      showStatus(`Failed to save: ${err.message}`, "error");
+    }
   });
 }
 
