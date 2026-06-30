@@ -218,6 +218,49 @@
   width: 100%;
   margin: 0 auto;
 }
+
+/*Collapseable/expand animation for exercises*/
+
+/* Add to dashboard.css */
+.exercise-block { margin-bottom: 0.5rem; }
+
+.accordion-header {
+  cursor: pointer;
+  padding: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.accordion-header:hover { border-color: var(--accent-neon); }
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease;
+  opacity: 0;
+  padding: 0 1rem;
+  background: var(--bg-main);
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.accordion-content.active {
+  max-height: 500px;
+  opacity: 1;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0 0 8px 8px;
+}
+
+.set-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1.2fr 0.8fr;

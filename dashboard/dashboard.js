@@ -1214,5 +1214,82 @@ if (logoutBtn) {
   });
 }
 
+// Add these to dashboard.js
+
+// 1. Generate the accordion structure
+function generateExerciseForm(selectedDay) {
+  if (!selectedDay) {
+    if (workoutLoggingForm) workoutLoggingForm.classList.add('hidden');
+    return;
+  }
+  workoutLoggingForm.classList.remove('hidden');
+  exerciseContainer.innerHTML = '';
+  
+  const exerciseList = PROGRAMS[selectedDay] || [];
+  exerciseList.forEach((exerciseName, exIndex) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'exercise-block';
+    wrapper.setAttribute('data-exercise-name', exerciseName);
+    
+    wrapper.innerHTML = `
+      <div class="accordion-header" onclick="toggleExercise(this)">
+        <span>${exIndex + 1}. ${exerciseName}</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-content">
+        <div class="sets-list-container" id="sets-${exIndex}">
+          <div class="set-row">
+            <span>Set 1</span>
+            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
+            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
+          </div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="addSet(${exIndex})" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
+      </div>
+    `;
+    exerciseContainer.appendChild(wrapper);
+  });
+}
+
+// 2. Accordion Toggle Logic
+window.toggleExercise = (el) => {
+  const content = el.nextElementSibling;
+  // Close all others
+  document.querySelectorAll('.accordion-content').forEach(c => {
+    if (c !== content) c.classList.remove('active');
+  });
+  content.classList.toggle('active');
+};
+
+// 3. Dynamic Set Addition
+window.addSet = (index) => {
+  const container = document.getElementById(`sets-${index}`);
+  const count = container.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'set-row';
+  row.innerHTML = `
+    <span>Set ${count}</span>
+    <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
+    <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
+  `;
+  container.appendChild(row);
+};
+
+// 4. Update the Submit Logic to ignore empty rows
+// Inside your existing form submit listener:
+/* 
+   const repsVal = row.querySelector('.reps-input').value;
+   const weightVal = row.querySelector('.weight-input').value;
+   
+   // Only push if BOTH are filled
+   if (repsVal !== '' && weightVal !== '') {
+       structuredSetsArray.push({
+           set: rowIndex + 1,
+           reps: parseInt(repsVal),
+           weight: parseFloat(weightVal)
+       });
+   }
+*/
+
 initDashboard();
 
