@@ -236,27 +236,24 @@
   transition: all 0.2s ease;
   color: var(--text-primary);
   font-weight: 600;
+  pointer-events: auto; 
 }
 
 .accordion-header:hover { border-color: var(--accent-neon); }
 
 .accordion-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out, opacity 0.2s ease;
-  opacity: 0;
-  padding: 0 1rem;
+  display: none; /* We will use JS to toggle this */
+  padding: 1rem;
   background: var(--bg-main);
-  border-left: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 400px; /* Allow content to grow */
+  overflow-y: auto;  /* THIS ADDS THE SCROLLBAR IF LIST IS LONG */
 }
 
 .accordion-content.active {
-  max-height: 500px;
-  opacity: 1;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-subtle);
-  border-radius: 0 0 8px 8px;
+  display: block;
 }
 
 .set-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
