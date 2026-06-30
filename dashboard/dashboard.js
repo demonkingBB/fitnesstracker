@@ -473,17 +473,22 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
       }
     }); // Closes setRows.forEach
 
-    if (structuredSetsArray.length > 0) {
-      payloadRows.push({
-        user_id: currentUser.id,
-        log_date: todayDateString,
-        category: (selectedDay.toLowerCase().includes("calisthenics")) ? 'calisthenics' : 'weight_training',
-        exercise_name: exName,
-        routine_focus: selectedDay, 
-        metrics: { sets: structuredSetsArray }
-      });
-    }
-  }); // Closes blocks.forEach
+   // REPLACE your current payloadRows.push logic with this:
+if (structuredSetsArray.length > 0) {
+  let logCategory = 'weight_training';
+  if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
+    logCategory = 'calisthenics';
+  }
+  
+  payloadRows.push({
+    user_id: currentUser.id,             // Must match column "user_id"
+    log_date: todayDateString,          // Must match column "log_date"
+    category: logCategory,              // Must match column "category"
+    exercise_name: exName,              // Must match column "exercise_name"
+    routine_focus: selectedDay,         // Must match column "routine_focus"
+    metrics: { sets: structuredSetsArray } // Must match column "metrics" (JSONB)
+  });
+}// Closes blocks.forEach
 
   // 2. Validate and Save
   if (payloadRows.length === 0) {
@@ -491,18 +496,41 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  try {
-    const { error } = await supabase.from('workout_logs').insert(payloadRows);
-    if (error) throw error;
-    showStatus("Success! Progress saved.", "success");
-    workoutLoggingForm.reset();
-    workoutLoggingForm.classList.add('hidden');
-    await fetchWorkoutCache();
-    fetchAndRenderHistory(selectedDay);
-  } catch (err) {
-    console.error("Supabase Error Details:", err)
-    showStatus(`Failed to save: ${err.message}`, "error");
+ // ... (your blocks.forEach loop finishes here)
+
+// 1. Validation check
+if (payloadRows.length === 0) {
+  showStatus("Please fill out at least one exercise step.", "error");
+  return;
+}
+
+// 2. THE TRY/CATCH BLOCK GOES HERE
+try {
+  console.log("Attempting to insert payload:", payloadRows);
+  
+  const { data, error } = await supabase
+    .from('workout_logs')
+    .insert(payloadRows);
+
+  if (error) {
+    // This logs the specific error message to help us fix the 400 error
+    console.error("Supabase Error Message:", error.message);
+    console.error("Supabase Error Details:", error.details);
+    throw error;
   }
+  
+  // 3. Success Logic
+  showStatus("Success! Progress saved.", "success");
+  workoutLoggingForm.reset();
+  workoutLoggingForm.classList.add('hidden');
+  await fetchWorkoutCache();
+  fetchAndRenderHistory(selectedDay);
+  
+} catch (err) {
+  // This catches any errors and displays them to the user
+  showStatus(`Save failed: ${err.message}`, "error");
+  console.error("Full Catch Error:", err);
+}
 
   
 }); // <--- THIS IS THE CRITICAL LINE: Closes the submit function
