@@ -242,18 +242,20 @@
 .accordion-header:hover { border-color: var(--accent-neon); }
 
 .accordion-content {
-  display: none; /* We will use JS to toggle this */
+  display: none; 
   padding: 1rem;
   background: var(--bg-main);
   border: 1px solid var(--border-subtle);
   border-top: none;
   border-radius: 0 0 8px 8px;
-  max-height: 400px; /* Allow content to grow */
-  overflow-y: auto;  /* THIS ADDS THE SCROLLBAR IF LIST IS LONG */
+  /* REMOVE max-height and overflow-y: auto from here */
 }
 
 .accordion-content.active {
-  display: block;
+  display: block; 
+  /* Add these back here ONLY when active */
+  max-height: 500px; 
+  overflow-y: auto;
 }
 
 .set-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }

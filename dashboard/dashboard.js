@@ -1221,31 +1221,24 @@ if (logoutBtn) {
 
 // Universal click handler for the whole app
 document.addEventListener('click', (e) => {
-  // 1. Handle Accordion Header clicks
+  // Check if we clicked the header OR any element inside the header (the arrow or text)
   const header = e.target.closest('.accordion-header');
   
   if (header) {
-    // Only toggle if we are NOT clicking inside an accordion-content 
-    // or on an input/button inside the header.
     const content = header.nextElementSibling;
     
-    // Check if the click originated from within the content block
-    // If the click is inside the content, we don't want to toggle
-    if (e.target.closest('.accordion-content')) {
-      return; 
-    }
-
-    // Toggle THIS one
+    // Toggle the active class
     content.classList.toggle('active');
     
-    // Close others
+    // Optional: Close other accordions
     document.querySelectorAll('.accordion-content').forEach(c => {
       if (c !== content) c.classList.remove('active');
     });
-    return; 
+    
+    return; // Exit here so we don't process further
   }
 
-  // 2. Handle Add Set button clicks
+  // Handle Add Set button
   if (e.target.classList.contains('add-set-btn')) {
     const index = e.target.getAttribute('data-index');
     const container = document.getElementById(`sets-${index}`);
