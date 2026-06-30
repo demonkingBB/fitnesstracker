@@ -527,7 +527,7 @@ if (workoutLoggingForm) {
        });
    }
 
-    });
+  
 
     if (payloadRows.length === 0) {
       showStatus("Please fill out at least one exercise step to submit progress.", "error");
@@ -545,8 +545,8 @@ if (workoutLoggingForm) {
     } catch (err) {
       showStatus(`Failed to save: ${err.message}`, "error");
     }
-  });
-}
+    
+
 
 if (cardioLoggingForm) {
   cardioLoggingForm.addEventListener('submit', async (e) => {
