@@ -443,18 +443,19 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (isTrialExpired) return showStatus("Trial expired.", "error");
   showStatus("", "");
-  
   const selectedDay = programSelect ? programSelect.value : ''; 
   const blocks = document.querySelectorAll('.exercise-block'); 
   const payloadRows = [];
   const todayDateString = new Date().toISOString().split('T')[0];
 
+  // 1. Process Exercises
   blocks.forEach(block => {
     const exName = block.getAttribute('data-exercise-name');
     const setRows = block.querySelectorAll('.set-row');
     const structuredSetsArray = [];
 
-    setRows.forEach((currentRow) => {
+    // Loop through sets
+    setRows.forEach((currentRow, rowIndex) => {
       const repsInput = currentRow.querySelector('.reps-input');
       const weightInput = currentRow.querySelector('.weight-input');
       
@@ -464,31 +465,27 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
 
         if (repsVal !== '' && weightVal !== '') {
           structuredSetsArray.push({
-            set: structuredSetsArray.length + 1,
+            set: rowIndex + 1,
             reps: parseInt(repsVal, 10),
             weight: parseFloat(weightVal)
           });
         }
       }
-    });
+    }); // Closes setRows.forEach
 
     if (structuredSetsArray.length > 0) {
-      let logCategory = 'weight_training';
-      if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
-        logCategory = 'calisthenics';
-      }
-      
       payloadRows.push({
         user_id: currentUser.id,
         log_date: todayDateString,
-        category: logCategory,
+        category: (selectedDay.toLowerCase().includes("calisthenics")) ? 'calisthenics' : 'weight_training',
         exercise_name: exName,
         routine_focus: selectedDay, 
         metrics: { sets: structuredSetsArray }
       });
     }
-  });
+  }); // Closes blocks.forEach
 
+  // 2. Validate and Save
   if (payloadRows.length === 0) {
     showStatus("Please fill out at least one exercise step to submit progress.", "error");
     return;
@@ -505,47 +502,12 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   } catch (err) {
     showStatus(`Failed to save: ${err.message}`, "error");
   }
-}); // <--- This closes the addEventListener
+}); // <--- THIS IS THE CRITICAL LINE: Closes the submit function
 
-
-// 4. Update the Submit Logic to ignore empty rows
-// Inside your existing form submit listener:
-
-   const repsVal = row.querySelector('.reps-input').value;
-   const weightVal = row.querySelector('.weight-input').value;
-   
-   // Only push if BOTH are filled
-   if (repsVal !== '' && weightVal !== '') {
-       structuredSetsArray.push({
-           set: rowIndex + 1,
-           reps: parseInt(repsVal),
-           weight: parseFloat(weightVal)
-       });
-   }
-
-  
-
-    if (payloadRows.length === 0) {
-      showStatus("Please fill out at least one exercise step to submit progress.", "error");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from('workout_logs').insert(payloadRows);
-      if (error) throw error;
-      showStatus("Success! Progress saved.", "success");
-      workoutLoggingForm.reset();
-      workoutLoggingForm.classList.add('hidden');
-      await fetchWorkoutCache();
-      fetchAndRenderHistory(selectedDay);
-    } catch (err) {
-      showStatus(`Failed to save: ${err.message}`, "error");
-    }
-
-
-
+// NOW start the next block
 if (cardioLoggingForm) {
   cardioLoggingForm.addEventListener('submit', async (e) => {
+    // ...
     e.preventDefault();
     if (isTrialExpired) return showStatus("Trial expired.", "error");
     try {
