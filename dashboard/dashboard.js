@@ -500,6 +500,7 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
     await fetchWorkoutCache();
     fetchAndRenderHistory(selectedDay);
   } catch (err) {
+    console.error("Supabase Error Details:", err)
     showStatus(`Failed to save: ${err.message}`, "error");
   }
 }); // <--- THIS IS THE CRITICAL LINE: Closes the submit function
