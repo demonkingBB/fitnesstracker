@@ -503,12 +503,8 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
     console.error("Supabase Error Details:", err)
     showStatus(`Failed to save: ${err.message}`, "error");
   }
-console.log("Sending to Supabase:", JSON.stringify(payloadRows, null, 2));
 
-try {
-  const { error } = await supabase.from('workout_logs').insert(payloadRows);
-  // ...
-
+  
 }); // <--- THIS IS THE CRITICAL LINE: Closes the submit function
 
 // NOW start the next block
