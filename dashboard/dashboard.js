@@ -443,67 +443,7 @@ if (programSelect) {
   });
 }
 
-// Generate dynamic Weight Training Input Fields with inline target PR displays!
-function generateExerciseForm(selectedDay) {
-  if (!selectedDay) {
-    if (workoutLoggingForm) {
-      workoutLoggingForm.classList.add('hidden');
-    }
-    return;
-  }
-  if (workoutLoggingForm) {
-    workoutLoggingForm.classList.remove('hidden');
-  }
-  if (exerciseContainer) {
-    exerciseContainer.innerHTML = '';
-    const exerciseList = PROGRAMS[selectedDay] || [];
-    exerciseList.forEach((exerciseName, exIndex) => {
-      const exerciseWrapper = document.createElement('div');
-      exerciseWrapper.className = 'exercise-log-block';
-      exerciseWrapper.setAttribute('data-exercise-name', exerciseName);
-      
-      // Find existing PR for target label
-      const prObj = strengthPRs[exerciseName];
-      const prText = prObj 
-        ? `Target PR: <strong>${prObj.weight}</strong> lbs/kg x <strong>${prObj.reps}</strong> reps`
-        : `No previous lifts recorded.`;
 
-      exerciseWrapper.innerHTML = `
-        <h4 style="margin-bottom: 0.25rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
-        <p style="font-size: 0.8rem; color: var(--accent-neon); margin-bottom: 1rem;">${prText}</p>
-        <div class="sets-list-container" id="setsContainer-${exIndex}">
-          <div class="set-row">
-            <span>Set 1</span>
-            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
-            <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
-          </div>
-        </div>
-        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
-          + Add Extra Set
-        </button>
-      `;
-      exerciseContainer.appendChild(exerciseWrapper);
-    });
-  }
-}
-
-if (exerciseContainer) {
-  exerciseContainer.addEventListener('click', (e) => {
-    if (e.target.classList.contains('add-set-btn')) {
-      const exIndex = e.target.getAttribute('data-index');
-      const container = document.getElementById(`setsContainer-${exIndex}`);
-      const currentSetCount = container.children.length + 1;
-      const setRow = document.createElement('div');
-      setRow.className = "set-row";
-      setRow.innerHTML = `
-        <span>Set ${currentSetCount}</span>
-        <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
-        <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
-      `;
-      container.appendChild(setRow);
-    }
-  });
-}
 
 function setupDietRatingListeners() {
   const container = document.getElementById('dietRatingSelector');
@@ -525,41 +465,66 @@ if (workoutLoggingForm) {
     if (isTrialExpired) return showStatus("Trial expired.", "error");
     showStatus("", "");
     const selectedDay = programSelect ? programSelect.value : ''; 
-    const blocks = document.querySelectorAll('.exercise-log-block');
+    const blocks = document.querySelectorAll('.exercise-block'); // Changed to match the new container
     const payloadRows = [];
     const todayDateString = new Date().toISOString().split('T')[0];
 
+    // --- REPLACE THE CODE BELOW THIS LINE ---
     blocks.forEach(block => {
-      const exName = block.getAttribute('data-exercise-name');
-      const setRows = block.querySelectorAll('.set-row');
-      const structuredSetsArray = [];
+      // Add these to dashboard.js
 
-      setRows.forEach((row, rowIndex) => {
-        const repsVal = parseInt(row.querySelector('.reps-input').value, 10);
-        const weightVal = parseFloat(row.querySelector('.weight-input').value);
-        if (!isNaN(repsVal) && !isNaN(weightVal)) {
-          structuredSetsArray.push({
-            set: rowIndex + 1,
-            reps: repsVal,
-            weight: weightVal
-          });
-        }
-      });
+// 1. Generate the accordion structure
+function generateExerciseForm(selectedDay) {
+  if (!selectedDay) {
+    if (workoutLoggingForm) workoutLoggingForm.classList.add('hidden');
+    return;
+  }
+  workoutLoggingForm.classList.remove('hidden');
+  exerciseContainer.innerHTML = '';
+  
+  const exerciseList = PROGRAMS[selectedDay] || [];
+  exerciseList.forEach((exerciseName, exIndex) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'exercise-block';
+    wrapper.setAttribute('data-exercise-name', exerciseName);
+    
+    wrapper.innerHTML = `
+      <div class="accordion-header">
+        <span>${exIndex + 1}. ${exerciseName}</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-content">
+        <div class="sets-list-container" id="sets-${exIndex}">
+          <div class="set-row">
+            <span>Set 1</span>
+            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
+            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
+          </div>
+        </div>
+        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
+      </div>
+    `;
+    exerciseContainer.appendChild(wrapper);
+  });
+}
 
-      if (structuredSetsArray.length > 0) {
-        let logCategory = 'weight_training';
-        if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
-          logCategory = 'calisthenics';
-        }
-        payloadRows.push({
-          user_id: currentUser.id,
-          log_date: todayDateString,
-          category: logCategory,
-          exercise_name: exName,
-          routine_focus: selectedDay, 
-          metrics: { sets: structuredSetsArray }
-        });
-      }
+
+
+// 4. Update the Submit Logic to ignore empty rows
+// Inside your existing form submit listener:
+
+   const repsVal = row.querySelector('.reps-input').value;
+   const weightVal = row.querySelector('.weight-input').value;
+   
+   // Only push if BOTH are filled
+   if (repsVal !== '' && weightVal !== '') {
+       structuredSetsArray.push({
+           set: rowIndex + 1,
+           reps: parseInt(repsVal),
+           weight: parseFloat(weightVal)
+       });
+   }
+
     });
 
     if (payloadRows.length === 0) {
@@ -1214,82 +1179,36 @@ if (logoutBtn) {
   });
 }
 
-// Add these to dashboard.js
-
-// 1. Generate the accordion structure
-function generateExerciseForm(selectedDay) {
-  if (!selectedDay) {
-    if (workoutLoggingForm) workoutLoggingForm.classList.add('hidden');
-    return;
+// Universal click handler for the whole app
+document.addEventListener('click', (e) => {
+  // 1. Handle Accordion Header clicks
+  if (e.target.closest('.accordion-header')) {
+    const header = e.target.closest('.accordion-header');
+    const content = header.nextElementSibling;
+    // Close other accordions
+    document.querySelectorAll('.accordion-content').forEach(c => {
+      if (c !== content) c.classList.remove('active');
+    });
+    content.classList.toggle('active');
   }
-  workoutLoggingForm.classList.remove('hidden');
-  exerciseContainer.innerHTML = '';
-  
-  const exerciseList = PROGRAMS[selectedDay] || [];
-  exerciseList.forEach((exerciseName, exIndex) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'exercise-block';
-    wrapper.setAttribute('data-exercise-name', exerciseName);
-    
-    wrapper.innerHTML = `
-      <div class="accordion-header" onclick="toggleExercise(this)">
-        <span>${exIndex + 1}. ${exerciseName}</span>
-        <span>▼</span>
-      </div>
-      <div class="accordion-content">
-        <div class="sets-list-container" id="sets-${exIndex}">
-          <div class="set-row">
-            <span>Set 1</span>
-            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
-            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
-          </div>
-        </div>
-        <button type="button" class="btn-secondary" onclick="addSet(${exIndex})" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
-      </div>
-    `;
-    exerciseContainer.appendChild(wrapper);
-  });
-}
 
-// 2. Accordion Toggle Logic
-window.toggleExercise = (el) => {
-  const content = el.nextElementSibling;
-  // Close all others
-  document.querySelectorAll('.accordion-content').forEach(c => {
-    if (c !== content) c.classList.remove('active');
-  });
-  content.classList.toggle('active');
-};
-
-// 3. Dynamic Set Addition
-window.addSet = (index) => {
-  const container = document.getElementById(`sets-${index}`);
-  const count = container.children.length + 1;
-  const row = document.createElement('div');
-  row.className = 'set-row';
-  row.innerHTML = `
-    <span>Set ${count}</span>
-    <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
-    <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
-  `;
-  container.appendChild(row);
-};
-
-// 4. Update the Submit Logic to ignore empty rows
-// Inside your existing form submit listener:
-/* 
-   const repsVal = row.querySelector('.reps-input').value;
-   const weightVal = row.querySelector('.weight-input').value;
-   
-   // Only push if BOTH are filled
-   if (repsVal !== '' && weightVal !== '') {
-       structuredSetsArray.push({
-           set: rowIndex + 1,
-           reps: parseInt(repsVal),
-           weight: parseFloat(weightVal)
-       });
-   }
-*/
+  // 2. Handle Add Set button clicks
+  if (e.target.classList.contains('add-set-btn')) {
+    const index = e.target.getAttribute('data-index');
+    const container = document.getElementById(`sets-${index}`);
+    if (container) {
+      const count = container.children.length + 1;
+      const row = document.createElement('div');
+      row.className = 'set-row';
+      row.innerHTML = `
+        <span>Set ${count}</span>
+        <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
+        <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
+      `;
+      container.appendChild(row);
+    }
+  }
+});
 
 initDashboard();
 
