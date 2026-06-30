@@ -2,6 +2,46 @@
 // dashboard/dashboard.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Ensure this is at the top level of dashboard.js, not inside initDashboard or others
+export function generateExerciseForm(selectedDay) {
+  const container = document.getElementById('exerciseContainer');
+  const form = document.getElementById('workoutLoggingForm');
+  
+  if (!selectedDay) {
+    if (form) form.classList.add('hidden');
+    return;
+  }
+  
+  form.classList.remove('hidden');
+  container.innerHTML = '';
+  
+  const exerciseList = PROGRAMS[selectedDay] || [];
+  exerciseList.forEach((exerciseName, exIndex) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'exercise-block';
+    wrapper.setAttribute('data-exercise-name', exerciseName);
+    
+    // NO onclick here
+    wrapper.innerHTML = `
+      <div class="accordion-header">
+        <span>${exIndex + 1}. ${exerciseName}</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-content">
+        <div class="sets-list-container" id="sets-${exIndex}">
+          <div class="set-row">
+            <span>Set 1</span>
+            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
+            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
+          </div>
+        </div>
+        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
+      </div>
+    `;
+    container.appendChild(wrapper);
+  });
+}
+
 // Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
