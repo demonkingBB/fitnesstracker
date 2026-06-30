@@ -1222,14 +1222,25 @@ if (logoutBtn) {
 // Universal click handler for the whole app
 document.addEventListener('click', (e) => {
   // 1. Handle Accordion Header clicks
-  if (e.target.closest('.accordion-header')) {
-    const header = e.target.closest('.accordion-header');
+  const header = e.target.closest('.accordion-header');
+  
+  if (header) {
+    // If the click happened on an input or button, DO NOTHING (return)
+    // This stops the accordion from closing when you click inside to log data
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+      return;
+    }
+
     const content = header.nextElementSibling;
-    // Close other accordions
+    
+    // Toggle THIS one
+    content.classList.toggle('active');
+    
+    // Close others
     document.querySelectorAll('.accordion-content').forEach(c => {
       if (c !== content) c.classList.remove('active');
     });
-    content.classList.toggle('active');
+    return; 
   }
 
   // 2. Handle Add Set button clicks
