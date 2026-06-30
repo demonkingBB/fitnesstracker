@@ -450,19 +450,34 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
   const todayDateString = new Date().toISOString().split('T')[0];
 
   // 1. Process Exercises
-  blocks.forEach(block => {
-    // Force grab the attribute
+ blocks.forEach(block => {
     const exName = block.getAttribute('data-exercise-name');
     
-    // DEBUG: If this logs null, we found the issue!
-    console.log("Processing exercise block for:", exName); 
+    // SKIP if exName is null or empty
+    if (!exName) return; 
 
     const setRows = block.querySelectorAll('.set-row');
     const structuredSetsArray = [];
 
-    // ... (rest of the setRows.forEach loop stays exactly as it was)
+    setRows.forEach((currentRow, rowIndex) => {
+      const repsInput = currentRow.querySelector('.reps-input');
+      const weightInput = currentRow.querySelector('.weight-input');
+      
+      if (repsInput && weightInput) {
+        const repsVal = repsInput.value;
+        const weightVal = weightInput.value;
 
-    if (structuredSetsArray.length > 0 && exName) { // ADDED "&& exName" check
+        if (repsVal !== '' && weightVal !== '') {
+          structuredSetsArray.push({
+            set: rowIndex + 1,
+            reps: parseInt(repsVal, 10),
+            weight: parseFloat(weightVal)
+          });
+        }
+      }
+    });
+
+    if (structuredSetsArray.length > 0) {
       let logCategory = 'weight_training';
       if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
         logCategory = 'calisthenics';
@@ -472,13 +487,12 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
         user_id: currentUser.id,
         log_date: todayDateString,
         category: logCategory,
-        exercise_name: exName, // If exName is null here, the DB rejects it
+        exercise_name: exName,
         routine_focus: selectedDay, 
         metrics: { sets: structuredSetsArray }
       });
     }
   });
-
   // 2. Validate
   if (payloadRows.length === 0) {
     showStatus("Please fill out at least one exercise step to submit progress.", "error");
