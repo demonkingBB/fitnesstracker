@@ -451,34 +451,28 @@ workoutLoggingForm.addEventListener('submit', async (e) => {
 
   // 1. Process Exercises
   blocks.forEach(block => {
+    // Force grab the attribute
     const exName = block.getAttribute('data-exercise-name');
+    
+    // DEBUG: If this logs null, we found the issue!
+    console.log("Processing exercise block for:", exName); 
+
     const setRows = block.querySelectorAll('.set-row');
     const structuredSetsArray = [];
 
-    setRows.forEach((currentRow, rowIndex) => {
-      const repsInput = currentRow.querySelector('.reps-input');
-      const weightInput = currentRow.querySelector('.weight-input');
-      
-      if (repsInput && weightInput) {
-        const repsVal = repsInput.value;
-        const weightVal = weightInput.value;
+    // ... (rest of the setRows.forEach loop stays exactly as it was)
 
-        if (repsVal !== '' && weightVal !== '') {
-          structuredSetsArray.push({
-            set: rowIndex + 1,
-            reps: parseInt(repsVal, 10),
-            weight: parseFloat(weightVal)
-          });
-        }
+    if (structuredSetsArray.length > 0 && exName) { // ADDED "&& exName" check
+      let logCategory = 'weight_training';
+      if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
+        logCategory = 'calisthenics';
       }
-    });
-
-    if (structuredSetsArray.length > 0) {
+      
       payloadRows.push({
         user_id: currentUser.id,
         log_date: todayDateString,
-        category: (selectedDay.toLowerCase().includes("calisthenics")) ? 'calisthenics' : 'weight_training',
-        exercise_name: exName,
+        category: logCategory,
+        exercise_name: exName, // If exName is null here, the DB rejects it
         routine_focus: selectedDay, 
         metrics: { sets: structuredSetsArray }
       });
