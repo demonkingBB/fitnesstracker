@@ -1225,14 +1225,16 @@ document.addEventListener('click', (e) => {
   const header = e.target.closest('.accordion-header');
   
   if (header) {
-    // If the click happened on an input or button, DO NOTHING (return)
-    // This stops the accordion from closing when you click inside to log data
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
-      return;
-    }
-
+    // Only toggle if we are NOT clicking inside an accordion-content 
+    // or on an input/button inside the header.
     const content = header.nextElementSibling;
     
+    // Check if the click originated from within the content block
+    // If the click is inside the content, we don't want to toggle
+    if (e.target.closest('.accordion-content')) {
+      return; 
+    }
+
     // Toggle THIS one
     content.classList.toggle('active');
     
