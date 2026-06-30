@@ -1221,25 +1221,24 @@ if (logoutBtn) {
 
 // Universal click handler for the whole app
 document.addEventListener('click', (e) => {
-  // Check if we clicked the header OR any element inside the header (the arrow or text)
   const header = e.target.closest('.accordion-header');
   
+  // If we clicked a header
   if (header) {
     const content = header.nextElementSibling;
     
-    // Toggle the active class
+    // Toggle THIS specific block ONLY
     content.classList.toggle('active');
     
-    // Optional: Close other accordions
-    document.querySelectorAll('.accordion-content').forEach(c => {
-      if (c !== content) c.classList.remove('active');
-    });
-    
-    return; // Exit here so we don't process further
+    // Stop the event from bubbling up to any other listeners
+    e.stopPropagation(); 
+    e.preventDefault();
+    return;
   }
-
+  
   // Handle Add Set button
   if (e.target.classList.contains('add-set-btn')) {
+    e.preventDefault();
     const index = e.target.getAttribute('data-index');
     const container = document.getElementById(`sets-${index}`);
     if (container) {
