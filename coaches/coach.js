@@ -570,41 +570,7 @@ tabButtons.forEach(button => {
 
 // ... (your branding form listener and other static listeners)
 
-if (brandForm) {
-  brandForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (brandStatusMsg) {
-      brandStatusMsg.className = "hidden";
-      brandStatusMsg.textContent = "";
-    }
 
-    const primary = brandPrimaryColor.value;
-    const secondary = brandSecondaryColor.value;
-    const logo = brandLogoUrl.value.trim();
-    const phone = brandPhone.value.trim();
-    const address = brandAddress.value.trim();
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          theme_primary_color: primary,
-          theme_secondary_color: secondary,
-          logo_url: logo ? logo : null,
-          contact_phone: phone ? phone : null,
-          contact_address: address ? address : null
-        })
-        .eq('id', currentCoachId);
-
-      if (error) throw error;
-
-      showBrandStatus("Brand configurations updated successfully!", "success");
-    } catch (err) {
-      showBrandStatus("Failed to update configurations: " + err.message, "error");
-    }
-  });
-}
 
 function showBrandStatus(text, type) {
   if (!brandStatusMsg) return;
