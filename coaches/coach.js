@@ -40,15 +40,19 @@ let coachChartInstance = null;
 // --- CORE FUNCTIONS ---
 
 
-async function fetchRoster() {
-  console.log(currentCoachId);
+  async function fetchRoster() {
+  // Use a very simple, direct query
   const { data: clients, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, client_status')
-    .eq('coach_id', currentCoachId)
-    .order('full_name', { ascending: true });
+    .select('id, full_name, email, client_status, coach_id') // Added coach_id to the select
+    .eq('coach_id', currentCoachId); 
 
-  if (error || !athleteList) return;
+  if (error) {
+    console.error("Roster query error:", error.message);
+    return;
+  }
+  
+  // ... continue with your rendering code
   athleteList.innerHTML = clients?.length ? '' : '<p>No athletes found.</p>';
   clients?.forEach(client => {
     const item = document.createElement('div');
