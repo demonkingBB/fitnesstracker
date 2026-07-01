@@ -39,10 +39,6 @@ let coachChartInstance = null;
 
 // --- CORE FUNCTIONS ---
 
-function applyCoachBranding(profile) {
-  if (profile.theme_primary_color) document.documentElement.style.setProperty('--brand-primary', profile.theme_primary_color);
-  if (profile.theme_secondary_color) document.documentElement.style.setProperty('--brand-hover', profile.theme_secondary_color);
-}
 
 async function fetchRoster() {
   const { data: clients, error } = await supabase
