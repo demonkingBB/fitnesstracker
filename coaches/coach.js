@@ -144,6 +144,7 @@ if (brandForm) {
 // ... (Add your existing inspectAthlete, renderCoachChart, fetchAthleteHistory, and comment logic below here)
 // Inspect specific athlete portfolio logs & metrics
 async function inspectAthlete(client) {
+  console.log("Inspecting:", client.full_name, "ID:", client.id); // Check this
   activeClientId = client.id;
   activeClientEmail = client.email;
   
@@ -373,6 +374,7 @@ if (athleteStatusSelect) {
 
 // Fetch workout history logs of the inspected client
 async function fetchAthleteHistory() {
+  console.log("Fetching history for ID:", activeClientId); // Check thi
   if (!activeClientId) return;
 
   const { data: workouts, error } = await supabase
