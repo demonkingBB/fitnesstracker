@@ -9,6 +9,16 @@ const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_coach_payment_link";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Place this at the top level of the file
+function applyCoachBranding(profile) {
+  if (profile.theme_primary_color) {
+    document.documentElement.style.setProperty('--brand-primary', profile.theme_primary_color);
+  }
+  if (profile.theme_secondary_color) {
+    document.documentElement.style.setProperty('--brand-hover', profile.theme_secondary_color);
+  }
+}
+
 // DOM Elements
 const userEmailDisplay = document.getElementById('userEmail');
 const logoutBtn = document.getElementById('logoutBtn');
@@ -53,6 +63,22 @@ let coachChartInstance = null;
 
 // Routing Security Guard: Only allow valid coaches in this directory
 async function initCoachDashboard() {
+
+
+  const { data: profile, error: profileErr } = await supabase
+    .from('profiles')
+    .select('role, theme_primary_color, theme_secondary_color, logo_url, contact_phone, contact_address')
+    .eq('id', currentCoachId)
+    .single();
+
+  if (profile) {
+    // THIS IS WHERE YOU CALL IT
+    applyCoachBranding(profile); 
+  }
+
+  // ... continue with fetchRoster() etc ...
+}
+
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (error || !session) {
