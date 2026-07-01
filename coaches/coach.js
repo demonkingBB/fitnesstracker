@@ -41,6 +41,7 @@ let coachChartInstance = null;
 
 
 async function fetchRoster() {
+  console.log(currentCoachId);
   const { data: clients, error } = await supabase
     .from('profiles')
     .select('id, full_name, email, client_status')
