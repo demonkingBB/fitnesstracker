@@ -782,6 +782,10 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
 
       detailsHTML += `</div>`;
       dayCard.innerHTML = headerHTML + detailsHTML;
+      <div class="workout-comments-feed" style="margin-top: 1rem;">
+    <div id="commentsList-${workout.id}" class="comments-list" style="max-height: 120px; overflow-y: auto;">
+    </div>
+  </div>;
 
       dayCard.addEventListener('click', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
