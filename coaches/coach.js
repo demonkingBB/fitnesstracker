@@ -657,4 +657,13 @@ if (logoutBtn) {
   });
 }
 
+function applyCoachBranding(coach) {
+  if (coach.theme_primary_color) {
+    document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
+  }
+  if (coach.theme_secondary_color) {
+    document.documentElement.style.setProperty('--brand-hover', coach.theme_secondary_color);
+  }
+}
+
 initCoachDashboard();

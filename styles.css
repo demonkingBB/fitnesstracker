@@ -1,12 +1,21 @@
 
-  :root {
+ :root {
+  /* Default Branding (These are your "EliteTrack" defaults) */
   --bg-main: #0c0d10;
   --bg-surface: #16181d;
   --border-subtle: #242730;
   --text-primary: #f3f4f6;
   --text-muted: #8a8f98;
-  --accent-neon: #39ff14;
-  --accent-hover: #29d609;
+  
+  /* These are the variables we will override via JavaScript for Coaches */
+  --brand-primary: #39ff14;   /* Replaces --accent-neon */
+  --brand-hover: #29d609;     /* Replaces --accent-hover */
+}
+
+
+.category-tag {
+  border: 1px solid rgba(var(--brand-primary), 0.2); /* Example of using variable */
+  color: var(--brand-primary);
 }
 * {
   margin: 0;
@@ -105,7 +114,7 @@ nav {
   width: 100%;
 }
 .btn-primary {
-  background-color: var(--accent-neon);
+  background-color: var(--brand-primary); 
   color: #000000;
   padding: 0.85rem 1.75rem;
   border-radius: 8px;
@@ -118,9 +127,11 @@ nav {
   display: inline-block;
   border: none;
   cursor: pointer;
+
+
 }
 .btn-primary:hover {
-  background-color: var(--accent-hover);
+  background-color: var(--brand-hover);
   transform: translateY(-1px);
 }
 .btn-secondary {
@@ -205,13 +216,14 @@ nav {
   text-align: center;
 }
 .step span {
+ .step span {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--accent-neon);
-  background-color:
-    rgba(57, 255, 20, 0.08);
-  border: 1px solid
-    rgba(57, 255, 20, 0.2);
+  color: var(--brand-primary); /* The number color */
+  background-color: rgba(var(--brand-primary-rgb), 0.08); /* Requires RGB version */
+  border: 1px solid rgba(var(--brand-primary-rgb), 0.2);
+  /* ... rest of your code ... */
+}
   width: 48px;
   height: 48px;
   display: flex;
