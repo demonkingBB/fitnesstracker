@@ -146,7 +146,7 @@ if (brandForm) {
 async function inspectAthlete(client) {
   console.log("Inspecting:", client.full_name, "ID:", client.id); // Check this
   activeClientId = client.id;
-  activeClientEmail = client.email;
+  //activeClientEmail = client.email; // Optional: store email if needed
   
   if (inactiveInspector) inactiveInspector.classList.add('hidden');
   if (activeInspector) activeInspector.classList.remove('hidden');
