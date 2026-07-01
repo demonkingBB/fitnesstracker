@@ -44,7 +44,7 @@ let coachChartInstance = null;
   // Use a very simple, direct query
   const { data: clients, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, client_status, coach_id') // Added coach_id to the select
+    .select('id, full_name, client_status, coach_id') // Added coach_id to the select
     .eq('coach_id', currentCoachId); 
 
   if (error) {
