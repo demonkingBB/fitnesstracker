@@ -57,7 +57,7 @@ let coachChartInstance = null;
   clients?.forEach(client => {
     const item = document.createElement('div');
     item.className = 'athlete-roster-item';
-    item.innerHTML = `<div><strong>${client.full_name}</strong><p>${client.email}</p></div>`;
+    item.innerHTML = `<div><strong>${client.full_name}</div>`;
     item.addEventListener('click', () => inspectAthlete(client));
     athleteList.appendChild(item);
   });
@@ -152,7 +152,7 @@ async function inspectAthlete(client) {
   if (activeInspector) activeInspector.classList.remove('hidden');
 
   if (inspectAthleteName) inspectAthleteName.textContent = client.full_name || 'Anonymous athlete';
-  if (inspectAthleteEmail) inspectAthleteEmail.textContent = client.email;
+  //if (inspectAthleteEmail) inspectAthleteEmail.textContent = client.athlete;//
   if (athleteStatusSelect) athleteStatusSelect.value = client.client_status || 'active';
 
   // Load latest biometrics
