@@ -108,43 +108,39 @@ async function initDashboard() {
     userEmailDisplay.textContent = currentUser.email;
   }
 
-  // Retrieve user profile configuration details
-  // Change this temporarily to test:
-const { data: profile, error: profileErr } = await supabase
+ // Retrieve user profile configuration details
+const { data: profile, error: profileError } = await supabase
   .from('profiles')
-  .select('id') // ONLY ID
+  .select('id, role, coach_id') // We need id, role, and coach_id to make decisions
   .eq('id', currentUser.id)
   .single();
 
-  if (!profileError && profile) {
-    if (profile.role === 'coach') {
-      window.location.href = '/coaches/';
-      return;
+if (!profileError && profile) {
+  if (profile.role === 'coach') {
+    window.location.href = '/coaches/';
+    return;
+  }
+
+  // MULTI-TENANT ACCESS ENGINE
+  if (profile.coach_id) {
+    // Fetch only the columns that definitely exist in your database
+    const { data: coach, error: coachError } = await supabase
+      .from('profiles')
+      .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
+      .eq('id', profile.coach_id) 
+      .single();
+
+    if (!coachError && coach) {
+      activeCoachProfile = coach;
+      applyCoachBranding(coach);
+
+      if (coachContactWrapper) {
+        coachContactWrapper.classList.remove('hidden');
+        if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
+        if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
+        if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+      }
     }
-
-    // MULTI-TENANT ACCESS ENGINE
-    // MULTI-TENANT ACCESS ENGINE
-if (profile.coach_id) {
-  // 1. Fetch only the Coach's profile using the coach_id found in the client profile
-  const { data: coach, error: coachError } = await supabase
-    .from('profiles')
-    .select('full_name, email, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
-    .eq('id', profile.coach_id) // Querying the coach by their ID
-    .single();
-
-  if (!coachError && coach) {
-    activeCoachProfile = coach;
-    applyCoachBranding(coach); // Apply the coach's colors
-
-    // 2. Populate the Contact Card
-    if (coachContactWrapper) {
-      coachContactWrapper.classList.remove('hidden');
-      if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
-      if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-      // ... etc
-    }
-  } else {
-    console.error("Could not fetch coach branding:", coachError);
   }
 }
 
