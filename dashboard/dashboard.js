@@ -159,7 +159,19 @@ async function initDashboard() {
     lockLoggingInputs('Trial Expired - Sign Up Required');
   }
 
- 
+ // Load Saved Program from Database Memory if available
+  if (profile && profile.current_program_id) {
+    const { data: programObj } = await supabase
+      .from('programs')
+      .select('name')
+      .eq('id', profile.current_program_id)
+      .single();
+
+    if (programObj && ROUTINES[programObj.name]) {
+      if (routineSelect) routineSelect.value = programObj.name;
+      populateSubDays(programObj.name);
+    }
+  }
 
   setupDietRatingListeners();
   setupContactCardListeners();
