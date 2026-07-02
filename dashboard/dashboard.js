@@ -104,111 +104,62 @@ let performanceChartInstance = null; // <--- THESE MUST BE HERE
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
   const { data: { session }, error } = await supabase.auth.getSession();
-
-  if (error || !session) {
-    window.location.href = '/login/';
-    return;
-  }
+  if (error || !session) { window.location.href = '/login/'; return; }
 
   currentUser = session.user;
-  if (userEmailDisplay) {
-    userEmailDisplay.textContent = currentUser.email;
-  }
+  if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
 
- // Retrieve user profile configuration details
-// Change your query temporarily to this
-const { data: profile, error: profileError } = await supabase
-  .from('profiles')
-  .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
-  .eq('id', currentUser.id)
-  .single();
+  // 1. Fetch Client Profile (Safely)
+  // Ensure 'email' is NOT in this select list if it's not in your database
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
+    .eq('id', currentUser.id)
+    .single();
 
-if (!profileError && profile) {
-  if (profile.role === 'coach') {
-    window.location.href = '/coaches/';
+  if (profileError || !profile) {
+    console.error("Critical error fetching profile:", profileError);
+    // Continue loading even if profile fetch has a minor issue, or redirect if fatal
     return;
   }
 
-  // MULTI-TENANT ACCESS ENGINE - CLIENT SIDE
-if (profile.coach_id) {
-  // ONLY select fields that are PUBLIC (Name, Branding, Contact)
-  // DO NOT select subscription_status or trial_ends_at here!
-  const { data: coach, error: coachError } = await supabase
-    .from('profiles')
-    .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
-    .eq('id', profile.coach_id) 
-    .single();
+  // 2. Handle Coach Branding (The Defensive Way)
+  if (profile.coach_id) {
+    try {
+      const { data: coach, error: coachError } = await supabase
+        .from('profiles')
+        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
+        .eq('id', profile.coach_id)
+        .single();
 
-  if (!coachError && coach) {
-    activeCoachProfile = coach;
-    applyCoachBranding(coach);
-    // ... populate contact card ...
+      if (coach && !coachError) {
+        applyCoachBranding(coach);
+        if (coachContactWrapper) {
+           coachContactWrapper.classList.remove('hidden');
+           // Safely set text content
+           if (coachCardName) coachCardName.textContent = coach.full_name || 'Coach';
+           if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
+           if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+        }
+      }
+    } catch (e) {
+      console.warn("Branding fetch skipped (likely RLS):", e);
+    }
   }
 
-
-    // ... (Your branding logic like coachCardName, coachCardPhone etc goes here)
-
-    // CHECK EXPIRATION
-    const coachTrialEnds = new Date(coach.trial_ends_at);
-    const now = new Date();
-    const isCoachExpired = coach.subscription_status !== 'active' && (coachTrialEnds < now);
-
-    if (isCoachExpired) {
-      // ... logic for expired coach
-    } else if (profile.client_status === 'suspended' || profile.client_status === 'closed') {
-      // ... logic for suspended client
-    } else {
-      isTrialExpired = false;
-      if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-    }
-  } 
-} else { 
-  // THIS ELSE ONLY RUNS IF profile.coach_id IS NULL (i.e., user is not linked to a coach)
-  const trialEndsDate = new Date(profile.trial_ends_at);
+  // 3. Subscription Status (Safely using optional chaining ?.)
+  const trialEndsDate = new Date(profile?.trial_ends_at || Date.now());
   const now = new Date();
-  const isPaid = profile.subscription_status === 'active';
-  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
+  const isPaid = profile?.subscription_status === 'active';
+  const isTrialActive = profile?.subscription_status === 'trial' && (trialEndsDate >= now);
 
-  if (isPaid) {
-    isTrialExpired = false;
-    if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-  } else if (isTrialActive) {
-    isTrialExpired = false;
-    if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
-    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-  } else {
+  if (!isPaid && !isTrialActive) {
     isTrialExpired = true;
-    if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
     if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
     lockLoggingInputs('Trial Expired - Sign Up Required');
   }
-} // <--- This closes the 'else' block for when there is NO coach_id
 
-  // Populate Program Selection Dropdown
-  if (routineSelect) {
-    routineSelect.innerHTML = '<option value="">-- Select Your Overall Program Split --</option>';
-    Object.keys(ROUTINES).forEach(routineKey => {
-      const option = document.createElement('option');
-      option.value = routineKey;
-      option.textContent = routineKey;
-      routineSelect.appendChild(option);
-    });
-  }
-
-  // Load Saved Program from Database Memory if available
-  if (profile && profile.current_program_id) {
-    const { data: programObj } = await supabase
-      .from('programs')
-      .select('name')
-      .eq('id', profile.current_program_id)
-      .single();
-
-    if (programObj && ROUTINES[programObj.name]) {
-      if (routineSelect) routineSelect.value = programObj.name;
-      populateSubDays(programObj.name);
-    }
-  }
+ 
 
   setupDietRatingListeners();
   setupContactCardListeners();
