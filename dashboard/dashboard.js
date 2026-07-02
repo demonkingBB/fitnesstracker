@@ -960,8 +960,8 @@ async function fetchAndRenderBiometricHistory() {
 // ==========================================================================
 // TWO STATIC GRAPHS FOR CLIENTS (Body & Nutrition Journey + Performance Volume)
 // ==========================================================================
-let bodyChartInstance = null;
-let performanceChartInstance = null;
+bodyChartInstance = null;
+performanceChartInstance = null;
 
 async function renderAnalyticsChart() {
   if (!currentUser) return;
