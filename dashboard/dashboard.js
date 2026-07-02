@@ -109,16 +109,31 @@ async function initDashboard() {
   currentUser = session.user;
 
   // 1. Fetch USER profile only (No coach fetching here to avoid 406)
-  const { data: profile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', currentUser.id)
-    .single();
+  // Retrieve user profile configuration details
+const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', currentUser.id)
+  .single();
 
-  if (profileErr || !profile) {
-    console.error("Profile fetch error:", profileErr);
-    return;
+// CRITICAL FIX: Stop if profile is null or fetch failed
+if (profileError || !profile) {
+  console.error("Could not load profile:", profileError);
+} else {
+  // Only run this logic if profile exists
+  if (profile.current_program_id) {
+    const { data: programObj } = await supabase
+      .from('programs')
+      .select('name')
+      .eq('id', profile.current_program_id)
+      .single();
+
+    if (programObj && ROUTINES[programObj.name]) {
+      if (routineSelect) routineSelect.value = programObj.name;
+      populateSubDays(programObj.name);
+    }
   }
+}
 
   // 2. Safely check expiration
   const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
