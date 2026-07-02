@@ -1,3 +1,31 @@
+const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, current_program_id, trial_ends_at, subscription_status, coach_id, client_status')
+    .eq('id', currentUser.id)
+    .single();
+
+
+
+ // Load Saved Program from Database Memory if available
+  if (profile && profile.current_program_id) {
+    const { data: programObj } = await supabase
+      .from('programs')
+      .select('name')
+      .eq('id', profile.current_program_id)
+      .single();
+
+    if (programObj && ROUTINES[programObj.name]) {
+      if (routineSelect) routineSelect.value = programObj.name;
+      populateSubDays(programObj.name);
+    }
+  }
+
+
+
+
+
+
+
 // This is your EXISTING event listener
 if (workoutLoggingForm) {
   workoutLoggingForm.addEventListener('submit', async (e) => {

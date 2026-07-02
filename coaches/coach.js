@@ -104,19 +104,24 @@ if (brandForm) {
   brandForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Collect all values from your form
+    if (brandStatusMsg) {
+      brandStatusMsg.className = "hidden";
+      brandStatusMsg.textContent = "";
+    }
+
+    // Capture values from the NEW HTML inputs
     const updates = {
+      full_name: document.getElementById('brandAppName').value.trim(),
       theme_primary_color: brandPrimaryColor.value,
       theme_secondary_color: brandSecondaryColor.value,
+      background_color: document.getElementById('brandBgColor').value,
+      theme_mode: document.getElementById('brandThemeMode').value,
       logo_url: brandLogoUrl.value.trim() || null,
       contact_phone: brandPhone.value.trim() || null,
       contact_address: brandAddress.value.trim() || null
-      // NOTE: If you add an "app_name" column to your 'profiles' table, 
-      // you can simply add: app_name: document.getElementById('brandAppName').value
     };
 
     try {
-      // 1. Update the database
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -124,19 +129,20 @@ if (brandForm) {
 
       if (error) throw error;
 
-      // 2. Apply theme changes instantly (Live Preview)
+      // Apply the branding changes visually
       applyCoachBranding({
         theme_primary_color: updates.theme_primary_color,
         theme_secondary_color: updates.theme_secondary_color
       });
+      
+      // Update background if defined
+      if(updates.background_color) {
+        document.documentElement.style.setProperty('--bg-main', updates.background_color);
+      }
 
-      // 3. Optional: Update Title if you have an input for it
-      // const titleInput = document.getElementById('brandAppName');
-      // if (titleInput) document.title = titleInput.value;
-
-      alert("Branding configurations updated successfully!");
+      showBrandStatus("Brand configurations updated successfully!", "success");
     } catch (err) {
-      alert("Failed to update configurations: " + err.message);
+      showBrandStatus("Failed to update configurations: " + err.message, "error");
     }
   });
 }

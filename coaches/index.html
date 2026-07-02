@@ -125,67 +125,57 @@
         <h3 style="margin-bottom: 0.5rem;">White-Label Settings</h3>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Customized branding options apply directly to all clients on your roster instantly on login.</p>
         
-        <form id="brandForm">
-          <div class="form-group">
-            <label for="brandPrimaryColor">Theme Primary Accent Color</label>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <input type="color" id="brandPrimaryColor" style="width: 50px; height: 40px; background: none; border: 1px solid var(--border-subtle); cursor: pointer;" value="#39ff14">
-              <span style="font-size: 0.85rem; color: var(--text-muted);">Pick colors that accent buttons and highlights (e.g. Neon green)</span>
-            </div>
-          </div>
+        <!-- Inside #brandTab -->
+<form id="brandForm">
+  <!-- Brand Name -->
+  <div class="form-group">
+    <label for="brandAppName">App Name (Workspace Title)</label>
+    <input type="text" id="brandAppName" class="workout-input" placeholder="e.g. Coach Ab's Track">
+  </div>
 
-          <div class="form-group">
-            <label for="brandSecondaryColor">Theme Hover Accent Color</label>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <input type="color" id="brandSecondaryColor" style="width: 50px; height: 40px; background: none; border: 1px solid var(--border-subtle); cursor: pointer;" value="#29d609">
-              <span style="font-size: 0.85rem; color: var(--text-muted);">Pick slightly darker colors for hover interactions</span>
-            </div>
-          </div>
+  <!-- Primary Color -->
+  <div class="form-group">
+    <label for="brandPrimaryColor">Theme Primary Accent Color</label>
+    <input type="color" id="brandPrimaryColor" class="workout-input" style="height: 40px; cursor: pointer;">
+  </div>
 
-          <div class="form-group">
-            <label for="brandLogoUrl">Custom Logo Image URL</label>
-            <input type="url" id="brandLogoUrl" class="workout-input" placeholder="e.g. https://yourdomain.com/logo.png">
-          </div>
+  <!-- Secondary Color -->
+  <div class="form-group">
+    <label for="brandSecondaryColor">Theme Hover Accent Color</label>
+    <input type="color" id="brandSecondaryColor" class="workout-input" style="height: 40px; cursor: pointer;">
+  </div>
 
-          <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-top: 1.5rem; margin-bottom: 1rem;">
-            <h4 style="color: #fff; margin-bottom: 1rem; font-size: 1rem;">Public Trainer Contact Card</h4>
-          </div>
-
-          <!-- App Name -->
-       <div class="form-group">
-        <label for="brandAppName">App/Workspace Name</label>
-         <input type="text" id="brandAppName" class="workout-input" placeholder="e.g. Coach Ab's Track">
-        </div>
-
-<!-- Background Color -->
-    <div class="form-group">
+  <!-- Background Color -->
+  <div class="form-group">
     <label for="brandBgColor">Dashboard Background Color</label>
-       <input type="color" id="brandBgColor" class="workout-input" style="width: 100%; height: 40px;">
-        </div>
+    <input type="color" id="brandBgColor" class="workout-input" style="height: 40px; cursor: pointer;">
+  </div>
 
-<!-- Theme Mode Toggle -->
-      <div class="form-group">
-      <label for="brandThemeMode">Theme Mode</label>
-      <select id="brandThemeMode" class="workout-input">
-    <option value="dark">Dark Mode</option>
-    <option value="light">Light Mode</option>
-       </select>
-        </div>
+  <!-- Theme Mode Toggle -->
+  <div class="form-group">
+    <label for="brandThemeMode">Theme Mode</label>
+    <select id="brandThemeMode" class="program-select-dropdown">
+      <option value="dark">Dark Mode</option>
+      <option value="light">Light Mode</option>
+    </select>
+  </div>
 
-          <div class="form-group">
-            <label for="brandPhone">Public Contact Phone</label>
-            <input type="tel" id="brandPhone" class="workout-input" placeholder="e.g. (555) 555-5555">
-          </div>
+  <!-- Existing Contact Fields -->
+  <div class="form-group">
+    <label for="brandLogoUrl">Custom Logo Image URL</label>
+    <input type="url" id="brandLogoUrl" class="workout-input" placeholder="https://...">
+  </div>
+  <div class="form-group">
+    <label for="brandPhone">Public Contact Phone</label>
+    <input type="tel" id="brandPhone" class="workout-input" placeholder="(555) 555-5555">
+  </div>
+  <div class="form-group">
+    <label for="brandAddress">Public Address</label>
+    <input type="text" id="brandAddress" class="workout-input" placeholder="123 Gym St">
+  </div>
 
-          <div class="form-group">
-            <label for="brandAddress">Public Gym Address / Info</label>
-            <input type="text" id="brandAddress" class="workout-input" placeholder="e.g. 123 Elite Athletics Gym, Suite A">
-          </div>
-
-          <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
-            Save Brand Configurations
-          </button>
-        </form>
+  <button type="submit" class="btn-primary" style="width: 100%;">Save Brand Configurations</button>
+</form>
 
         <div id="brandStatusMsg" class="hidden" style="margin-top: 1.5rem; padding: 1rem; border-radius: 6px; text-align: center;"></div>
       </div>
