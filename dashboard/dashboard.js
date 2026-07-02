@@ -1166,6 +1166,7 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     return;
   }
+
   
   // Handle Add Set button
   if (e.target.classList.contains('add-set-btn')) {
@@ -1185,6 +1186,6 @@ document.addEventListener('click', (e) => {
     }
   }
 });
-
+}
 initDashboard();
 
