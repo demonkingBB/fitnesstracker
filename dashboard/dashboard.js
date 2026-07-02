@@ -100,6 +100,7 @@ let strengthPRs = {};
 let cardioPR = { distance: 0, duration: 0 };
 let bodyChartInstance = null;      // <--- THESE MUST BE HERE
 let performanceChartInstance = null; // <--- THESE MUST BE HERE
+let currentUser = null
 
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
@@ -128,18 +129,22 @@ if (!profileError && profile) {
     return;
   }
 
-  // MULTI-TENANT ACCESS ENGINE
-  // MULTI-TENANT ACCESS ENGINE
+  // MULTI-TENANT ACCESS ENGINE - CLIENT SIDE
 if (profile.coach_id) {
+  // ONLY select fields that are PUBLIC (Name, Branding, Contact)
+  // DO NOT select subscription_status or trial_ends_at here!
   const { data: coach, error: coachError } = await supabase
     .from('profiles')
-    .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at')
-    .eq('id', profile.coach_id)
+    .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
+    .eq('id', profile.coach_id) 
     .single();
 
   if (!coachError && coach) {
     activeCoachProfile = coach;
     applyCoachBranding(coach);
+    // ... populate contact card ...
+  }
+
 
     // ... (Your branding logic like coachCardName, coachCardPhone etc goes here)
 
