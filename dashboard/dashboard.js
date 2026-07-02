@@ -109,11 +109,12 @@ async function initDashboard() {
   }
 
   // Retrieve user profile configuration details
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role, current_program_id, trial_ends_at, subscription_status, coach_id, client_status')
-    .eq('id', currentUser.id)
-    .single();
+  // Change this temporarily to test:
+const { data: profile, error: profileErr } = await supabase
+  .from('profiles')
+  .select('id') // ONLY ID
+  .eq('id', currentUser.id)
+  .single();
 
   if (!profileError && profile) {
     if (profile.role === 'coach') {
