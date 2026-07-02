@@ -104,65 +104,67 @@ let performanceChartInstance = null; // <--- THESE MUST BE HERE
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) { window.location.href = '/login/'; return; }
+  if (error || !session) { 
+    window.location.href = '/login/'; 
+    return; 
+  }
 
   currentUser = session.user;
   if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
 
-  // 1. DECLARE 'profile' at the top of the function so it is available everywhere
-  let profile = null;
-
-  // 2. FETCH
-  const { data: fetchedProfile, error: profileError } = await supabase
+  // 1. FETCH PROFILE
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
     .eq('id', currentUser.id)
     .single();
 
-  if (profileError || !fetchedProfile) {
-    console.error("Dashboard init failed:", profileError);
-    return; // Exit here so line 159 is never reached if profile is missing
+  if (profileError || !profile) {
+    console.error("Profile fetch failed:", profileError);
+    return;
   }
 
-  // 3. Assign the fetched data to the variable
-  profile = fetchedProfile;
+  // 2. COACH REDIRECT
+  if (profile.role === 'coach') {
+    window.location.href = '/coaches/';
+    return;
+  }
 
-  // Now 'profile' is available for the rest of the function!
-  // ... your existing logic using 'profile' ...
-  if (profile.role === 'coach') { ... } 
-  
-  // Now line 159 and beyond will work!
+  // 3. MULTI-TENANT ACCESS ENGINE
+  if (profile.coach_id) {
+    const { data: coach, error: coachError } = await supabase
+      .from('profiles')
+      .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
+      .eq('id', profile.coach_id)
+      .single();
 
-  // 2. Safely check expiration
+    if (!coachError && coach) {
+      applyCoachBranding(coach);
+      if (coachContactWrapper) {
+        coachContactWrapper.classList.remove('hidden');
+        if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
+        if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
+        if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+      }
+    }
+  }
+
+  // 4. SUBSCRIPTION LOGIC
   const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
+  const now = new Date();
   const isPaid = profile.subscription_status === 'active';
-  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= new Date());
+  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
 
-  // Only show banner if explicitly NOT paid AND NOT trial active
   if (!isPaid && !isTrialActive) {
+    isTrialExpired = true;
     if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
     lockLoggingInputs('Trial Expired - Sign Up Required');
   } else {
+    isTrialExpired = false;
     if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
   }
 
-  // 3. Load your app data
-  await fetchWorkoutCache();
-  fetchAndRenderHistory();
-  // ... rest of init ...
-}
-    const { data: programObj } = await supabase
-      .from('programs')
-      .select('name')
-      .eq('id', profile.current_program_id)
-      .single();
-
-    if (programObj && ROUTINES[programObj.name]) {
-      if (routineSelect) routineSelect.value = programObj.name;
-      populateSubDays(programObj.name);
-    }
-  
-
+  // 5. REST OF INITIALIZATION
   setupDietRatingListeners();
   setupContactCardListeners();
   await fetchWorkoutCache();
@@ -170,7 +172,7 @@ async function initDashboard() {
   fetchAndRenderBiometricHistory();
   renderAnalyticsChart();
   setupRealtimeComments();
-
+}
 
 function lockLoggingInputs(buttonMessage) {
   if (saveWorkoutBtn) {
