@@ -116,9 +116,10 @@ async function initDashboard() {
   }
 
  // Retrieve user profile configuration details
+// Change your query temporarily to this
 const { data: profile, error: profileError } = await supabase
   .from('profiles')
-  .select('id, role, coach_id') // We need id, role, and coach_id to make decisions
+  .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
   .eq('id', currentUser.id)
   .single();
 
