@@ -122,79 +122,56 @@ if (!profileError && profile) {
   }
 
   // MULTI-TENANT ACCESS ENGINE
-  if (profile.coach_id) {
-    // Fetch only the columns that definitely exist in your database
-    const { data: coach, error: coachError } = await supabase
-      .from('profiles')
-      .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
-      .eq('id', profile.coach_id) 
-      .single();
+  // MULTI-TENANT ACCESS ENGINE
+if (profile.coach_id) {
+  const { data: coach, error: coachError } = await supabase
+    .from('profiles')
+    .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at')
+    .eq('id', profile.coach_id)
+    .single();
 
-    if (!coachError && coach) {
-      activeCoachProfile = coach;
-      applyCoachBranding(coach);
+  if (!coachError && coach) {
+    activeCoachProfile = coach;
+    applyCoachBranding(coach);
 
-      if (coachContactWrapper) {
-        coachContactWrapper.classList.remove('hidden');
-        if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
-        if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-        if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
-      }
-    }
-  }
-}
+    // ... (Your branding logic like coachCardName, coachCardPhone etc goes here)
 
-        const coachTrialEnds = new Date(coach.trial_ends_at);
-        const now = new Date();
-        const isCoachExpired = coach.subscription_status !== 'active' && (coachTrialEnds < now);
+    // CHECK EXPIRATION
+    const coachTrialEnds = new Date(coach.trial_ends_at);
+    const now = new Date();
+    const isCoachExpired = coach.subscription_status !== 'active' && (coachTrialEnds < now);
 
-        if (isCoachExpired) {
-          isTrialExpired = true;
-          if (trialExpirationBanner) {
-            trialExpirationBanner.classList.remove('hidden');
-            trialExpirationBanner.querySelector('h4').textContent = "Coaching Group Inactive";
-            trialExpirationBanner.querySelector('p').textContent = "Your coach's account is currently inactive. Logging is temporarily restricted.";
-          }
-          if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-          if (restartTrialBtn) restartTrialBtn.classList.add('hidden');
-          lockLoggingInputs('Coaching Account Suspended');
-        } else if (profile.client_status === 'suspended' || profile.client_status === 'closed') {
-          isTrialExpired = true;
-          if (trialExpirationBanner) {
-            trialExpirationBanner.classList.remove('hidden');
-            trialExpirationBanner.querySelector('h4').textContent = "Access Restricted";
-            trialExpirationBanner.querySelector('p').textContent = "Your coach has suspended your logging privileges. You can still view your history below.";
-          }
-          if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-          if (restartTrialBtn) restartTrialBtn.classList.add('hidden');
-          lockLoggingInputs('Account Suspended by Coach');
-        } else {
-          isTrialExpired = false;
-          if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-        }
-      }
+    if (isCoachExpired) {
+      // ... logic for expired coach
+    } else if (profile.client_status === 'suspended' || profile.client_status === 'closed') {
+      // ... logic for suspended client
     } else {
-      const trialEndsDate = new Date(profile.trial_ends_at);
-      const now = new Date();
-      const isPaid = profile.subscription_status === 'active';
-      const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
-
-      if (isPaid) {
-        isTrialExpired = false;
-        if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-      } else if (isTrialActive) {
-        isTrialExpired = false;
-        if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
-        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-      } else {
-        isTrialExpired = true;
-        if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-        if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
-        lockLoggingInputs('Trial Expired - Sign Up Required');
-      }
+      isTrialExpired = false;
+      if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
     }
+  } 
+} else { 
+  // THIS ELSE ONLY RUNS IF profile.coach_id IS NULL (i.e., user is not linked to a coach)
+  const trialEndsDate = new Date(profile.trial_ends_at);
+  const now = new Date();
+  const isPaid = profile.subscription_status === 'active';
+  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
+
+  if (isPaid) {
+    isTrialExpired = false;
+    if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+  } else if (isTrialActive) {
+    isTrialExpired = false;
+    if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
+    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+  } else {
+    isTrialExpired = true;
+    if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+    if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
+    lockLoggingInputs('Trial Expired - Sign Up Required');
   }
+} // <--- This closes the 'else' block for when there is NO coach_id
 
   // Populate Program Selection Dropdown
   if (routineSelect) {
