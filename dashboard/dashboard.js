@@ -1197,6 +1197,6 @@ document.addEventListener('click', (e) => {
     }
   }
 });
-}
+
 initDashboard();
 
