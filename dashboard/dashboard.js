@@ -107,60 +107,37 @@ async function initDashboard() {
   if (error || !session) { window.location.href = '/login/'; return; }
 
   currentUser = session.user;
-  if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
 
-  // 1. Fetch Client Profile (Safely)
-  // Ensure 'email' is NOT in this select list if it's not in your database
-  const { data: profile, error: profileError } = await supabase
+  // 1. Fetch USER profile only (No coach fetching here to avoid 406)
+  const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
+    .select('*')
     .eq('id', currentUser.id)
     .single();
 
-  if (profileError || !profile) {
-    console.error("Critical error fetching profile:", profileError);
-    // Continue loading even if profile fetch has a minor issue, or redirect if fatal
+  if (profileErr || !profile) {
+    console.error("Profile fetch error:", profileErr);
     return;
   }
 
-  // 2. Handle Coach Branding (The Defensive Way)
-  if (profile.coach_id) {
-    try {
-      const { data: coach, error: coachError } = await supabase
-        .from('profiles')
-        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
-        .eq('id', profile.coach_id)
-        .single();
+  // 2. Safely check expiration
+  const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
+  const isPaid = profile.subscription_status === 'active';
+  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= new Date());
 
-      if (coach && !coachError) {
-        applyCoachBranding(coach);
-        if (coachContactWrapper) {
-           coachContactWrapper.classList.remove('hidden');
-           // Safely set text content
-           if (coachCardName) coachCardName.textContent = coach.full_name || 'Coach';
-           if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-           if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
-        }
-      }
-    } catch (e) {
-      console.warn("Branding fetch skipped (likely RLS):", e);
-    }
-  }
-
-  // 3. Subscription Status (Safely using optional chaining ?.)
-  const trialEndsDate = new Date(profile?.trial_ends_at || Date.now());
-  const now = new Date();
-  const isPaid = profile?.subscription_status === 'active';
-  const isTrialActive = profile?.subscription_status === 'trial' && (trialEndsDate >= now);
-
+  // Only show banner if explicitly NOT paid AND NOT trial active
   if (!isPaid && !isTrialActive) {
-    isTrialExpired = true;
     if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
     lockLoggingInputs('Trial Expired - Sign Up Required');
+  } else {
+    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
   }
 
- // Load Saved Program from Database Memory if available
-  if (profile && profile.current_program_id) {
+  // 3. Load your app data
+  await fetchWorkoutCache();
+  fetchAndRenderHistory();
+  // ... rest of init ...
+}
     const { data: programObj } = await supabase
       .from('programs')
       .select('name')
@@ -171,7 +148,7 @@ async function initDashboard() {
       if (routineSelect) routineSelect.value = programObj.name;
       populateSubDays(programObj.name);
     }
-  }
+  
 
   setupDietRatingListeners();
   setupContactCardListeners();
@@ -180,7 +157,7 @@ async function initDashboard() {
   fetchAndRenderBiometricHistory();
   renderAnalyticsChart();
   setupRealtimeComments();
-}
+
 
 function lockLoggingInputs(buttonMessage) {
   if (saveWorkoutBtn) {
