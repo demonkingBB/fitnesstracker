@@ -100,7 +100,6 @@ let strengthPRs = {};
 let cardioPR = { distance: 0, duration: 0 };
 let bodyChartInstance = null;      // <--- THESE MUST BE HERE
 let performanceChartInstance = null; // <--- THESE MUST BE HERE
-let currentUser = null
 
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
