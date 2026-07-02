@@ -3,6 +3,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { PROGRAMS, ROUTINES } from './programdata.js'
 
+
+
 // Ensure this is at the top level of dashboard.js, not inside initDashboard or others
 function generateExerciseForm(selectedDay) {
   const container = document.getElementById('exerciseContainer');
@@ -87,12 +89,17 @@ const coachCardAddress = document.getElementById('coachCardAddress');
 const strengthPRContainer = document.getElementById('strengthPRContainer');
 const cardioPRContainer = document.getElementById('cardioPRContainer');
 
+
+
+// PUT THESE AT THE VERY TOP OF dashboard.js (below the imports/config)
 let currentUser = null;
 let isTrialExpired = false;
 let activeCoachProfile = null;
 let cachedWorkouts = [];
 let strengthPRs = {};
 let cardioPR = { distance: 0, duration: 0 };
+let bodyChartInstance = null;      // <--- THESE MUST BE HERE
+let performanceChartInstance = null; // <--- THESE MUST BE HERE
 
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
