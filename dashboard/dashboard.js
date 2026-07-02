@@ -123,16 +123,30 @@ const { data: profile, error: profileErr } = await supabase
     }
 
     // MULTI-TENANT ACCESS ENGINE
-    if (profile.coach_id) {
-      const { data: coach, error: coachError } = await supabase
-        .from('profiles')
-        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at')
-        .eq('id', profile.coach_id)
-        .single();
+    // MULTI-TENANT ACCESS ENGINE
+if (profile.coach_id) {
+  // 1. Fetch only the Coach's profile using the coach_id found in the client profile
+  const { data: coach, error: coachError } = await supabase
+    .from('profiles')
+    .select('full_name, email, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
+    .eq('id', profile.coach_id) // Querying the coach by their ID
+    .single();
 
-      if (!coachError && coach) {
-        activeCoachProfile = coach;
-        applyCoachBranding(coach);
+  if (!coachError && coach) {
+    activeCoachProfile = coach;
+    applyCoachBranding(coach); // Apply the coach's colors
+
+    // 2. Populate the Contact Card
+    if (coachContactWrapper) {
+      coachContactWrapper.classList.remove('hidden');
+      if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
+      if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
+      // ... etc
+    }
+  } else {
+    console.error("Could not fetch coach branding:", coachError);
+  }
+}
 
         const coachTrialEnds = new Date(coach.trial_ends_at);
         const now = new Date();
