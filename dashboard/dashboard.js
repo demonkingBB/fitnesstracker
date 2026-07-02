@@ -125,7 +125,7 @@ async function initDashboard() {
     if (profile.coach_id) {
       const { data: coach, error: coachError } = await supabase
         .from('profiles')
-        .select('full_name, email, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at')
+        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at')
         .eq('id', profile.coach_id)
         .single();
 
