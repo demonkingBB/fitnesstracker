@@ -451,29 +451,26 @@ async function fetchAthleteHistory() {
       ? 'NUTRITION' 
       : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
 
-    card.innerHTML = `
-      <div style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.04);">
-        <div>
-          <span class="category-tag">${displayTag}</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">${workout.log_date}</span>
-        </div>
+     // Change your card.innerHTML block to this (the ID fix is on the input tag):
+card.innerHTML = `
+  <div style="...">
+    ...
+  </div>
+  <div style="padding: 1rem;">
+    <h4 ...>${workout.exercise_name}</h4>
+    <div style="...">
+      ${innerSetsHTML}
+    </div>
+    <div class="workout-comments-feed">
+      <div class="comments-list" id="inspectComments-${workout.id}" style="..."></div>
+      <div class="comment-input-row" style="...">
+        <!-- FIX IS HERE: Use workout.id directly -->
+        <input type="text" id="inspectCommentInput-${workout.id}" placeholder="Type feedback..." ...>
+        <button type="button" class="btn-primary post-comment-btn" data-workout-id="${workout.id}" style="...">Comment</button>
       </div>
-      <div style="padding: 1rem;">
-        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 1rem;">${workout.exercise_name}</h4>
-        <div style="font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
-          ${innerSetsHTML}
-        </div>
-        <div class="workout-comments-feed">
-          <div class="comments-list" id="inspectComments-${workout.id}" style="max-height: 120px; overflow-y: auto; margin-bottom: 0.5rem; display: flex; flex-direction: column;">
-            <!-- Comments rendering -->
-          </div>
-          <div class="comment-input-row" style="display: flex; gap: 0.5rem;">
-            <input type="text" id="inspectCommentInput-${workoutId = workout.id}" placeholder="Type feedback message..." style="flex: 1; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-main); color: #fff; font-size: 0.8rem;">
-            <button type="button" class="btn-primary post-comment-btn" data-workout-id="${workout.id}" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 4px;">Comment</button>
-          </div>
-        </div>
-      </div>
-    `;
+    </div>
+  </div>
+`;
 
     const feedContainer = card.querySelector('.comments-list');
     const workoutComments = commentsMap[workout.id] || [];
