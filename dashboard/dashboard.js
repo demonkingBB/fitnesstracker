@@ -107,33 +107,31 @@ async function initDashboard() {
   if (error || !session) { window.location.href = '/login/'; return; }
 
   currentUser = session.user;
+  if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
 
-  // 1. Fetch USER profile only (No coach fetching here to avoid 406)
-  // Retrieve user profile configuration details
-const { data: profile, error: profileError } = await supabase
-  .from('profiles')
-  .select('*')
-  .eq('id', currentUser.id)
-  .single();
+  // 1. DECLARE 'profile' at the top of the function so it is available everywhere
+  let profile = null;
 
-// CRITICAL FIX: Stop if profile is null or fetch failed
-if (profileError || !profile) {
-  console.error("Could not load profile:", profileError);
-} else {
-  // Only run this logic if profile exists
-  if (profile.current_program_id) {
-    const { data: programObj } = await supabase
-      .from('programs')
-      .select('name')
-      .eq('id', profile.current_program_id)
-      .single();
+  // 2. FETCH
+  const { data: fetchedProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
+    .eq('id', currentUser.id)
+    .single();
 
-    if (programObj && ROUTINES[programObj.name]) {
-      if (routineSelect) routineSelect.value = programObj.name;
-      populateSubDays(programObj.name);
-    }
+  if (profileError || !fetchedProfile) {
+    console.error("Dashboard init failed:", profileError);
+    return; // Exit here so line 159 is never reached if profile is missing
   }
-}
+
+  // 3. Assign the fetched data to the variable
+  profile = fetchedProfile;
+
+  // Now 'profile' is available for the rest of the function!
+  // ... your existing logic using 'profile' ...
+  if (profile.role === 'coach') { ... } 
+  
+  // Now line 159 and beyond will work!
 
   // 2. Safely check expiration
   const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
