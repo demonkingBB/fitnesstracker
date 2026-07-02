@@ -779,36 +779,36 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
             <div style="font-size: 0.8rem; color: #38bdf8;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
           </div>`;
       }
+      
+      // INSERT COMMENT BUCKET HERE
+      detailsHTML += `
+        <div class="workout-comments-feed" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+          <div id="commentsList-${dayGroup.date}" class="comments-list" style="max-height: 120px; overflow-y: auto;">
+          </div>
+        </div>
+      `;
 
-      detailsHTML += `</div>`;
+      detailsHTML += `</div>`; // Close day-card-details
+
       dayCard.innerHTML = headerHTML + detailsHTML;
-      <div class="workout-comments-feed" style="margin-top: 1rem;">
-    <div id="commentsList-${workout.id}" class="comments-list" style="max-height: 120px; overflow-y: auto;">
-    </div>
-  </div>;
-
+      
+      // Now add the event listener
       dayCard.addEventListener('click', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         const detailsBlock = dayCard.querySelector('.day-card-details');
         const isHidden = detailsBlock.classList.contains('hidden');
-        document.querySelectorAll('.day-card-details').forEach(el => {
-          el.classList.add('hidden');
-        });
+        
+        document.querySelectorAll('.day-card-details').forEach(el => el.classList.add('hidden'));
 
         if (isHidden) {
           detailsBlock.classList.remove('hidden');
           dayCard.style.borderColor = "var(--accent-neon)";
-          if (liftCount > 0) {
-            dayGroup.lifts.forEach(workout => {
-              const feedContainer = document.getElementById(`commentsList-${workout.id}`);
-              if (feedContainer) {
-                feedContainer.innerHTML = '';
-                const workoutComments = commentsByWorkout[workout.id] || [];
-                workoutComments.forEach(comment => {
-                  appendSingleCommentToFeed(feedContainer, comment);
-                });
-              }
-            });
+          
+          // Populate comments when opened
+          const feedContainer = dayCard.querySelector(`#commentsList-${dayGroup.date}`);
+          if (feedContainer) {
+            feedContainer.innerHTML = '';
+            // Fetch and append comments here...
           }
         } else {
           detailsBlock.classList.add('hidden');
@@ -819,7 +819,7 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
       historyGrid.appendChild(dayCard);
     });
   }
-}
+}         
 
 // ==========================================================================
 // BIOMETRIC ENGINE MATH & PROGRESSIVE OVERLOAD VISUALS
