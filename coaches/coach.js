@@ -40,26 +40,48 @@ let coachChartInstance = null;
 // --- CORE FUNCTIONS ---
 
 
-  async function fetchRoster() {
-  // Use a very simple, direct query
-  const { data: clients, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, client_status, coach_id') // Added coach_id to the select
-    .eq('coach_id', currentCoachId); 
+async function fetchAthleteHistory() {
+  if (!activeClientId) return;
 
-  if (error) {
-    console.error("Roster query error:", error.message);
+  const { data: workouts, error } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('user_id', activeClientId)
+    .order('log_date', { ascending: false });
+
+  if (error || !athleteHistoryGrid) return;
+
+  athleteHistoryGrid.innerHTML = '';
+
+  if (!workouts || workouts.length === 0) {
+    athleteHistoryGrid.innerHTML = '<p style="color: var(--text-muted);">No logs found.</p>';
     return;
   }
-  
-  // ... continue with your rendering code
-  athleteList.innerHTML = clients?.length ? '' : '<p>No athletes found.</p>';
-  clients?.forEach(client => {
-    const item = document.createElement('div');
-    item.className = 'athlete-roster-item';
-    item.innerHTML = `<div><strong>${client.full_name}</div>`;
-    item.addEventListener('click', () => inspectAthlete(client));
-    athleteList.appendChild(item);
+
+  workouts.forEach(workout => {
+    let logDetail = '';
+
+    // Logic for readable CSV-style formatting
+    if (workout.exercise_name === 'Daily Nutritional Matrix') {
+      logDetail = `Diet Rating: <strong>${workout.metrics.diet_rating}/5</strong>`;
+    } else if (workout.category === 'cardio') {
+      logDetail = `${workout.metrics.sets?.[0]?.distance} miles in ${workout.metrics.sets?.[0]?.duration} mins`;
+    } else if (workout.exercise_name !== 'Biometric Snapshot Engine') {
+      logDetail = workout.metrics.sets?.map(s => `${s.reps}x${s.weight}lbs`).join(', ');
+    } else {
+      logDetail = `Weight: ${workout.metrics.weight} lbs | BMI: ${workout.metrics.bmi?.toFixed(1)}`;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'audit-log-row';
+    row.innerHTML = `
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--accent-neon); font-weight: bold;">${workout.log_date}</span>
+        <span style="color: var(--text-muted);">${workout.exercise_name}</span>
+      </div>
+      <div style="margin-top: 4px;">${logDetail}</div>
+    `;
+    athleteHistoryGrid.appendChild(row);
   });
 }
 
@@ -81,7 +103,7 @@ async function initCoachDashboard() {
   if (profileErr || !profile || profile.role !== 'coach') { window.location.href = '/login/'; return; }
 
   applyCoachBranding(profile);
-  
+
   // Expiration check
   const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
   if (profile.subscription_status !== 'active' && trialEndsDate < new Date()) {
@@ -103,7 +125,7 @@ document.addEventListener('DOMContentLoaded', initCoachDashboard);
 if (brandForm) {
   brandForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     if (brandStatusMsg) {
       brandStatusMsg.className = "hidden";
       brandStatusMsg.textContent = "";
@@ -134,9 +156,9 @@ if (brandForm) {
         theme_primary_color: updates.theme_primary_color,
         theme_secondary_color: updates.theme_secondary_color
       });
-      
+
       // Update background if defined
-      if(updates.background_color) {
+      if (updates.background_color) {
         document.documentElement.style.setProperty('--bg-main', updates.background_color);
       }
 
@@ -153,7 +175,7 @@ async function inspectAthlete(client) {
   console.log("Inspecting:", client.full_name, "ID:", client.id); // Check this
   activeClientId = client.id;
   //activeClientEmail = client.email; // Optional: store email if needed
-  
+
   if (inactiveInspector) inactiveInspector.classList.add('hidden');
   if (activeInspector) activeInspector.classList.remove('hidden');
 
@@ -426,7 +448,7 @@ async function fetchAthleteHistory() {
     card.style.cssText = `background: #1c2742; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;`;
 
     let innerSetsHTML = '';
-    
+
     if (workout.exercise_name === 'Daily Nutritional Matrix') {
       innerSetsHTML = `<strong>Diet Quality Rating: ${workout.metrics.diet_rating}/5</strong>`;
     } else if (workout.exercise_name === 'Biometric Snapshot Engine') {
@@ -447,12 +469,12 @@ async function fetchAthleteHistory() {
       });
     }
 
-    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix' 
-      ? 'NUTRITION' 
+    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix'
+      ? 'NUTRITION'
       : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
 
-     // Change your card.innerHTML block to this (the ID fix is on the input tag):
-card.innerHTML = `
+    // Change your card.innerHTML block to this (the ID fix is on the input tag):
+    card.innerHTML = `
   <div style="...">
     ...
   </div>
@@ -538,7 +560,7 @@ function appendSingleCommentToFeed(container, comment) {
     bubble.style.borderColor = "rgba(57, 255, 20, 0.2)";
     bubble.style.backgroundColor = "rgba(57, 255, 20, 0.02)";
   }
-  
+
   bubble.innerHTML = `
     <div style="font-weight: bold; color: ${isMe ? 'var(--accent-neon)' : '#ffffff'}; margin-bottom: 0.15rem;">
       ${isMe ? 'You (Coach)' : 'Athlete'}
@@ -561,7 +583,7 @@ tabButtons.forEach(button => {
       btn.classList.remove('active');
       btn.style.color = "var(--text-muted)";
     });
-    
+
     button.classList.add('active');
     button.style.color = "#ffffff";
 
