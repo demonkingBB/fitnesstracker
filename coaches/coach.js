@@ -40,48 +40,26 @@ let coachChartInstance = null;
 // --- CORE FUNCTIONS ---
 
 
-async function fetchAthleteHistory() {
-  if (!activeClientId) return;
+async function fetchRoster() {
+  // Use a very simple, direct query
+  const { data: clients, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, client_status, coach_id') // Added coach_id to the select
+    .eq('coach_id', currentCoachId);
 
-  const { data: workouts, error } = await supabase
-    .from('workout_logs')
-    .select('*')
-    .eq('user_id', activeClientId)
-    .order('log_date', { ascending: false });
-
-  if (error || !athleteHistoryGrid) return;
-
-  athleteHistoryGrid.innerHTML = '';
-
-  if (!workouts || workouts.length === 0) {
-    athleteHistoryGrid.innerHTML = '<p style="color: var(--text-muted);">No logs found.</p>';
+  if (error) {
+    console.error("Roster query error:", error.message);
     return;
   }
 
-  workouts.forEach(workout => {
-    let logDetail = '';
-
-    // Logic for readable CSV-style formatting
-    if (workout.exercise_name === 'Daily Nutritional Matrix') {
-      logDetail = `Diet Rating: <strong>${workout.metrics.diet_rating}/5</strong>`;
-    } else if (workout.category === 'cardio') {
-      logDetail = `${workout.metrics.sets?.[0]?.distance} miles in ${workout.metrics.sets?.[0]?.duration} mins`;
-    } else if (workout.exercise_name !== 'Biometric Snapshot Engine') {
-      logDetail = workout.metrics.sets?.map(s => `${s.reps}x${s.weight}lbs`).join(', ');
-    } else {
-      logDetail = `Weight: ${workout.metrics.weight} lbs | BMI: ${workout.metrics.bmi?.toFixed(1)}`;
-    }
-
-    const row = document.createElement('div');
-    row.className = 'audit-log-row';
-    row.innerHTML = `
-      <div style="display: flex; justify-content: space-between;">
-        <span style="color: var(--accent-neon); font-weight: bold;">${workout.log_date}</span>
-        <span style="color: var(--text-muted);">${workout.exercise_name}</span>
-      </div>
-      <div style="margin-top: 4px;">${logDetail}</div>
-    `;
-    athleteHistoryGrid.appendChild(row);
+  // ... continue with your rendering code
+  athleteList.innerHTML = clients?.length ? '' : '<p>No athletes found.</p>';
+  clients?.forEach(client => {
+    const item = document.createElement('div');
+    item.className = 'athlete-roster-item';
+    item.innerHTML = `<div><strong>${client.full_name}</div>`;
+    item.addEventListener('click', () => inspectAthlete(client));
+    athleteList.appendChild(item);
   });
 }
 
@@ -402,7 +380,6 @@ if (athleteStatusSelect) {
 
 // Fetch workout history logs of the inspected client
 async function fetchAthleteHistory() {
-  console.log("Fetching history for ID:", activeClientId); // Check thi
   if (!activeClientId) return;
 
   const { data: workouts, error } = await supabase
@@ -411,96 +388,39 @@ async function fetchAthleteHistory() {
     .eq('user_id', activeClientId)
     .order('log_date', { ascending: false });
 
-  if (error) {
-    console.error("Athlete history query failed:", error.message);
-    return;
-  }
+  if (error || !athleteHistoryGrid) return;
 
-  if (!athleteHistoryGrid) return;
   athleteHistoryGrid.innerHTML = '';
 
   if (!workouts || workouts.length === 0) {
-    athleteHistoryGrid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">This athlete has not logged any workouts yet.</p>';
+    athleteHistoryGrid.innerHTML = '<p style="color: var(--text-muted);">No logs found.</p>';
     return;
   }
 
-  // Fetch comments linked to these workouts
-  const workoutIds = workouts.map(w => w.id);
-  let commentsMap = {};
-  if (workoutIds.length > 0) {
-    const { data: dbComments } = await supabase
-      .from('comments')
-      .select('*')
-      .in('workout_id', workoutIds)
-      .order('created_at', { ascending: true });
-
-    if (dbComments) {
-      dbComments.forEach(c => {
-        if (!commentsMap[c.workout_id]) commentsMap[c.workout_id] = [];
-        commentsMap[c.workout_id].push(c);
-      });
-    }
-  }
-
   workouts.forEach(workout => {
-    const card = document.createElement('div');
-    card.className = 'history-day-card';
-    card.style.cssText = `background: #1c2742; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;`;
+    let logDetail = '';
 
-    let innerSetsHTML = '';
-
+    // Logic for readable CSV-style formatting
     if (workout.exercise_name === 'Daily Nutritional Matrix') {
-      innerSetsHTML = `<strong>Diet Quality Rating: ${workout.metrics.diet_rating}/5</strong>`;
-    } else if (workout.exercise_name === 'Biometric Snapshot Engine') {
-      const m = workout.metrics;
-      innerSetsHTML = `
-        <div>Scale Weight: <strong>${m.weight}</strong> lbs | Waist: <strong>${m.waist}</strong>"</div>
-        <div style="margin-top: 0.15rem;">BMI: <strong>${m.bmi ? m.bmi.toFixed(1) : '-'}</strong> | Daily TDEE Target: <strong>${Math.round(m.tdee)}</strong> kcal</div>
-      `;
+      logDetail = `Diet Rating: <strong>${workout.metrics.diet_rating}/5</strong>`;
     } else if (workout.category === 'cardio') {
-      const sets = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-      sets.forEach(item => {
-        innerSetsHTML += `<div>Duration: ${item.duration} mins | Distance: ${item.distance} miles/km</div>`;
-      });
+      logDetail = `${workout.metrics.sets?.[0]?.distance} miles in ${workout.metrics.sets?.[0]?.duration} mins`;
+    } else if (workout.exercise_name !== 'Biometric Snapshot Engine') {
+      logDetail = workout.metrics.sets?.map(s => `${s.reps}x${s.weight}lbs`).join(', ');
     } else {
-      const sets = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-      sets.forEach(item => {
-        innerSetsHTML += `<div>Set ${item.set}: ${item.reps} reps @ ${item.weight} lbs/kg</div>`;
-      });
+      logDetail = `Weight: ${workout.metrics.weight} lbs | BMI: ${workout.metrics.bmi?.toFixed(1)}`;
     }
 
-    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix'
-      ? 'NUTRITION'
-      : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
-
-    // Change your card.innerHTML block to this (the ID fix is on the input tag):
-    card.innerHTML = `
-  <div style="...">
-    ...
-  </div>
-  <div style="padding: 1rem;">
-    <h4 ...>${workout.exercise_name}</h4>
-    <div style="...">
-      ${innerSetsHTML}
-    </div>
-    <div class="workout-comments-feed">
-      <div class="comments-list" id="inspectComments-${workout.id}" style="..."></div>
-      <div class="comment-input-row" style="...">
-        <!-- FIX IS HERE: Use workout.id directly -->
-        <input type="text" id="inspectCommentInput-${workout.id}" placeholder="Type feedback..." ...>
-        <button type="button" class="btn-primary post-comment-btn" data-workout-id="${workout.id}" style="...">Comment</button>
+    const row = document.createElement('div');
+    row.className = 'audit-log-row';
+    row.innerHTML = `
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--accent-neon); font-weight: bold;">${workout.log_date}</span>
+        <span style="color: var(--text-muted);">${workout.exercise_name}</span>
       </div>
-    </div>
-  </div>
-`;
-
-    const feedContainer = card.querySelector('.comments-list');
-    const workoutComments = commentsMap[workout.id] || [];
-    workoutComments.forEach(comment => {
-      appendSingleCommentToFeed(feedContainer, comment);
-    });
-
-    athleteHistoryGrid.appendChild(card);
+      <div style="margin-top: 4px;">${logDetail}</div>
+    `;
+    athleteHistoryGrid.appendChild(row);
   });
 }
 
