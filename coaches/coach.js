@@ -39,6 +39,38 @@ let coachChartInstance = null;
 
 // --- CORE FUNCTIONS ---
 
+const mainCommentFeed = document.getElementById('mainCommentFeed');
+const coachMessageInput = document.getElementById('coachMessageInput');
+const sendCoachMessageBtn = document.getElementById('sendCoachMessageBtn');
+
+// Load general thread for the selected athlete
+async function loadCoachCommunication(athleteId) {
+  if (!mainCommentFeed) return;
+  mainCommentFeed.innerHTML = '';
+
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('user_id', athleteId) // Assuming comments are tied to the user
+    .order('created_at', { ascending: true });
+
+  comments?.forEach(c => appendComment(c));
+}
+
+// Send a message
+sendCoachMessageBtn.addEventListener('click', async () => {
+  const message = coachMessageInput.value.trim();
+  if (!message || !activeClientId) return;
+
+  const { error } = await supabase.from('comments').insert([{
+    user_id: activeClientId,
+    sender_id: currentCoachId,
+    message: message
+  }]);
+
+  if (!error) coachMessageInput.value = '';
+});
+
 
 async function fetchRoster() {
   // Use a very simple, direct query
@@ -64,37 +96,56 @@ async function fetchRoster() {
 }
 
 // --- INITIALIZATION ---
+async function renderCoachChart() {
+  if (!activeClientId) return;
 
-async function initCoachDashboard() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) { window.location.href = '/login/'; return; }
+  // GET THE CURRENT VALUE FRESH FROM THE DOM
+  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
+  console.log("Drawing chart for type:", selectedChartType); // Verify this matches your choice
 
-  currentCoachId = session.user.id;
-  if (userEmailDisplay) userEmailDisplay.textContent = session.user.email;
+  const ctx = document.getElementById('coachAnalyticsChart');
+  if (!ctx) return;
 
-  const { data: profile, error: profileErr } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', currentCoachId)
-    .single();
-
-  if (profileErr || !profile || profile.role !== 'coach') { window.location.href = '/login/'; return; }
-
-  applyCoachBranding(profile);
-
-  // Expiration check
-  const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
-  if (profile.subscription_status !== 'active' && trialEndsDate < new Date()) {
-    if (coachExpirationBanner) coachExpirationBanner.classList.remove('hidden');
+  // IMPORTANT: Destroy logic must happen before the new fetch
+  if (coachChartInstance) {
+    coachChartInstance.destroy();
+    coachChartInstance = null; // Clear the variable
   }
 
-  // Populate UI
-  if (brandPrimaryColor) brandPrimaryColor.value = profile.theme_primary_color || '#39ff14';
-  if (brandSecondaryColor) brandSecondaryColor.value = profile.theme_secondary_color || '#29d609';
-  if (inviteLinkContainer) inviteLinkContainer.textContent = `${window.location.origin}/signup/?coach=${currentCoachId}`;
-
-  await fetchRoster();
+  // ... rest of your if/else if/else logic ...
 }
+
+
+async function initCoachDashboard() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) { window.location.href = '/login/'; return; }
+
+    currentCoachId = session.user.id;
+
+    // Fetch Profile
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('full_name, role, theme_primary_color, theme_secondary_color')
+      .eq('id', currentCoachId)
+      .single();
+
+    if (profileErr || !profile) {
+      console.error("Profile fetch error:", profileErr);
+      return; // Stop if profile is broken
+    }
+
+    applyCoachBranding(profile);
+
+    // Now call roster
+    await fetchRoster();
+    console.log("Roster fetch finished!");
+
+  } catch (err) {
+    console.error("Dashboard Init Crashed:", err);
+  }
+}
+
 
 // --- START APP ---
 document.addEventListener('DOMContentLoaded', initCoachDashboard);
@@ -149,40 +200,89 @@ if (brandForm) {
 
 // ... (Add your existing inspectAthlete, renderCoachChart, fetchAthleteHistory, and comment logic below here)
 // Inspect specific athlete portfolio logs & metrics
+// --- 1. THE MANAGER ---
 async function inspectAthlete(client) {
-  console.log("Inspecting:", client.full_name, "ID:", client.id); // Check this
   activeClientId = client.id;
-  //activeClientEmail = client.email; // Optional: store email if needed
 
+  // Show the inspector panel
   if (inactiveInspector) inactiveInspector.classList.add('hidden');
   if (activeInspector) activeInspector.classList.remove('hidden');
+  if (inspectAthleteName) inspectAthleteName.textContent = client.full_name;
 
-  if (inspectAthleteName) inspectAthleteName.textContent = client.full_name || 'Anonymous athlete';
-  //if (inspectAthleteEmail) inspectAthleteEmail.textContent = client.athlete;//
-  if (athleteStatusSelect) athleteStatusSelect.value = client.client_status || 'active';
+  // Trigger the 4 independent widgets
+  loadBiometricWidget(client.id);
+  loadChartWidget(client.id);
+  // We will add Audit & Comments in the next step
+}
 
-  // Load latest biometrics
-  const { data: bRec } = await supabase
+// --- 2. THE WIDGETS ---
+
+async function loadBiometricWidget(clientId) {
+  try {
+    const { data: bRec } = await supabase
+      .from('workout_logs')
+      .select('metrics')
+      .eq('user_id', clientId)
+      .eq('exercise_name', 'Biometric Snapshot Engine')
+      .order('log_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (bRec?.metrics && inspectBiometricsBlock) {
+      inspectBiometricsBlock.classList.remove('hidden');
+      inspectBioWeight.textContent = bRec.metrics.weight || '-';
+      inspectBioWaist.textContent = bRec.metrics.waist || '-';
+      inspectBioCal.textContent = bRec.metrics.target_calories || '-';
+    } else if (inspectBiometricsBlock) {
+      inspectBiometricsBlock.classList.add('hidden');
+    }
+  } catch (err) {
+    console.warn("Biometric widget failed:", err);
+  }
+}
+
+async function loadChartWidget(clientId) {
+  // Define ctx at the top of the function scope so everyone can see it
+  const ctx = document.getElementById('coachAnalyticsChart');
+
+  try {
+    if (coachChartInstance) coachChartInstance.destroy();
+    if (!ctx) return; // Safety check
+
+    const selectedChartType = coachChartSelector?.value || 'volume';
+
+    // ... rest of your data fetching and drawing logic ...
+
+  } catch (err) {
+    console.error("Chart widget failed:", err);
+    // Now 'ctx' is guaranteed to exist here
+    if (ctx) drawEmptyChartPlaceholder(ctx, "Chart could not be loaded.");
+  }
+}
+
+async function loadAuditFeedWidget(clientId) {
+  const grid = document.getElementById('athleteHistoryGrid');
+  if (!grid) return;
+  grid.innerHTML = 'Loading history...';
+
+  const { data: workouts, error } = await supabase
     .from('workout_logs')
-    .select('metrics')
-    .eq('user_id', activeClientId)
-    .eq('exercise_name', 'Biometric Snapshot Engine')
-    .order('log_date', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .select('*')
+    .eq('user_id', clientId)
+    .order('log_date', { ascending: false });
 
-  if (bRec && bRec.metrics) {
-    if (inspectBiometricsBlock) inspectBiometricsBlock.classList.remove('hidden');
-    if (inspectBioWeight) inspectBioWeight.textContent = bRec.metrics.weight || '-';
-    if (inspectBioWaist) inspectBioWaist.textContent = bRec.metrics.waist || '-';
-    if (inspectBioCal) inspectBioCal.textContent = bRec.metrics.target_calories || '-';
-  } else {
-    if (inspectBiometricsBlock) inspectBiometricsBlock.classList.add('hidden');
+  if (error) {
+    grid.innerHTML = '<p>Error loading history.</p>';
+    return;
   }
 
-  fetchAthleteHistory();
-  renderCoachChart();
+  grid.innerHTML = ''; // Clear loading
+  workouts.forEach(workout => {
+    // ... insert your existing history card rendering logic here ...
+  });
 }
+
+
 
 // Render dynamic customizable coach charts based on dropdown selection
 async function renderCoachChart() {
