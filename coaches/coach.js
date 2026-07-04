@@ -248,22 +248,48 @@ async function loadBiometricWidget(clientId) {
   }
 }
 
+// Add this as your primary Chart Widget
 async function loadChartWidget(clientId) {
-  console.log("Loading Chart for:", clientId);
-  // Define ctx at the top of the function scope so everyone can see it
   const ctx = document.getElementById('coachAnalyticsChart');
+  if (!ctx) return;
+
+  // 1. Clean up old chart
+  if (coachChartInstance) {
+    coachChartInstance.destroy();
+    coachChartInstance = null;
+  }
+
+  // 2. Determine which data to fetch
+  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
+
   try {
-    if (coachChartInstance) coachChartInstance.destroy();
-    if (!ctx) return; // Safety check
+    if (selectedChartType === 'volume') {
+      const { data: logs, error } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_id', clientId)
+        .eq('category', 'weight_training')
+        .order('log_date', { ascending: true });
 
-    const selectedChartType = coachChartSelector?.value || 'volume';
+      if (error || !logs || logs.length === 0) {
+        drawEmptyChartPlaceholder(ctx, "No strength data.");
+        return;
+      }
 
-    // ... rest of your data fetching and drawing logic ...
+      // ... [Insert your existing Volume Chart Logic/Calculation here] ...
+      // TIP: Keep your math logic inside this block!
+      // ... 
 
+      coachChartInstance = new Chart(ctx, { /* Your Chart Config */ });
+
+    } else if (selectedChartType === 'cardio') {
+      // ... [Insert your existing Cardio Chart Logic here] ...
+    } else {
+      // ... [Insert your existing BMI/Diet Chart Logic here] ...
+    }
   } catch (err) {
-    console.error("Chart widget failed:", err);
-    // Now 'ctx' is guaranteed to exist here
-    if (ctx) drawEmptyChartPlaceholder(ctx, "Chart could not be loaded.");
+    console.error("Chart widget error:", err);
+    drawEmptyChartPlaceholder(ctx, "Error loading chart.");
   }
 }
 
