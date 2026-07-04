@@ -252,19 +252,23 @@ async function loadBiometricWidget(clientId) {
 async function loadChartWidget(clientId) {
   console.log("Loading chart for:", clientId);
   const ctx = document.getElementById('coachAnalyticsChart');
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn("Canvas element 'coachAnalyticsChart' not found.");
+    return;
+  }
 
-  // 1. Clean up old chart
+  // 1. Clean up old chart instance safely before drawing a new one
   if (coachChartInstance) {
     coachChartInstance.destroy();
     coachChartInstance = null;
   }
 
-  // 2. Determine which data to fetch
+  // 2. Read the current dropdown selection
   const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
 
   try {
     if (selectedChartType === 'volume') {
+      // Fetch Strength Volumes
       const { data: logs, error } = await supabase
         .from('workout_logs')
         .select('*')
@@ -272,21 +276,156 @@ async function loadChartWidget(clientId) {
         .eq('category', 'weight_training')
         .order('log_date', { ascending: true });
 
-      if (error || !logs || logs.length === 0) {
-        drawEmptyChartPlaceholder(ctx, "No strength data.");
+      if (error) {
+        console.error("Error fetching volume data:", error);
+        drawEmptyChartPlaceholder(ctx, "Error loading strength data.");
         return;
       }
 
-      // ... [Insert your existing Volume Chart Logic/Calculation here] ...
-      // TIP: Keep your math logic inside this block!
-      // ... 
+      if (!logs || logs.length === 0) {
+        drawEmptyChartPlaceholder(ctx, "No strength volume data available.");
+        return;
+      }
 
-      coachChartInstance = new Chart(ctx, { /* Your Chart Config */ });
+      // Compute volume calculations
+      const volumeByDate = {};
+      logs.forEach(log => {
+        if (log.exercise_name === 'Daily Nutritional Matrix') return;
+        const sets = log.metrics?.sets || [];
+        let sessionVolume = 0;
+        sets.forEach(s => {
+          sessionVolume += ((parseInt(s.reps, 10) || 0) * (parseFloat(s.weight) || 0));
+        });
+        if (sessionVolume > 0) {
+          volumeByDate[log.log_date] = (volumeByDate[log.log_date] || 0) + sessionVolume;
+        }
+      });
+
+      if (Object.keys(volumeByDate).length === 0) {
+        drawEmptyChartPlaceholder(ctx, "No strength volume data available.");
+        return;
+      }
+
+      // Create new Strength Volume chart
+      coachChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(volumeByDate),
+          datasets: [{
+            label: 'Strength Volume (lbs)',
+            data: Object.values(volumeByDate),
+            borderColor: '#39ff14',
+            backgroundColor: 'rgba(57, 255, 20, 0.03)',
+            borderWidth: 2,
+            tension: 0.25,
+            fill: true
+          }]
+        },
+        options: getCommonChartOptions()
+      });
 
     } else if (selectedChartType === 'cardio') {
-      // ... [Insert your existing Cardio Chart Logic here] ...
+      // Fetch Cardio Outputs
+      const { data: logs, error } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_id', clientId)
+        .eq('category', 'cardio')
+        .order('log_date', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching cardio data:", error);
+        drawEmptyChartPlaceholder(ctx, "Error loading cardio data.");
+        return;
+      }
+
+      if (!logs || logs.length === 0) {
+        drawEmptyChartPlaceholder(ctx, "No cardio history logs available.");
+        return;
+      }
+
+      const labels = logs.map(l => l.log_date);
+      const distanceData = logs.map(l => l.metrics?.sets?.[0]?.distance || 0);
+      const durationData = logs.map(l => l.metrics?.sets?.[0]?.duration || 0);
+
+      coachChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Distance (miles/km)', data: distanceData, borderColor: '#38bdf8', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y' },
+            { label: 'Duration (mins)', data: durationData, borderColor: '#f43f5e', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } },
+            y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+
     } else {
-      // ... [Insert your existing BMI/Diet Chart Logic here] ...
+      // Fetch Behavioral Diagnostics (BMI vs. Diet)
+      const { data: bioLogs, error: bioError } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_id', clientId)
+        .eq('exercise_name', 'Biometric Snapshot Engine')
+        .order('log_date', { ascending: true });
+
+      const { data: dietLogs, error: dietError } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_id', clientId)
+        .eq('exercise_name', 'Daily Nutritional Matrix')
+        .order('log_date', { ascending: true });
+
+      if (bioError || dietError) {
+        console.error("Error fetching comparison metrics:", bioError || dietError);
+        drawEmptyChartPlaceholder(ctx, "Error loading comparison data.");
+        return;
+      }
+
+      if ((!bioLogs || bioLogs.length === 0) && (!dietLogs || dietLogs.length === 0)) {
+        drawEmptyChartPlaceholder(ctx, "No metrics available for Diet comparisons.");
+        return;
+      }
+
+      const allDates = Array.from(new Set([
+        ...bioLogs.map(b => b.log_date),
+        ...dietLogs.map(d => d.log_date)
+      ])).sort();
+
+      const bmiByDate = {};
+      bioLogs.forEach(b => bmiByDate[b.log_date] = b.metrics?.bmi || 0);
+
+      const dietByDate = {};
+      dietLogs.forEach(d => dietByDate[d.log_date] = d.metrics?.diet_rating || 0);
+
+      const bmiData = allDates.map(date => bmiByDate[date] || null);
+      const dietData = allDates.map(date => dietByDate[date] || null);
+
+      coachChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: allDates,
+          datasets: [
+            { label: 'BMI Progress', data: bmiData, borderColor: '#e11d48', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y', spanGaps: true },
+            { label: 'Diet Rating (1-5)', data: dietData, borderColor: '#39ff14', backgroundColor: 'rgba(57, 255, 20, 0.05)', borderWidth: 2, yAxisID: 'y1', spanGaps: true, fill: true, showLine: true }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'BMI Score', color: '#fff' } },
+            y1: { type: 'linear', display: true, position: 'right', min: 1, max: 5, ticks: { stepSize: 1 }, title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' }, grid: { drawOnChartArea: false } }
+          }
+        }
+      });
     }
   } catch (err) {
     console.error("Chart widget error:", err);
@@ -616,8 +755,7 @@ document.addEventListener('click', async (e) => {
       // Now render the chart based on the new value
       renderCoachChart();
     }
-  }
-});
+  });
 
 // Real-Time Sync on Coach Dashboard
 function setupRealtimeComments() {
