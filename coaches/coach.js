@@ -573,6 +573,7 @@ async function fetchAthleteHistory() {
 
 
 document.addEventListener('click', async (e) => {
+  // 1. Handle Comment Posting
   if (e.target.classList.contains('post-comment-btn')) {
     const workoutId = e.target.getAttribute('data-workout-id');
     const inputElement = document.getElementById(`inspectCommentInput-${workoutId}`);
@@ -600,6 +601,18 @@ document.addEventListener('click', async (e) => {
       }
     } catch (err) {
       alert("Failed to send comment: " + err.message);
+    }
+  }
+
+  // 2. Handle Metric Buttons (The Fix: Set value BEFORE rendering)
+  if (e.target.classList.contains('coach-metric-btn')) {
+    const metricType = e.target.getAttribute('data-metric');
+
+    // Update the dropdown so it reflects what you clicked
+    if (coachChartSelector) {
+      coachChartSelector.value = metricType;
+      // Now render the chart based on the new value
+      renderCoachChart();
     }
   }
 });
