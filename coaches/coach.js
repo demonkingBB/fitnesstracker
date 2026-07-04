@@ -31,7 +31,7 @@ const brandLogoUrl = document.getElementById('brandLogoUrl');
 const brandPhone = document.getElementById('brandPhone');
 const brandAddress = document.getElementById('brandAddress');
 const brandStatusMsg = document.getElementById('brandStatusMsg');
-const coachChartSelector = document.getElementById('coachChartSelector');
+
 
 let currentCoachId = null;
 let activeClientId = null;
@@ -102,30 +102,70 @@ async function fetchRoster() {
 async function initCoachDashboard() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) { window.location.href = '/login/'; return; }
+    if (error || !session) {
+      window.location.href = '/login/';
+      return;
+    }
 
     currentCoachId = session.user.id;
+    if (userEmailDisplay) {
+      userEmailDisplay.textContent = session.user.email;
+    }
 
-    // Fetch Profile
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('full_name, role, theme_primary_color, theme_secondary_color')
+      .select('full_name, role, theme_primary_color, theme_secondary_color, trial_ends_at, subscription_status')
       .eq('id', currentCoachId)
       .single();
 
-    if (profileErr || !profile) {
-      console.error("Profile fetch error:", profileErr);
-      return; // Stop if profile is broken
+    if (profileErr || !profile || profile.role !== 'coach') {
+      window.location.href = '/login/';
+      return;
     }
 
     applyCoachBranding(profile);
 
-    // Now call roster
-    await fetchRoster();
-    console.log("Roster fetch finished!");
+    const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
+    const now = new Date();
+    const isPaid = profile.subscription_status === 'active';
+    const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
 
+    if (!isPaid && !isTrialActive) {
+      if (coachExpirationBanner) {
+        coachExpirationBanner.classList.remove('hidden');
+      }
+      if (coachUpgradeBtn) {
+        coachUpgradeBtn.classList.add('hidden');
+      }
+    } else {
+      if (coachUpgradeBtn) {
+        coachUpgradeBtn.classList.remove('hidden');
+      }
+    }
+
+    if (brandPrimaryColor) {
+      brandPrimaryColor.value = profile.theme_primary_color || '#39ff14';
+    }
+    if (brandSecondaryColor) {
+      brandSecondaryColor.value = profile.theme_secondary_color || '#29d609';
+    }
+    if (inviteLinkContainer) {
+      inviteLinkContainer.textContent = `${window.location.origin}/signup/?coach=${currentCoachId}`;
+    }
+
+    await fetchRoster();
+    setupRealtimeComments();
+
+    const selector = document.getElementById('coachChartSelector');
+    if (selector) {
+      selector.addEventListener('change', () => {
+        if (activeClientId) {
+          loadChartWidget(activeClientId);
+        }
+      });
+    }
   } catch (err) {
-    console.error("Dashboard Init Crashed:", err);
+    console.error("Dashboard Init Error:", err);
   }
 }
 
@@ -257,14 +297,16 @@ async function loadChartWidget(clientId) {
     return;
   }
 
-  // 1. Clean up old chart instance safely before drawing a new one
+  // 1. Clean up old chart instance safely before drawing
   if (coachChartInstance) {
     coachChartInstance.destroy();
     coachChartInstance = null;
   }
 
-  // 2. Read the current dropdown selection
-  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
+  // 2. FRESH FETCH: Read the dropdown selection freshly from the DOM
+  const selector = document.getElementById('coachChartSelector');
+  const selectedChartType = selector ? selector.value : 'volume';
+  console.log("Drawing chart for type:", selectedChartType);
 
   try {
     if (selectedChartType === 'volume') {
@@ -464,161 +506,7 @@ async function loadMessageCenterWidget(clientId) {
 
 
 // Render dynamic customizable coach charts based on dropdown selection
-async function renderCoachChart() {
-  console.log("Rendering Chart for Client ID:", activeClientId);
-  if (!activeClientId) return;
-  const ctx = document.getElementById('coachAnalyticsChart');
-  if (!ctx) return; // Add this
-
-  // Clean destruction
-  if (coachChartInstance) {
-    coachChartInstance.destroy();
-    coachChartInstance = null;
-  }
-
-  // ... (Keep the rest of your if/else logic exactly as it is) ...
-
-  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
-
-  if (selectedChartType === 'volume') {
-    // 1. Plot Strength Volumes
-    const { data: logs } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', activeClientId)
-      .eq('category', 'weight_training')
-      .order('log_date', { ascending: true });
-
-    if (!logs || logs.length === 0) {
-      drawEmptyChartPlaceholder(ctx, "No strength volume data available.");
-      return;
-    }
-
-    const volumeByDate = {};
-    logs.forEach(log => {
-      if (log.exercise_name === 'Daily Nutritional Matrix') return;
-      const sets = log.metrics?.sets || [];
-      let sessionVolume = 0;
-      sets.forEach(s => {
-        sessionVolume += ((parseInt(s.reps, 10) || 0) * (parseFloat(s.weight) || 0));
-      });
-      if (sessionVolume > 0) {
-        volumeByDate[log.log_date] = (volumeByDate[log.log_date] || 0) + sessionVolume;
-      }
-    });
-
-    coachChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Object.keys(volumeByDate),
-        datasets: [{
-          label: 'Strength Volume (lbs)',
-          data: Object.values(volumeByDate),
-          borderColor: '#39ff14',
-          backgroundColor: 'rgba(57, 255, 20, 0.03)',
-          borderWidth: 2,
-          tension: 0.25,
-          fill: true
-        }]
-      },
-      options: getCommonChartOptions()
-    });
-
-  } else if (selectedChartType === 'cardio') {
-    // 2. Plot Cardio Outputs (Dual-axis Grouped metrics)
-    const { data: logs } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', activeClientId)
-      .eq('category', 'cardio')
-      .order('log_date', { ascending: true });
-
-    if (!logs || logs.length === 0) {
-      drawEmptyChartPlaceholder(ctx, "No cardio history logs available.");
-      return;
-    }
-
-    const labels = logs.map(l => l.log_date);
-    const distanceData = logs.map(l => l.metrics?.sets?.[0]?.distance || 0);
-    const durationData = logs.map(l => l.metrics?.sets?.[0]?.duration || 0);
-
-    coachChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'Distance (miles/km)', data: distanceData, borderColor: '#38bdf8', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y' },
-          { label: 'Duration (mins)', data: durationData, borderColor: '#f43f5e', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } },
-          y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
-        }
-      }
-    });
-
-  } else {
-    // 3. Plot Behavioral Diagnostics (BMI vs. Diet Quality ratings side-by-side)
-    const { data: bioLogs } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', activeClientId)
-      .eq('exercise_name', 'Biometric Snapshot Engine')
-      .order('log_date', { ascending: true });
-
-    const { data: dietLogs } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_id', activeClientId)
-      .eq('exercise_name', 'Daily Nutritional Matrix')
-      .order('log_date', { ascending: true });
-
-    if ((!bioLogs || bioLogs.length === 0) && (!dietLogs || dietLogs.length === 0)) {
-      drawEmptyChartPlaceholder(ctx, "No metrics available for Diet comparisons.");
-      return;
-    }
-
-    // Merge dates for accurate alignment
-    const allDates = Array.from(new Set([
-      ...bioLogs.map(b => b.log_date),
-      ...dietLogs.map(d => d.log_date)
-    ])).sort();
-
-    const bmiByDate = {};
-    bioLogs.forEach(b => bmiByDate[b.log_date] = b.metrics?.bmi || 0);
-
-    const dietByDate = {};
-    dietLogs.forEach(d => dietByDate[d.log_date] = d.metrics?.diet_rating || 0);
-
-    const bmiData = allDates.map(date => bmiByDate[date] || null);
-    const dietData = allDates.map(date => dietByDate[date] || null);
-
-    coachChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: allDates,
-        datasets: [
-          { label: 'BMI Progress', data: bmiData, borderColor: '#e11d48', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y', spanGaps: true },
-          { label: 'Diet Rating (1-5)', data: dietData, borderColor: '#39ff14', backgroundColor: 'rgba(57, 255, 20, 0.05)', borderWidth: 2, yAxisID: 'y1', spanGaps: true, fill: true, showLine: true }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'BMI Score', color: '#fff' } },
-          y1: { type: 'linear', display: true, position: 'right', min: 1, max: 5, ticks: { stepSize: 1 }, title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' }, grid: { drawOnChartArea: false } }
-        }
-      }
-      // ... inside your if/else/else block ...
-    }); // Closes the last Chart configuration
-  } // Closes the final 'else' block
-
-} // <--- THIS IS THE ONLY BRACKET THAT CLOSES THE FUNCTION
+// <--- THIS IS THE ONLY BRACKET THAT CLOSES THE FUNCTION
 
 function getCommonChartOptions() {
   return {
