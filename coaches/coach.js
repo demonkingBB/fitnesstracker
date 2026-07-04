@@ -544,10 +544,11 @@ async function loadChartWidget(clientId) {
 }
 
 async function loadAuditFeedWidget(clientId) {
-  console.log("Loading Audit Feed for:", clientId)
+  console.log("Loading Audit Feed for:", clientId);
   const grid = document.getElementById('athleteHistoryGrid');
   if (!grid) return;
-  grid.innerHTML = 'Loading history...';
+
+  grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Loading audit feed...</p>';
 
   const { data: workouts, error } = await supabase
     .from('workout_logs')
@@ -556,19 +557,96 @@ async function loadAuditFeedWidget(clientId) {
     .order('log_date', { ascending: false });
 
   if (error) {
-    grid.innerHTML = '<p>Error loading history.</p>';
+    console.error("Audit Feed Error:", error);
+    grid.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading history.</p>';
     return;
   }
 
-  grid.innerHTML = ''; // Clear loading
+  grid.innerHTML = ''; // Clear loading state
+
+  if (!workouts || workouts.length === 0) {
+    grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No history logged yet.</p>';
+    return;
+  }
+
   workouts.forEach(workout => {
-    // ... insert your existing history card rendering logic here ...
+    let logDetail = '';
+
+    // Format the details cleanly depending on what type of log it is
+    if (workout.exercise_name === 'Daily Nutritional Matrix') {
+      logDetail = `Diet Quality Rating: <strong>${workout.metrics?.diet_rating || '-'}/5</strong>`;
+    } else if (workout.exercise_name === 'Biometric Snapshot Engine') {
+      const m = workout.metrics || {};
+      logDetail = `Weight: <strong>${m.weight || '-'}</strong> lbs | Waist: <strong>${m.waist || '-'}</strong>" | Target: <strong>${m.target_calories || '-'}</strong> cal`;
+    } else if (workout.category === 'cardio') {
+      const sets = Array.isArray(workout.metrics?.sets) ? workout.metrics.sets : [];
+      logDetail = sets.map(s => `${s.duration || '-'} mins (${s.distance || '-'} mi)`).join(', ');
+    } else {
+      const sets = Array.isArray(workout.metrics?.sets) ? workout.metrics.sets : [];
+      logDetail = sets.map(s => `Set ${s.set}: ${s.reps || '-'} reps @ ${s.weight || '-'} lbs/kg`).join(' | ');
+    }
+
+    // Determine a clean tag for the right side of the row
+    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix'
+      ? 'NUTRITION'
+      : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
+
+    const row = document.createElement('div');
+    row.style.cssText = "padding: 1rem; border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.01);";
+    row.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+        <span style="font-weight: 700; color: var(--brand-primary); font-size: 0.8rem;">${workout.log_date}</span>
+        <span style="font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); text-transform: uppercase;">
+          ${displayTag}
+        </span>
+      </div>
+      <div style="font-size: 0.9rem; color: #fff; font-weight: 600; margin-bottom: 0.25rem;">${workout.exercise_name}</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">${logDetail}</div>
+    `;
+
+    grid.appendChild(row);
   });
 }
 
 async function loadMessageCenterWidget(clientId) {
   console.log("Loading Message Center for:", clientId);
-  // We will build the logic for this in the next step
+  const feed = document.getElementById('mainCommentFeed');
+  if (!feed) return;
+
+  feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Loading conversation...</p>';
+
+  try {
+    // Fetch all comments linked to any of this athlete's workout logs
+    const { data: comments, error } = await supabase
+      .from('comments')
+      .select('id, sender_id, message, created_at, workout_logs!inner(user_id)')
+      .eq('workout_logs.user_id', clientId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error("Error loading messages:", error);
+      feed.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading messages.</p>';
+      return;
+    }
+
+    feed.innerHTML = ''; // Clear loading state
+
+    if (!comments || comments.length === 0) {
+      feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0;">No messages in this thread yet. Send a message to start the conversation.</p>';
+      return;
+    }
+
+    comments.forEach(comment => {
+      appendSingleCommentToFeed(feed, comment);
+    });
+
+    // Automatically scroll to the latest message at the bottom
+    feed.scrollTop = feed.scrollHeight;
+
+  } catch (err) {
+    console.error("Message Center Widget failed:", err);
+    feed.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading conversation.</p>';
+  }
 }
 
 
@@ -676,6 +754,8 @@ document.addEventListener('click', async (e) => {
     const inputElement = document.getElementById(`inspectCommentInput-${workoutId}`);
     const message = inputElement.value.trim();
 
+
+
     if (!message) return;
 
     try {
@@ -714,7 +794,59 @@ document.addEventListener('click', async (e) => {
     }
   }
 });
+// Dedicated Message Sender logic
 
+
+if (sendCoachMessageBtn) {
+  sendCoachMessageBtn.addEventListener('click', async () => {
+    if (!activeClientId) return;
+    const message = coachMessageInput.value.trim();
+    if (!message) return;
+
+    try {
+      // 1. Safely find the client's latest logged session to anchor the comment to
+      const { data: latestWorkout, error: fetchErr } = await supabase
+        .from('workout_logs')
+        .select('id')
+        .eq('user_id', activeClientId)
+        .order('log_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+
+      if (!latestWorkout) {
+        alert("This client has not logged any workouts yet. You cannot send a message until they record at least one session on their dashboard.");
+        return;
+      }
+
+      // 2. Insert the comment under the active chat thread
+      const { data: newComment, error: insertErr } = await supabase
+        .from('comments')
+        .insert([{
+          workout_id: latestWorkout.id,
+          sender_id: currentCoachId,
+          message: message
+        }])
+        .select()
+        .single();
+
+      if (insertErr) throw insertErr;
+
+      // Clear input and immediately append the comment to the active feed
+      coachMessageInput.value = '';
+      const feedContainer = document.getElementById('mainCommentFeed');
+      if (feedContainer) {
+        appendSingleCommentToFeed(feedContainer, newComment);
+        feedContainer.scrollTop = feedContainer.scrollHeight;
+      }
+
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      alert("Failed to send message: " + err.message);
+    }
+  });
+}
 // Real-Time Sync on Coach Dashboard
 function setupRealtimeComments() {
   supabase
