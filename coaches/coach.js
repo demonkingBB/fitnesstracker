@@ -227,38 +227,39 @@ if (brandForm) {
 // 1. THE DISPATCHER: This function handles the "Switching" logic
 async function inspectAthlete(client) {
   console.log("Inspecting athlete:", client.full_name, "ID:", client.id);
-
-  // Set the Global ID so widgets know who to fetch for
   activeClientId = client.id;
 
-  // Clean the UI state
+  // Show the inspector panel
   if (inactiveInspector) inactiveInspector.classList.add('hidden');
   if (activeInspector) activeInspector.classList.remove('hidden');
   if (inspectAthleteName) inspectAthleteName.textContent = client.full_name;
   if (athleteStatusSelect) athleteStatusSelect.value = client.client_status || 'active';
 
-  // Trigger the Widgets (We will build these in upcoming steps)
-  loadBiometricWidget(client.id);
-  loadChartWidget(client.id);
-  loadAuditFeedWidget(client.id);
-  loadMessageCenterWidget(client.id);
-}
+  // PROTECTED WIDGET SEQUENCE: Wrapped in individual try/catch blocks
+  // If one widget fails, it CANNOT block the others from loading!
+  try {
+    await loadBiometricWidget(client.id);
+  } catch (e) {
+    console.warn("Biometrics widget failed to load:", e);
+  }
 
-// 2. THE STICKY LISTENER: (Add this to the bottom with your other listeners)
-// This uses "Event Delegation" so clicks work even if the roster refreshes
-if (athleteList) {
-  athleteList.addEventListener('click', (e) => {
-    const item = e.target.closest('.athlete-roster-item');
-    if (!item) return;
+  try {
+    await loadChartWidget(client.id);
+  } catch (e) {
+    console.warn("Chart widget failed to load:", e);
+  }
 
-    // Remove active class from all
-    document.querySelectorAll('.athlete-roster-item').forEach(el => el.classList.remove('active'));
-    item.classList.add('active');
+  try {
+    await loadAuditFeedWidget(client.id);
+  } catch (e) {
+    console.warn("Audit Feed widget failed to load:", e);
+  }
 
-    // Get the client data from the element (we'll need to store this on the element)
-    // For now, assume you have a way to match this back to the client ID
-    // If this part is tricky, we can adjust the fetchRoster loop to store the client ID on the item
-  });
+  try {
+    await loadMessageCenterWidget(client.id);
+  } catch (e) {
+    console.warn("Message Center widget failed to load:", e);
+  }
 }
 
 // --- 2. THE WIDGETS ---
@@ -616,11 +617,11 @@ async function loadMessageCenterWidget(clientId) {
   feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Loading conversation...</p>';
 
   try {
-    // Fetch all comments linked to any of this athlete's workout logs
+    // Simple, clean select pointing directly to the new user_id column
     const { data: comments, error } = await supabase
       .from('comments')
-      .select('id, sender_id, message, created_at, workout_logs!inner(user_id)')
-      .eq('workout_logs.user_id', clientId)
+      .select('*')
+      .eq('user_id', clientId)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -632,7 +633,7 @@ async function loadMessageCenterWidget(clientId) {
     feed.innerHTML = ''; // Clear loading state
 
     if (!comments || comments.length === 0) {
-      feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0;">No messages in this thread yet. Send a message to start the conversation.</p>';
+      feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0;">No messages yet. Send a message to start the conversation.</p>';
       return;
     }
 
@@ -640,11 +641,10 @@ async function loadMessageCenterWidget(clientId) {
       appendSingleCommentToFeed(feed, comment);
     });
 
-    // Automatically scroll to the latest message at the bottom
     feed.scrollTop = feed.scrollHeight;
 
   } catch (err) {
-    console.error("Message Center Widget failed:", err);
+    console.error("Message Center failed:", err);
     feed.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading conversation.</p>';
   }
 }
@@ -766,7 +766,7 @@ document.addEventListener('click', async (e) => {
           sender_id: currentCoachId,
           message: message
         }])
-        .select()
+        .select
         .single();
 
       if (error) throw error;
@@ -797,56 +797,6 @@ document.addEventListener('click', async (e) => {
 // Dedicated Message Sender logic
 
 
-if (sendCoachMessageBtn) {
-  sendCoachMessageBtn.addEventListener('click', async () => {
-    if (!activeClientId) return;
-    const message = coachMessageInput.value.trim();
-    if (!message) return;
-
-    try {
-      // 1. Safely find the client's latest logged session to anchor the comment to
-      const { data: latestWorkout, error: fetchErr } = await supabase
-        .from('workout_logs')
-        .select('id')
-        .eq('user_id', activeClientId)
-        .order('log_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (fetchErr) throw fetchErr;
-
-      if (!latestWorkout) {
-        alert("This client has not logged any workouts yet. You cannot send a message until they record at least one session on their dashboard.");
-        return;
-      }
-
-      // 2. Insert the comment under the active chat thread
-      const { data: newComment, error: insertErr } = await supabase
-        .from('comments')
-        .insert([{
-          workout_id: latestWorkout.id,
-          sender_id: currentCoachId,
-          message: message
-        }])
-        .select()
-        .single();
-
-      if (insertErr) throw insertErr;
-
-      // Clear input and immediately append the comment to the active feed
-      coachMessageInput.value = '';
-      const feedContainer = document.getElementById('mainCommentFeed');
-      if (feedContainer) {
-        appendSingleCommentToFeed(feedContainer, newComment);
-        feedContainer.scrollTop = feedContainer.scrollHeight;
-      }
-
-    } catch (err) {
-      console.error("Failed to send message:", err);
-      alert("Failed to send message: " + err.message);
-    }
-  });
-}
 // Real-Time Sync on Coach Dashboard
 function setupRealtimeComments() {
   supabase
