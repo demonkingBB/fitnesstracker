@@ -250,6 +250,7 @@ async function loadBiometricWidget(clientId) {
 
 // Add this as your primary Chart Widget
 async function loadChartWidget(clientId) {
+  console.log("Loading chart for:", clientId);
   const ctx = document.getElementById('coachAnalyticsChart');
   if (!ctx) return;
 
