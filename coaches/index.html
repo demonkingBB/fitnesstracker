@@ -84,21 +84,20 @@
           </div>
 
           <div id="activeInspector" class="hidden">
+            <!-- Header: Name, Email, Status -->
             <div
               style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <h3 id="inspectAthleteName" style="margin: 0; color: #fff;">Athlete Name</h3>
                 <p id="inspectAthleteEmail" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                  athlete@email.com</p>
+                </p>
               </div>
-
-              <!-- ACCOUNT SUSPENSION CONTROL SELECTOR -->
               <div style="text-align: right;">
                 <label for="athleteStatusSelect"
-                  style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Athlete
+                  style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Athlete
                   Status</label>
                 <select id="athleteStatusSelect"
-                  style="background: var(--bg-main); color: #fff; border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+                  style="background: var(--bg-main); color: #fff; border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
                   <option value="active">Active</option>
                   <option value="suspended">Suspended</option>
                   <option value="closed">Closed / Archive</option>
@@ -106,130 +105,121 @@
               </div>
             </div>
 
-            <!-- Dynamic Graph Suite for Coaches -->
-            <div class="card"
-              style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
-              <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
-                <h4 style="font-size: 0.85rem; color: #fff; text-transform: uppercase;">📈 Coach Analytics Matrix</h4>
+            <!-- Zone 2: Graph Zone -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="font-size: 0.85rem; color: #fff; text-transform: uppercase;">📈 Analytics</h4>
                 <select id="coachChartSelector"
-                  style="background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
-                  <option value="volume" selected>Strength Volume Over Time</option>
-                  <option value="cardio">Cardio Output Over Time</option>
-                  <option value="diet">BMI vs. Diet Quality rating</option>
+                  style="background: #0b111e; color: #fff; border: 1px solid var(--border-subtle); padding: 0.25rem; border-radius: 4px; font-size: 0.75rem;">
+                  <option value="volume">Strength Volume</option>
+                  <option value="cardio">Cardio Output</option>
+                  <option value="diet">BMI & Diet</option>
                 </select>
               </div>
-              <div
-                style="position: relative; width: 100%; height: 180px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 0.5rem;">
-                <canvas id="coachAnalyticsChart"></canvas>
-              </div>
+              <div style="height: 180px;"><canvas id="coachAnalyticsChart"></canvas></div>
             </div>
 
-            <!-- Athlete biometrics quick lookup -->
-            <div id="inspectBiometricsBlock" class="hidden"
-              style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+            <!-- Zone 3: Latest Snapshot Zone -->
+            <div id="inspectBiometricsBlock" class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
               <h4
                 style="font-size: 0.85rem; color: var(--accent-neon); margin-bottom: 0.5rem; text-transform: uppercase;">
-                Latest Weight & Biometrics</h4>
+                Latest Snapshot</h4>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
-                <div><strong>Weight:</strong> <span id="inspectBioWeight">-</span> lbs</div>
+                <div><strong>Weight:</strong> <span id="inspectBioWeight">-</span></div>
                 <div><strong>Waist:</strong> <span id="inspectBioWaist">-</span>"</div>
-                <div><strong>Calories:</strong> <span id="inspectBioCal">-</span> cal</div>
+                <div><strong>Calories:</strong> <span id="inspectBioCal">-</span></div>
               </div>
             </div>
 
-            <h4
-              style="margin-bottom: 1rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; color: var(--text-muted);">
-              Session Audits</h4>
-            <div id="athleteHistoryGrid" class="workout-history-grid">
-              <!-- Dynamically populated from JS -->
+            <!-- Zone 4: Audit Feed Zone -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+              <h4 style="margin-bottom: 1rem; color: #fff; font-size: 0.9rem;">Session Audit Feed</h4>
+              <div id="mainAthleteHistoryGrid" class="workout-history-grid"
+                style="max-height: 300px; overflow-y: auto;">
+                <!-- Scrollable list of logs -->
+              </div>
+            </div>
+
+            <!-- Zone 5: Message Center Zone -->
+            <div class="card">
+              <h4 style="margin-bottom: 1rem; color: #fff; font-size: 0.9rem;">Client Communication</h4>
+              <div id="mainCommentFeed"
+                style="max-height: 200px; overflow-y: auto; background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-subtle);">
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Start a conversation.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="coachMessageInput" placeholder="Write a message..." class="workout-input">
+                <button id="sendCoachMessageBtn" class="btn-primary">Send</button>
+              </div>
             </div>
           </div>
-        </section>
 
+          <!-- TAB 2: Brand Settings customization -->
+          <div id="brandTab" class="tab-content hidden" style="display: none;">
+            <div style="max-width: 600px; margin: 0 auto;" class="card">
+              <h3 style="margin-bottom: 0.5rem;">White-Label Settings</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Customized branding
+                options
+                apply directly to all clients on your roster instantly on login.</p>
 
-        <div class="card" style="margin-bottom: 1.5rem;">
-          <h4 style="margin-bottom: 1rem; color: #fff;">Session Audit Feed</h4>
-          <div id="athleteHistoryGrid" class="workout-history-grid"></div>
-        </div>
+              <!-- Inside #brandTab -->
+              <form id="brandForm">
+                <!-- Brand Name -->
+                <div class="form-group">
+                  <label for="brandAppName">App Name (Workspace Title)</label>
+                  <input type="text" id="brandAppName" class="workout-input" placeholder="e.g. Coach Ab's Track">
+                </div>
 
-        <!-- 4. NEW: Message Center Card -->
-        <div class="card">
-          <h4 style="margin-bottom: 1rem; color: #fff;">Client Communication</h4>
-          <div id="mainCommentFeed"
-            style="max-height: 200px; overflow-y: auto; background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-subtle);">
-            <p style="color: var(--text-muted); font-size: 0.8rem;">Select an athlete to start a conversation.</p>
+                <!-- Primary Color -->
+                <div class="form-group">
+                  <label for="brandPrimaryColor">Theme Primary Accent Color</label>
+                  <input type="color" id="brandPrimaryColor" class="workout-input"
+                    style="height: 40px; cursor: pointer;">
+                </div>
+
+                <!-- Secondary Color -->
+                <div class="form-group">
+                  <label for="brandSecondaryColor">Theme Hover Accent Color</label>
+                  <input type="color" id="brandSecondaryColor" class="workout-input"
+                    style="height: 40px; cursor: pointer;">
+                </div>
+
+                <!-- Background Color -->
+                <div class="form-group">
+                  <label for="brandBgColor">Dashboard Background Color</label>
+                  <input type="color" id="brandBgColor" class="workout-input" style="height: 40px; cursor: pointer;">
+                </div>
+
+                <!-- Theme Mode Toggle -->
+                <div class="form-group">
+                  <label for="brandThemeMode">Theme Mode</label>
+                  <select id="brandThemeMode" class="program-select-dropdown">
+                    <option value="dark">Dark Mode</option>
+                    <option value="light">Light Mode</option>
+                  </select>
+                </div>
+
+                <!-- Existing Contact Fields -->
+                <div class="form-group">
+                  <label for="brandLogoUrl">Custom Logo Image URL</label>
+                  <input type="url" id="brandLogoUrl" class="workout-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                  <label for="brandPhone">Public Contact Phone</label>
+                  <input type="tel" id="brandPhone" class="workout-input" placeholder="(555) 555-5555">
+                </div>
+                <div class="form-group">
+                  <label for="brandAddress">Public Address</label>
+                  <input type="text" id="brandAddress" class="workout-input" placeholder="123 Gym St">
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%;">Save Brand Configurations</button>
+              </form>
+
+              <div id="brandStatusMsg" class="hidden"
+                style="margin-top: 1.5rem; padding: 1rem; border-radius: 6px; text-align: center;"></div>
+            </div>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="coachMessageInput" placeholder="Write a message..." class="workout-input">
-            <button id="sendCoachMessageBtn" class="btn-primary">Send</button>
-          </div>
-        </div>
-
-        <!-- TAB 2: Brand Settings customization -->
-        <div id="brandTab" class="tab-content hidden" style="display: none;">
-          <div style="max-width: 600px; margin: 0 auto;" class="card">
-            <h3 style="margin-bottom: 0.5rem;">White-Label Settings</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Customized branding options
-              apply directly to all clients on your roster instantly on login.</p>
-
-            <!-- Inside #brandTab -->
-            <form id="brandForm">
-              <!-- Brand Name -->
-              <div class="form-group">
-                <label for="brandAppName">App Name (Workspace Title)</label>
-                <input type="text" id="brandAppName" class="workout-input" placeholder="e.g. Coach Ab's Track">
-              </div>
-
-              <!-- Primary Color -->
-              <div class="form-group">
-                <label for="brandPrimaryColor">Theme Primary Accent Color</label>
-                <input type="color" id="brandPrimaryColor" class="workout-input" style="height: 40px; cursor: pointer;">
-              </div>
-
-              <!-- Secondary Color -->
-              <div class="form-group">
-                <label for="brandSecondaryColor">Theme Hover Accent Color</label>
-                <input type="color" id="brandSecondaryColor" class="workout-input"
-                  style="height: 40px; cursor: pointer;">
-              </div>
-
-              <!-- Background Color -->
-              <div class="form-group">
-                <label for="brandBgColor">Dashboard Background Color</label>
-                <input type="color" id="brandBgColor" class="workout-input" style="height: 40px; cursor: pointer;">
-              </div>
-
-              <!-- Theme Mode Toggle -->
-              <div class="form-group">
-                <label for="brandThemeMode">Theme Mode</label>
-                <select id="brandThemeMode" class="program-select-dropdown">
-                  <option value="dark">Dark Mode</option>
-                  <option value="light">Light Mode</option>
-                </select>
-              </div>
-
-              <!-- Existing Contact Fields -->
-              <div class="form-group">
-                <label for="brandLogoUrl">Custom Logo Image URL</label>
-                <input type="url" id="brandLogoUrl" class="workout-input" placeholder="https://...">
-              </div>
-              <div class="form-group">
-                <label for="brandPhone">Public Contact Phone</label>
-                <input type="tel" id="brandPhone" class="workout-input" placeholder="(555) 555-5555">
-              </div>
-              <div class="form-group">
-                <label for="brandAddress">Public Address</label>
-                <input type="text" id="brandAddress" class="workout-input" placeholder="123 Gym St">
-              </div>
-
-              <button type="submit" class="btn-primary" style="width: 100%;">Save Brand Configurations</button>
-            </form>
-
-            <div id="brandStatusMsg" class="hidden"
-              style="margin-top: 1.5rem; padding: 1rem; border-radius: 6px; text-align: center;"></div>
-          </div>
-        </div>
 
   </main>
 
