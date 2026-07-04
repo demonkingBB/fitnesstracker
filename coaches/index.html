@@ -79,6 +79,7 @@
       <div id="activeInspector" class="hidden">
 
         <!-- Athlete Header (Name, Email, Status) -->
+        <!-- Athlete Header (Name, Email, Status Card) -->
         <div class="card"
           style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem;">
           <div>
@@ -90,11 +91,14 @@
             <label for="athleteStatusSelect"
               style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Athlete
               Status</label>
+            <!-- FIXED SELECT TAG: Uses var(--text-primary) to dynamically adapt text color on theme switch -->
             <select id="athleteStatusSelect"
-              style="background: var(--bg-main); color: #fff; border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="closed">Closed / Archive</option>
+              style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+              <option value="active" style="background: var(--bg-surface); color: var(--text-primary);">Active</option>
+              <option value="suspended" style="background: var(--bg-surface); color: var(--text-primary);">Suspended
+              </option>
+              <option value="closed" style="background: var(--bg-surface); color: var(--text-primary);">Closed / Archive
+              </option>
             </select>
           </div>
         </div>

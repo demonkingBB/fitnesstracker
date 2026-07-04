@@ -107,23 +107,22 @@ if (sendCoachMessageBtn) {
 
 
 async function fetchRoster() {
-  // Use a very simple, direct query
   const { data: clients, error } = await supabase
     .from('profiles')
-    .select('id, full_name, client_status, coach_id') // Added coach_id to the select
-    .eq('coach_id', currentCoachId);
+    .select('id, full_name, client_status, coach_id')
+    .eq('coach_id', currentCoachId)
+    .neq('id', currentCoachId);
 
   if (error) {
     console.error("Roster query error:", error.message);
     return;
   }
 
-  // ... continue with your rendering code
   athleteList.innerHTML = clients?.length ? '' : '<p>No athletes found.</p>';
   clients?.forEach(client => {
     const item = document.createElement('div');
     item.className = 'athlete-roster-item';
-    item.innerHTML = `<div><strong>${client.full_name}</div>`;
+    item.innerHTML = `<div><strong>${client.full_name || 'Anonymous athlete'}</strong></div>`;
     item.addEventListener('click', () => inspectAthlete(client));
     athleteList.appendChild(item);
   });
@@ -238,22 +237,14 @@ if (brandForm) {
       if (error) throw error;
 
       // Apply the branding changes visually
-      applyCoachBranding({
-        theme_primary_color: updates.theme_primary_color,
-        theme_secondary_color: updates.theme_secondary_color
-      });
-
-      // Update background if defined
-      if (updates.background_color) {
-        document.documentElement.style.setProperty('--bg-main', updates.background_color);
-      }
-
-      showBrandStatus("Brand configurations updated successfully!", "success");
+      applyCoachBranding(updates);
     } catch (err) {
-      showBrandStatus("Failed to update configurations: " + err.message, "error");
-    }
-  });
-}
+      // Optional: surface the error to the user
+      console.error('Brand update failed:', err);
+    }                               // ← close `try…catch`
+  });                              // ← close `brandForm.addEventListener`
+}                                 // ← close `if (brandForm)`
+
 
 // ... (Add your existing inspectAthlete, renderCoachChart, fetchAthleteHistory, and comment logic below here)
 // Inspect specific athlete portfolio logs & metrics
@@ -925,10 +916,30 @@ if (logoutBtn) {
 }
 
 function applyCoachBranding(coach) {
+  if (!coach) return;
+
   if (coach.theme_primary_color) {
     document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
   }
   if (coach.theme_secondary_color) {
     document.documentElement.style.setProperty('--brand-hover', coach.theme_secondary_color);
+  }
+  if (coach.background_color) {
+    document.documentElement.style.setProperty('--bg-main', coach.background_color);
+  }
+
+  if (coach.theme_mode === 'light') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
+  }
+
+  const logoEl = document.getElementById('logoElement');
+  if (logoEl) {
+    if (coach.logo_url) {
+      logoEl.innerHTML = `<img src="${coach.logo_url}" alt="Logo" style="max-height: 40px; width: auto; object-fit: contain;">`;
+    } else {
+      logoEl.innerHTML = `<h2>🚀 ${coach.full_name || 'EliteTrack'}</h2>`;
+    }
   }
 }
