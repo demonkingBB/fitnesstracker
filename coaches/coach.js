@@ -58,18 +58,52 @@ async function loadCoachCommunication(athleteId) {
 }
 
 // Send a message
-sendCoachMessageBtn.addEventListener('click', async () => {
-  const message = coachMessageInput.value.trim();
-  if (!message || !activeClientId) return;
+if (sendCoachMessageBtn) {
+  sendCoachMessageBtn.addEventListener('click', async () => {
+    if (!activeClientId) return;
+    const message = coachMessageInput.value.trim();
+    if (!message) return;
 
-  const { error } = await supabase.from('comments').insert([{
-    user_id: activeClientId,
-    sender_id: currentCoachId,
-    message: message
-  }]);
+    try {
+      // 1. Find the client's latest logged session to anchor the comment to
+      const { data: latestWorkout, error: fetchErr } = await supabase
+        .from('workout_logs')
+        .select('id')
+        .eq('user_id', activeClientId)
+        .order('log_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-  if (!error) coachMessageInput.value = '';
-});
+      if (fetchErr) throw fetchErr;
+
+      if (!latestWorkout) {
+        alert("This client has not logged any workouts yet. A message cannot be sent until they record at least one session on their dashboard.");
+        return;
+      }
+
+      // 2. Insert the comment under the active chat thread
+      const { error: insertErr } = await supabase
+        .from('comments')
+        .insert([{
+          user_id: activeClientId,
+          workout_id: latestWorkout.id,
+          sender_id: currentCoachId,
+          message: message
+        }]);
+
+      if (insertErr) throw insertErr;
+
+      // 3. Instant Widget Reload: Clear the input and reload the conversation feed
+      coachMessageInput.value = '';
+      await loadMessageCenterWidget(activeClientId);
+
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      alert("Failed to send message: " + err.message);
+    }
+  });
+}
+
 
 
 async function fetchRoster() {
