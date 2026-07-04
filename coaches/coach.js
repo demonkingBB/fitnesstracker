@@ -750,12 +750,14 @@ document.addEventListener('click', async (e) => {
     const metricType = e.target.getAttribute('data-metric');
 
     // Update the dropdown so it reflects what you clicked
+    // Update the dropdown so it reflects what you clicked
     if (coachChartSelector) {
       coachChartSelector.value = metricType;
       // Now render the chart based on the new value
       renderCoachChart();
     }
-  });
+  }
+});
 
 // Real-Time Sync on Coach Dashboard
 function setupRealtimeComments() {
