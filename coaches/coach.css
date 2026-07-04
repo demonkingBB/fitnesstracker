@@ -1,4 +1,32 @@
 /* coaches/coach.css */
+#coachAnalyticsChart {
+  height: 250px !important;
+  width: 100% !important;
+}
+
+/* Layout containers */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* 2 Columns */
+  gap: 2rem;
+}
+
+/* Scrollable areas to stop page elongation */
+#athleteHistoryGrid,
+#mainCommentFeed {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Mobile responsive stacking */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    /* Stack on mobile */
+  }
+}
+
 input,
 button,
 select {
