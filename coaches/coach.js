@@ -224,6 +224,7 @@ if (athleteList) {
 // --- 2. THE WIDGETS ---
 
 async function loadBiometricWidget(clientId) {
+  console.log("Loading Biometrics for:", clientId);
   try {
     const { data: bRec } = await supabase
       .from('workout_logs')
@@ -248,9 +249,9 @@ async function loadBiometricWidget(clientId) {
 }
 
 async function loadChartWidget(clientId) {
+  console.log("Loading Chart for:", clientId);
   // Define ctx at the top of the function scope so everyone can see it
   const ctx = document.getElementById('coachAnalyticsChart');
-
   try {
     if (coachChartInstance) coachChartInstance.destroy();
     if (!ctx) return; // Safety check
@@ -267,6 +268,7 @@ async function loadChartWidget(clientId) {
 }
 
 async function loadAuditFeedWidget(clientId) {
+  console.log("Loading Audit Feed for:", clientId)
   const grid = document.getElementById('athleteHistoryGrid');
   if (!grid) return;
   grid.innerHTML = 'Loading history...';
@@ -286,6 +288,11 @@ async function loadAuditFeedWidget(clientId) {
   workouts.forEach(workout => {
     // ... insert your existing history card rendering logic here ...
   });
+}
+
+async function loadMessageCenterWidget(clientId) {
+  console.log("Loading Message Center for:", clientId);
+  // We will build the logic for this in the next step
 }
 
 
