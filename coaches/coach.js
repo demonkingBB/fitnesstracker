@@ -96,24 +96,7 @@ async function fetchRoster() {
 }
 
 // --- INITIALIZATION ---
-async function renderCoachChart() {
-  if (!activeClientId) return;
 
-  // GET THE CURRENT VALUE FRESH FROM THE DOM
-  const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
-  console.log("Drawing chart for type:", selectedChartType); // Verify this matches your choice
-
-  const ctx = document.getElementById('coachAnalyticsChart');
-  if (!ctx) return;
-
-  // IMPORTANT: Destroy logic must happen before the new fetch
-  if (coachChartInstance) {
-    coachChartInstance.destroy();
-    coachChartInstance = null; // Clear the variable
-  }
-
-  // ... rest of your if/else if/else logic ...
-}
 
 
 async function initCoachDashboard() {
@@ -288,9 +271,15 @@ async function loadAuditFeedWidget(clientId) {
 async function renderCoachChart() {
   if (!activeClientId) return;
   const ctx = document.getElementById('coachAnalyticsChart');
-  if (!ctx) return;
+  if (!ctx) return; // Add this
 
-  if (coachChartInstance) coachChartInstance.destroy();
+  // Clean destruction
+  if (coachChartInstance) {
+    coachChartInstance.destroy();
+    coachChartInstance = null;
+  }
+
+  // ... (Keep the rest of your if/else logic exactly as it is) ...
 
   const selectedChartType = coachChartSelector ? coachChartSelector.value : 'volume';
 
