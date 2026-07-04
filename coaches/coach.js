@@ -248,7 +248,7 @@ async function loadBiometricWidget(clientId) {
   }
 }
 
-// Add this as your primary Chart Widget
+// Add this as your primary Chart Widget add
 async function loadChartWidget(clientId) {
   console.log("Loading chart for:", clientId);
   const ctx = document.getElementById('coachAnalyticsChart');
@@ -326,6 +326,7 @@ async function loadMessageCenterWidget(clientId) {
 
 // Render dynamic customizable coach charts based on dropdown selection
 async function renderCoachChart() {
+  console.log("Rendering Chart for Client ID:", activeClientId);
   if (!activeClientId) return;
   const ctx = document.getElementById('coachAnalyticsChart');
   if (!ctx) return; // Add this
