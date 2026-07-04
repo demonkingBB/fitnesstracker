@@ -386,25 +386,50 @@ async function loadChartWidget(clientId) {
         return;
       }
 
-      const labels = logs.map(l => l.log_date);
-      const distanceData = logs.map(l => l.metrics?.sets?.[0]?.distance || 0);
-      const durationData = logs.map(l => l.metrics?.sets?.[0]?.duration || 0);
+      // Calculate Average Speed (Distance / Duration) per log date
+      const speedByDate = {};
+      logs.forEach(log => {
+        const sets = log.metrics?.sets || [];
+        const distance = parseFloat(sets[0]?.distance || 0);
+        const duration = parseFloat(sets[0]?.duration || 0);
 
+        if (duration > 0 && distance > 0) {
+          // Speed = (Distance / Duration) * 60 (Calculates MPH / KPH)
+          const avgSpeed = (distance / duration) * 60;
+          speedByDate[log.log_date] = parseFloat(avgSpeed.toFixed(2));
+        }
+      });
+
+      if (Object.keys(speedByDate).length === 0) {
+        drawEmptyChartPlaceholder(ctx, "No speed progress logged yet.");
+        return;
+      }
+
+      // Create a single-line Cardio Efficiency trend chart
       coachChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
-          datasets: [
-            { label: 'Distance (miles/km)', data: distanceData, borderColor: '#38bdf8', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y' },
-            { label: 'Duration (mins)', data: durationData, borderColor: '#f43f5e', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' }
-          ]
+          labels: Object.keys(speedByDate),
+          datasets: [{
+            label: 'Average Speed (mph / kph)',
+            data: Object.values(speedByDate),
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.04)',
+            borderWidth: 2.5,
+            tension: 0.25,
+            fill: true
+          }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } },
-            y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8a8f98' } },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#8a8f98' },
+              title: { display: true, text: 'Avg Speed (mph / kph)', color: '#38bdf8' }
+            }
           }
         }
       });
@@ -436,35 +461,78 @@ async function loadChartWidget(clientId) {
         return;
       }
 
+      // Merge timelines of daily diet logs and weekly biometrics cleanly
       const allDates = Array.from(new Set([
         ...bioLogs.map(b => b.log_date),
         ...dietLogs.map(d => d.log_date)
       ])).sort();
 
       const bmiByDate = {};
-      bioLogs.forEach(b => bmiByDate[b.log_date] = b.metrics?.bmi || 0);
+      bioLogs.forEach(b => {
+        if (b.metrics?.bmi) {
+          bmiByDate[b.log_date] = parseFloat(b.metrics.bmi);
+        }
+      });
 
       const dietByDate = {};
-      dietLogs.forEach(d => dietByDate[d.log_date] = d.metrics?.diet_rating || 0);
+      dietLogs.forEach(d => {
+        if (d.metrics?.diet_rating) {
+          dietByDate[d.log_date] = parseInt(d.metrics.diet_rating, 10);
+        }
+      });
 
-      const bmiData = allDates.map(date => bmiByDate[date] || null);
-      const dietData = allDates.map(date => dietByDate[date] || null);
+      // Align arrays to unified timeline, falling back to 'null' so spanGaps links points
+      const bmiData = allDates.map(date => bmiByDate[date] !== undefined ? bmiByDate[date] : null);
+      const dietData = allDates.map(date => dietByDate[date] !== undefined ? dietByDate[date] : null);
 
       coachChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels: allDates,
           datasets: [
-            { label: 'BMI Progress', data: bmiData, borderColor: '#e11d48', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y', spanGaps: true },
-            { label: 'Diet Rating (1-5)', data: dietData, borderColor: '#39ff14', backgroundColor: 'rgba(57, 255, 20, 0.05)', borderWidth: 2, yAxisID: 'y1', spanGaps: true, fill: true, showLine: true }
+            {
+              label: 'BMI Progress',
+              data: bmiData,
+              borderColor: '#e11d48',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              yAxisID: 'y',
+              spanGaps: true
+            },
+            {
+              label: 'Diet Rating (1-5)',
+              data: dietData,
+              borderColor: '#39ff14',
+              backgroundColor: 'rgba(57, 255, 20, 0.05)',
+              borderWidth: 2,
+              yAxisID: 'y1',
+              spanGaps: true,
+              fill: true,
+              showLine: true
+            }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'BMI Score', color: '#fff' } },
-            y1: { type: 'linear', display: true, position: 'right', min: 1, max: 5, ticks: { stepSize: 1 }, title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' }, grid: { drawOnChartArea: false } }
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'BMI Score', color: '#e11d48' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              min: 1,
+              max: 5,
+              ticks: { stepSize: 1 },
+              title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' },
+              grid: { drawOnChartArea: false }
+            }
           }
         }
       });
