@@ -184,18 +184,41 @@ if (brandForm) {
 // ... (Add your existing inspectAthlete, renderCoachChart, fetchAthleteHistory, and comment logic below here)
 // Inspect specific athlete portfolio logs & metrics
 // --- 1. THE MANAGER ---
+// 1. THE DISPATCHER: This function handles the "Switching" logic
 async function inspectAthlete(client) {
+  console.log("Inspecting athlete:", client.full_name, "ID:", client.id);
+
+  // Set the Global ID so widgets know who to fetch for
   activeClientId = client.id;
 
-  // Show the inspector panel
+  // Clean the UI state
   if (inactiveInspector) inactiveInspector.classList.add('hidden');
   if (activeInspector) activeInspector.classList.remove('hidden');
   if (inspectAthleteName) inspectAthleteName.textContent = client.full_name;
+  if (athleteStatusSelect) athleteStatusSelect.value = client.client_status || 'active';
 
-  // Trigger the 4 independent widgets
+  // Trigger the Widgets (We will build these in upcoming steps)
   loadBiometricWidget(client.id);
   loadChartWidget(client.id);
-  // We will add Audit & Comments in the next step
+  loadAuditFeedWidget(client.id);
+  loadMessageCenterWidget(client.id);
+}
+
+// 2. THE STICKY LISTENER: (Add this to the bottom with your other listeners)
+// This uses "Event Delegation" so clicks work even if the roster refreshes
+if (athleteList) {
+  athleteList.addEventListener('click', (e) => {
+    const item = e.target.closest('.athlete-roster-item');
+    if (!item) return;
+
+    // Remove active class from all
+    document.querySelectorAll('.athlete-roster-item').forEach(el => el.classList.remove('active'));
+    item.classList.add('active');
+
+    // Get the client data from the element (we'll need to store this on the element)
+    // For now, assume you have a way to match this back to the client ID
+    // If this part is tricky, we can adjust the fetchRoster loop to store the client ID on the item
+  });
 }
 
 // --- 2. THE WIDGETS ---
@@ -417,9 +440,11 @@ async function renderCoachChart() {
           y1: { type: 'linear', display: true, position: 'right', min: 1, max: 5, ticks: { stepSize: 1 }, title: { display: true, text: 'Diet Rating (1-5)', color: '#39ff14' }, grid: { drawOnChartArea: false } }
         }
       }
-    });
-  }
-}
+      // ... inside your if/else/else block ...
+    }); // Closes the last Chart configuration
+  } // Closes the final 'else' block
+
+} // <--- THIS IS THE ONLY BRACKET THAT CLOSES THE FUNCTION
 
 function getCommonChartOptions() {
   return {
