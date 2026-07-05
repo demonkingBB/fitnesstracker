@@ -226,6 +226,47 @@ async function initDashboard() {
   }
 }
 
+async function loadMessageCenterWidget() {
+  if (!currentUser) return;
+  const feed = document.getElementById('mainCommentFeed');
+  if (!feed) return;
+
+  feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Loading conversation...</p>';
+
+  try {
+    // Fetch all comments belonging to the logged-in client
+    const { data: comments, error } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error("Error loading messages:", error);
+      feed.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading messages.</p>';
+      return;
+    }
+
+    feed.innerHTML = ''; // Clear loading state
+
+    if (!comments || comments.length === 0) {
+      feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0;">No messages yet. Send a message to start the conversation.</p>';
+      return;
+    }
+
+    comments.forEach(comment => {
+      appendSingleCommentToFeed(feed, comment);
+    });
+
+    // Automatically scroll to the latest message
+    feed.scrollTop = feed.scrollHeight;
+
+  } catch (err) {
+    console.error("Message Center failed:", err);
+    feed.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error loading conversation.</p>';
+  }
+}
+
 function lockLoggingInputs(buttonMessage) {
   if (saveWorkoutBtn) {
     saveWorkoutBtn.disabled = true;
@@ -686,9 +727,10 @@ function setupRealtimeComments() {
   supabase
     .channel('public:comments')
     .on('postgres_changes', { event: 'INSERT', table: 'comments' }, (payload) => {
-      const commentFeed = document.getElementById(`commentsList-${payload.new.workout_id}`);
-      if (commentFeed) {
-        appendSingleCommentToFeed(commentFeed, payload.new);
+      const mainCommentFeed = document.getElementById('mainCommentFeed');
+      if (mainCommentFeed) {
+        // Instantly reload the conversation widget
+        loadMessageCenterWidget();
       }
     })
     .subscribe();
@@ -1232,6 +1274,60 @@ if (logoutBtn) {
     window.location.href = '/login/';
   });
 }
+
+// Dedicated Client Message Sender logic
+document.addEventListener('DOMContentLoaded', () => {
+  const sendCoachMessageBtn = document.getElementById('sendCoachMessageBtn');
+  const coachMessageInput = document.getElementById('coachMessageInput');
+
+  if (sendCoachMessageBtn) {
+    sendCoachMessageBtn.addEventListener('click', async () => {
+      if (!currentUser) return;
+      const message = coachMessageInput.value.trim();
+      if (!message) return;
+
+      try {
+        // 1. Find the client's latest logged session to anchor the comment to
+        const { data: latestWorkout, error: fetchErr } = await supabase
+          .from('workout_logs')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .order('log_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (fetchErr) throw fetchErr;
+
+        if (!latestWorkout) {
+          alert("You have not logged any workouts yet. A message cannot be sent until you record at least one session on your dashboard.");
+          return;
+        }
+
+        // 2. Insert the comment under the active chat thread
+        const { error: insertErr } = await supabase
+          .from('comments')
+          .insert([{
+            user_id: currentUser.id,
+            workout_id: latestWorkout.id,
+            sender_id: currentUser.id,
+            message: message
+          }]);
+
+        if (insertErr) throw insertErr;
+
+        // 3. Instant Widget Reload: Clear input and repaint the chat feed
+        coachMessageInput.value = '';
+        await loadMessageCenterWidget();
+
+      } catch (err) {
+        console.error("Failed to send message:", err);
+        alert("Failed to send message: " + err.message);
+      }
+    });
+  }
+});
+
+await loadMessageCenterWidget();
 
 initDashboard();
 
