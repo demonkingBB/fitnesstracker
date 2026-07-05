@@ -113,42 +113,41 @@ let cachedWorkouts = [];
 let strengthPRs = {};
 let cardioPR = { distance: 0, duration: 0 };
 
+await loadMessageCenterWidget();
 // Initialize Session, Check Expiration and Load Preferences
+
 async function initDashboard() {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      window.location.href = '/login/';
-      return;
-    }
+  const { data: { session }, error } = await supabase.auth.getSession();
 
-    currentUser = session.user;
-    if (userEmailDisplay) {
-      userEmailDisplay.textContent = currentUser.email;
-    }
+  if (error || !session) {
+    window.location.href = '/login/';
+    return;
+  }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role, current_program_id, trial_ends_at, subscription_status, coach_id, client_status')
-      .eq('id', currentUser.id)
-      .single();
+  currentUser = session.user;
+  if (userEmailDisplay) {
+    userEmailDisplay.textContent = currentUser.email;
+  }
 
-    if (profileError || !profile) {
-      console.error("Critical error fetching profile:", profileError);
-      return;
-    }
+  // Retrieve user profile configuration details
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, current_program_id, trial_ends_at, subscription_status, coach_id, client_status')
+    .eq('id', currentUser.id)
+    .single();
 
+  if (!profileError && profile) {
     if (profile.role === 'coach') {
       window.location.href = '/coaches/';
       return;
     }
 
     // MULTI-TENANT ACCESS ENGINE
+    // MULTI-TENANT ACCESS ENGINE
     if (profile.coach_id) {
-      // Safe Select: Query only public branding columns to prevent 406/400 errors
       const { data: coach, error: coachError } = await supabase
         .from('profiles')
-        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, background_color, theme_mode')
+        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at, background_color, theme_mode')
         .eq('id', profile.coach_id)
         .single();
 
@@ -156,30 +155,34 @@ async function initDashboard() {
         activeCoachProfile = coach;
         applyCoachBranding(coach);
 
-        // Populate Contact Card
-        if (coachContactWrapper) {
-          coachContactWrapper.classList.remove('hidden');
-          if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
-          if (coachCardEmail) coachCardEmail.textContent = coach.email || 'N/A';
-          if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-          if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
-        }
-      }
-    } else {
-      // Handle clients without a coach (Direct EliteTrack users)
-      const trialEndsDate = new Date(profile.trial_ends_at);
-      const now = new Date();
-      const isPaid = profile.subscription_status === 'active';
-      const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
+        const coachTrialEnds = new Date(coach.trial_ends_at);
+        const now = new Date();
+        const isCoachExpired = coach.subscription_status !== 'active' && (coachTrialEnds < now);
 
-      if (isPaid) {
-        isTrialExpired = false;
-        if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
-        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-      } else if (isTrialActive) {
-        isTrialExpired = false;
-        if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
-        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+        if (isCoachExpired) {
+          isTrialExpired = true;
+          if (trialExpirationBanner) {
+            trialExpirationBanner.classList.remove('hidden');
+            trialExpirationBanner.querySelector('h4').textContent = "Coaching Group Inactive";
+            trialExpirationBanner.querySelector('p').textContent = "Your coach's account is currently inactive. Logging is temporarily restricted.";
+          }
+          if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+          if (restartTrialBtn) restartTrialBtn.classList.add('hidden');
+          lockLoggingInputs('Coaching Account Suspended');
+        } else if (profile.client_status === 'suspended' || profile.client_status === 'closed') {
+          isTrialExpired = true;
+          if (trialExpirationBanner) {
+            trialExpirationBanner.classList.remove('hidden');
+            trialExpirationBanner.querySelector('h4').textContent = "Access Restricted";
+            trialExpirationBanner.querySelector('p').textContent = "Your coach has suspended your logging privileges. You can still view your history below.";
+          }
+          if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+          if (restartTrialBtn) restartTrialBtn.classList.add('hidden');
+          lockLoggingInputs('Account Suspended by Coach');
+        } else {
+          isTrialExpired = false;
+          if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+        }
       } else {
         isTrialExpired = true;
         if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
@@ -187,43 +190,47 @@ async function initDashboard() {
         lockLoggingInputs('Trial Expired - Sign Up Required');
       }
     }
-
-    // Populate Program Selection Dropdown
-    if (routineSelect) {
-      routineSelect.innerHTML = '<option value="">-- Select Your Overall Program Split --</option>';
-      Object.keys(ROUTINES).forEach(routineKey => {
-        const option = document.createElement('option');
-        option.value = routineKey;
-        option.textContent = routineKey;
-        routineSelect.appendChild(option);
-      });
-    }
-
-    // Load Saved Program from Database
-    if (profile.current_program_id) {
-      const { data: programObj } = await supabase
-        .from('programs')
-        .select('name')
-        .eq('id', profile.current_program_id)
-        .single();
-
-      if (programObj && ROUTINES[programObj.name]) {
-        if (routineSelect) routineSelect.value = programObj.name;
-        populateSubDays(programObj.name);
-      }
-    }
-
-    setupDietRatingListeners();
-    setupContactCardListeners();
-    await fetchWorkoutCache();
-    fetchAndRenderHistory();
-    fetchAndRenderBiometricHistory();
-    renderAnalyticsChart();
-    setupRealtimeComments();
-
-  } catch (err) {
-    console.error("Dashboard failed to initialize:", err);
   }
+
+  // Populate Program Selection Dropdown
+  if (routineSelect) {
+    routineSelect.innerHTML = '<option value="">-- Select Your Overall Program Split --</option>';
+    Object.keys(ROUTINES).forEach(routineKey => {
+      const option = document.createElement('option');
+      option.value = routineKey;
+      option.textContent = routineKey;
+      routineSelect.appendChild(option);
+    });
+  }
+
+  // Load Saved Program from Database Memory if available
+  if (profile && profile.current_program_id) {
+    const { data: programObj } = await supabase
+      .from('programs')
+      .select('name')
+      .eq('id', profile.current_program_id)
+      .single();
+
+    if (programObj && ROUTINES[programObj.name]) {
+      if (routineSelect) routineSelect.value = programObj.name;
+      populateSubDays(programObj.name);
+    }
+  }
+
+  // Safe early load of the Message Center before other rendering sequences
+  try {
+    await loadMessageCenterWidget();
+  } catch (e) {
+    console.warn("Message Center load failed:", e);
+  }
+
+  setupDietRatingListeners();
+  setupContactCardListeners();
+  await fetchWorkoutCache();
+  fetchAndRenderHistory();
+  fetchAndRenderBiometricHistory();
+  renderAnalyticsChart();
+  setupRealtimeComments();
 }
 
 async function loadMessageCenterWidget() {
@@ -299,7 +306,7 @@ function applyCoachBranding(coach) {
     document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
   }
   if (coach.theme_secondary_color) {
-    document.documentElement.style.setProperty('--brand-hover', coach.theme_secondary_color);
+    document.documentElement.style.setProperty('--accent-hover', coach.theme_secondary_color);
   }
   if (coach.background_color) {
     document.documentElement.style.setProperty('--bg-main', coach.background_color);
@@ -1327,7 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-await loadMessageCenterWidget();
+
 
 initDashboard();
 
