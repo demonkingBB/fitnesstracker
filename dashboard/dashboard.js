@@ -1,58 +1,75 @@
 // dashboard/dashboard.js
-// dashboard/dashboard.js
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { PROGRAMS, ROUTINES } from './programdata.js'
-
-
-
-// Ensure this is at the top level of dashboard.js, not inside initDashboard or others
-function generateExerciseForm(selectedDay) {
-  const container = document.getElementById('exerciseContainer');
-  const form = document.getElementById('workoutLoggingForm');
-  
-  if (!selectedDay) {
-    if (form) form.classList.add('hidden');
-    return;
-  }
-  
-  form.classList.remove('hidden');
-  container.innerHTML = '';
-  
-  const exerciseList = PROGRAMS[selectedDay] || [];
-  exerciseList.forEach((exerciseName, exIndex) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'exercise-block';
-    wrapper.setAttribute('data-exercise-name', exerciseName);
-    
-    // NO onclick here
-    wrapper.innerHTML = `
-      <div class="accordion-header">
-        <span>${exIndex + 1}. ${exerciseName}</span>
-        <span>▼</span>
-      </div>
-      <div class="accordion-content">
-        <div class="sets-list-container" id="sets-${exIndex}">
-          <div class="set-row">
-            <span>Set 1</span>
-            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
-            <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
-          </div>
-        </div>
-        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="font-size: 0.75rem; margin-top: 0.5rem;">+ Add Set</button>
-      </div>
-    `;
-    container.appendChild(wrapper);
-  });
-}
 
 // Supabase Configuration
 const SUPABASE_URL = "https://eiiwcvxjtnzetkyjyudi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaXdjdnhqdG56ZXRreWp5dWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMTUzNTYsImV4cCI6MjA5Nzg5MTM1Nn0.RXDV2M02Gkgd4GBK4LEz_GVSjr5wqtR27z_Q_EWyHxQ";
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_your_payment_link_id"; 
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_your_payment_link_id";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const PROGRAMS = {
+  "Push Day": [
+    "Barbell Bench Press", "Incline Dumbbell Press", "Overhead Press",
+    "Dumbbell Lateral Raise", "Cable Fly", "Chest Dip",
+    "Triceps Pushdown", "Skull Crushers", "Push-Up", "Machine Chest Press"
+  ],
+  "Pull Day": [
+    "Pull-Up", "Lat Pulldown", "Barbell Row", "Seated Cable Row",
+    "Face Pull", "Dumbbell Curl", "Hammer Curl", "Rear Delt Fly",
+    "Chest-Supported Row", "Straight-Arm Pulldown"
+  ],
+  "Leg Day": [
+    "Back Squat", "Front Squat", "Romanian Deadlift", "Leg Press",
+    "Walking Lunge", "Leg Extension", "Leg Curl", "Calf Raise",
+    "Hip Thrust", "Bulgarian Split Squat"
+  ],
+  "Upper Body Day": [
+    "Bench Press", "Pull-Up", "Overhead Press", "Barbell Row",
+    "Incline Dumbbell Press", "Seated Cable Row", "Lateral Raise",
+    "Triceps Extension", "Biceps Curl", "Face Pull"
+  ],
+  "Lower Body Day": [
+    "Back Squat", "Deadlift", "Leg Press", "Romanian Deadlift",
+    "Walking Lunge", "Leg Extension", "Leg Curl", "Calf Raise",
+    "Hip Thrust", "Bulgarian Split Squat"
+  ],
+  "Total Body Day": [
+    "Deadlift", "Front Squat", "Bench Press", "Pull-Up",
+    "Overhead Press", "Barbell Row", "Kettlebell Swing",
+    "Farmer Carry", "Push Press", "Goblet Squat"
+  ],
+  "Calisthenics": [
+    "Push-Up", "Pull-Up", "Dip", "Bodyweight Squat",
+    "Walking Lunge", "Plank", "Hollow Hold", "Inverted Row",
+    "Pike Push-Up", "Mountain Climber"
+  ],
+  "Chest-Biceps Day": [
+    "Chest Press", "Incline Chest Press", "Chest Fly", "DB Chest Press",
+    "Overhead Press", "Cable Curls", "DB Curls",
+    "DB Hammer Curls", "Barbell Curls"
+  ],
+  "Back-Triceps Day": [
+    "Bent Over Row", "Lat Pulldown", "Back Row", "DB Row",
+    "Rear Delt Fly", "Tricep Press Down", "OH Tricep Press",
+    "DB Tricep Kickbacks", "Tricep Dips"
+  ],
+  "Leg-Quad-Dom Day": [
+    "Squat", "Leg Press", "Hack Squat", "Lunges",
+    "Leg Extensions", "Hip Abductor"
+  ],
+  "Leg-Ham-Dom Day": [
+    "Stiff Leg Deadlift", "Dead Lift", "Seated Leg Curl", "Prone Leg Curl",
+    "Step Ups", "Hip Adductor", "Wide leg far leg press"
+  ]
+};
 
+const ROUTINES = {
+  "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day"],
+  "Upper Lower Body": ["Upper Body Day", "Lower Body Day"],
+  "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day"],
+  "Total Body & Calisthenics": ["Total Body Day", "Calisthenics"]
+};
 
 // DOM Elements
 const userEmailDisplay = document.getElementById('userEmail');
@@ -89,89 +106,124 @@ const coachCardAddress = document.getElementById('coachCardAddress');
 const strengthPRContainer = document.getElementById('strengthPRContainer');
 const cardioPRContainer = document.getElementById('cardioPRContainer');
 
-
-
-// PUT THESE AT THE VERY TOP OF dashboard.js (below the imports/config)
 let currentUser = null;
 let isTrialExpired = false;
 let activeCoachProfile = null;
 let cachedWorkouts = [];
 let strengthPRs = {};
 let cardioPR = { distance: 0, duration: 0 };
-let bodyChartInstance = null;      // <--- THESE MUST BE HERE
-let performanceChartInstance = null; // <--- THESE MUST BE HERE
 
 // Initialize Session, Check Expiration and Load Preferences
 async function initDashboard() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) { 
-    window.location.href = '/login/'; 
-    return; 
-  }
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+      window.location.href = '/login/';
+      return;
+    }
 
-  currentUser = session.user;
-  if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
+    currentUser = session.user;
+    if (userEmailDisplay) {
+      userEmailDisplay.textContent = currentUser.email;
+    }
 
-  // 1. FETCH PROFILE
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, role, coach_id, current_program_id, trial_ends_at, subscription_status, client_status')
-    .eq('id', currentUser.id)
-    .single();
-
-  if (profileError || !profile) {
-    console.error("Profile fetch failed:", profileError);
-    return;
-  }
-
-  // 2. COACH REDIRECT
-  if (profile.role === 'coach') {
-    window.location.href = '/coaches/';
-    return;
-  }
-
-  // 3. MULTI-TENANT ACCESS ENGINE
-  if (profile.coach_id) {
-    const { data: coach, error: coachError } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url')
-      .eq('id', profile.coach_id)
+      .select('role, current_program_id, trial_ends_at, subscription_status, coach_id, client_status')
+      .eq('id', currentUser.id)
       .single();
 
-    if (!coachError && coach) {
-      applyCoachBranding(coach);
-      if (coachContactWrapper) {
-        coachContactWrapper.classList.remove('hidden');
-        if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
-        if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-        if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+    if (profileError || !profile) {
+      console.error("Critical error fetching profile:", profileError);
+      return;
+    }
+
+    if (profile.role === 'coach') {
+      window.location.href = '/coaches/';
+      return;
+    }
+
+    // MULTI-TENANT ACCESS ENGINE
+    if (profile.coach_id) {
+      // Safe Select: Query only public branding columns to prevent 406/400 errors
+      const { data: coach, error: coachError } = await supabase
+        .from('profiles')
+        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, background_color, theme_mode')
+        .eq('id', profile.coach_id)
+        .single();
+
+      if (!coachError && coach) {
+        activeCoachProfile = coach;
+        applyCoachBranding(coach);
+
+        // Populate Contact Card
+        if (coachContactWrapper) {
+          coachContactWrapper.classList.remove('hidden');
+          if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
+          if (coachCardEmail) coachCardEmail.textContent = coach.email || 'N/A';
+          if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
+          if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+        }
+      }
+    } else {
+      // Handle clients without a coach (Direct EliteTrack users)
+      const trialEndsDate = new Date(profile.trial_ends_at);
+      const now = new Date();
+      const isPaid = profile.subscription_status === 'active';
+      const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
+
+      if (isPaid) {
+        isTrialExpired = false;
+        if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+      } else if (isTrialActive) {
+        isTrialExpired = false;
+        if (smallUpgradeBtn) smallUpgradeBtn.classList.remove('hidden');
+        if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
+      } else {
+        isTrialExpired = true;
+        if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
+        if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
+        lockLoggingInputs('Trial Expired - Sign Up Required');
       }
     }
+
+    // Populate Program Selection Dropdown
+    if (routineSelect) {
+      routineSelect.innerHTML = '<option value="">-- Select Your Overall Program Split --</option>';
+      Object.keys(ROUTINES).forEach(routineKey => {
+        const option = document.createElement('option');
+        option.value = routineKey;
+        option.textContent = routineKey;
+        routineSelect.appendChild(option);
+      });
+    }
+
+    // Load Saved Program from Database
+    if (profile.current_program_id) {
+      const { data: programObj } = await supabase
+        .from('programs')
+        .select('name')
+        .eq('id', profile.current_program_id)
+        .single();
+
+      if (programObj && ROUTINES[programObj.name]) {
+        if (routineSelect) routineSelect.value = programObj.name;
+        populateSubDays(programObj.name);
+      }
+    }
+
+    setupDietRatingListeners();
+    setupContactCardListeners();
+    await fetchWorkoutCache();
+    fetchAndRenderHistory();
+    fetchAndRenderBiometricHistory();
+    renderAnalyticsChart();
+    setupRealtimeComments();
+
+  } catch (err) {
+    console.error("Dashboard failed to initialize:", err);
   }
-
-  // 4. SUBSCRIPTION LOGIC
-  const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
-  const now = new Date();
-  const isPaid = profile.subscription_status === 'active';
-  const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
-
-  if (!isPaid && !isTrialActive) {
-    isTrialExpired = true;
-    if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
-    lockLoggingInputs('Trial Expired - Sign Up Required');
-  } else {
-    isTrialExpired = false;
-    if (trialExpirationBanner) trialExpirationBanner.classList.add('hidden');
-  }
-
-  // 5. REST OF INITIALIZATION
-  setupDietRatingListeners();
-  setupContactCardListeners();
-  await fetchWorkoutCache();
-  fetchAndRenderHistory();
-  fetchAndRenderBiometricHistory();
-  renderAnalyticsChart();
-  setupRealtimeComments();
 }
 
 function lockLoggingInputs(buttonMessage) {
@@ -200,25 +252,31 @@ function lockLoggingInputs(buttonMessage) {
 
 // Apply Dynamic Coach Branding properties to document styles
 function applyCoachBranding(coach) {
+  if (!coach) return;
+
   if (coach.theme_primary_color) {
-    document.documentElement.style.setProperty('--accent-neon', coach.theme_primary_color);
+    document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
   }
   if (coach.theme_secondary_color) {
-    document.documentElement.style.setProperty('--accent-hover', coach.theme_secondary_color);
+    document.documentElement.style.setProperty('--brand-hover', coach.theme_secondary_color);
+  }
+  if (coach.background_color) {
+    document.documentElement.style.setProperty('--bg-main', coach.background_color);
   }
 
-  if (coach.logo_url && logoElement) {
-    logoElement.innerHTML = `<img src="${coach.logo_url}" alt="${coach.full_name}" style="max-height: 40px; width: auto; object-fit: contain;">`;
-  } else if (logoElement) {
-    logoElement.innerHTML = `<h2>🚀 ${coach.full_name || 'Coach'} Track</h2>`;
+  if (coach.theme_mode === 'light') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
   }
 
-  if (coachContactWrapper) {
-    coachContactWrapper.classList.remove('hidden');
-    if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
-    if (coachCardEmail) coachCardEmail.textContent = coach.email || 'N/A';
-    if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'N/A';
-    if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'Virtual coaching';
+  const logoEl = document.getElementById('logoElement');
+  if (logoEl) {
+    if (coach.logo_url) {
+      logoEl.innerHTML = `<img src="${coach.logo_url}" alt="Logo" style="max-height: 40px; width: auto; object-fit: contain;">`;
+    } else {
+      logoEl.innerHTML = `<h2>🚀 ${coach.full_name || 'Coach'} Track</h2>`;
+    }
   }
 }
 
@@ -378,7 +436,67 @@ if (programSelect) {
   });
 }
 
+// Generate dynamic Weight Training Input Fields with inline target PR displays!
+function generateExerciseForm(selectedDay) {
+  if (!selectedDay) {
+    if (workoutLoggingForm) {
+      workoutLoggingForm.classList.add('hidden');
+    }
+    return;
+  }
+  if (workoutLoggingForm) {
+    workoutLoggingForm.classList.remove('hidden');
+  }
+  if (exerciseContainer) {
+    exerciseContainer.innerHTML = '';
+    const exerciseList = PROGRAMS[selectedDay] || [];
+    exerciseList.forEach((exerciseName, exIndex) => {
+      const exerciseWrapper = document.createElement('div');
+      exerciseWrapper.className = 'exercise-log-block';
+      exerciseWrapper.setAttribute('data-exercise-name', exerciseName);
 
+      // Find existing PR for target label
+      const prObj = strengthPRs[exerciseName];
+      const prText = prObj
+        ? `Target PR: <strong>${prObj.weight}</strong> lbs/kg x <strong>${prObj.reps}</strong> reps`
+        : `No previous lifts recorded.`;
+
+      exerciseWrapper.innerHTML = `
+        <h4 style="margin-bottom: 0.25rem; color: var(--text-primary); font-size: 1.1rem;">${exIndex + 1}. ${exerciseName}</h4>
+        <p style="font-size: 0.8rem; color: var(--accent-neon); margin-bottom: 1rem;">${prText}</p>
+        <div class="sets-list-container" id="setsContainer-${exIndex}">
+          <div class="set-row">
+            <span>Set 1</span>
+            <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
+            <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
+          </div>
+        </div>
+        <button type="button" class="btn-secondary add-set-btn" data-index="${exIndex}" style="padding: 4px 12px; font-size: 0.8rem; margin-top: 0.5rem;">
+          + Add Extra Set
+        </button>
+      `;
+      exerciseContainer.appendChild(exerciseWrapper);
+    });
+  }
+}
+
+if (exerciseContainer) {
+  exerciseContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('add-set-btn')) {
+      const exIndex = e.target.getAttribute('data-index');
+      const container = document.getElementById(`setsContainer-${exIndex}`);
+      const currentSetCount = container.children.length + 1;
+      const setRow = document.createElement('div');
+      setRow.className = "set-row";
+      setRow.innerHTML = `
+        <span>Set ${currentSetCount}</span>
+        <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 100px;" min="0">
+        <input type="number" placeholder="lbs / kg" class="workout-input weight-input" style="width: 110px;" min="0" step="any">
+      `;
+      container.appendChild(setRow);
+    }
+  });
+}
 
 function setupDietRatingListeners() {
   const container = document.getElementById('dietRatingSelector');
@@ -394,94 +512,70 @@ function setupDietRatingListeners() {
   });
 }
 
-workoutLoggingForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (isTrialExpired) return showStatus("Trial expired.", "error");
-  showStatus("", "");
-  
-  const selectedDay = programSelect ? programSelect.value : ''; 
-  const blocks = document.querySelectorAll('.exercise-block'); 
-  const payloadRows = [];
-  const todayDateString = new Date().toISOString().split('T')[0];
+if (workoutLoggingForm) {
+  workoutLoggingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isTrialExpired) return showStatus("Trial expired.", "error");
+    showStatus("", "");
+    const selectedDay = programSelect ? programSelect.value : '';
+    const blocks = document.querySelectorAll('.exercise-log-block');
+    const payloadRows = [];
+    const todayDateString = new Date().toISOString().split('T')[0];
 
-  // 1. Process Exercises
- blocks.forEach(block => {
-    const exName = block.getAttribute('data-exercise-name');
-    
-    // SKIP if exName is null or empty
-    if (!exName) return; 
+    blocks.forEach(block => {
+      const exName = block.getAttribute('data-exercise-name');
+      const setRows = block.querySelectorAll('.set-row');
+      const structuredSetsArray = [];
 
-    const setRows = block.querySelectorAll('.set-row');
-    const structuredSetsArray = [];
-
-    setRows.forEach((currentRow, rowIndex) => {
-      const repsInput = currentRow.querySelector('.reps-input');
-      const weightInput = currentRow.querySelector('.weight-input');
-      
-      if (repsInput && weightInput) {
-        const repsVal = repsInput.value;
-        const weightVal = weightInput.value;
-
-        if (repsVal !== '' && weightVal !== '') {
+      setRows.forEach((row, rowIndex) => {
+        const repsVal = parseInt(row.querySelector('.reps-input').value, 10);
+        const weightVal = parseFloat(row.querySelector('.weight-input').value);
+        if (!isNaN(repsVal) && !isNaN(weightVal)) {
           structuredSetsArray.push({
             set: rowIndex + 1,
-            reps: parseInt(repsVal, 10),
-            weight: parseFloat(weightVal)
+            reps: repsVal,
+            weight: weightVal
           });
         }
+      });
+
+      if (structuredSetsArray.length > 0) {
+        let logCategory = 'weight_training';
+        if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
+          logCategory = 'calisthenics';
+        }
+        payloadRows.push({
+          user_id: currentUser.id,
+          log_date: todayDateString,
+          category: logCategory,
+          exercise_name: exName,
+          routine_focus: selectedDay,
+          metrics: { sets: structuredSetsArray }
+        });
       }
     });
 
-    if (structuredSetsArray.length > 0) {
-      let logCategory = 'weight_training';
-      if (selectedDay === "Calisthenics" || selectedDay.toLowerCase().includes("calisthenics")) {
-        logCategory = 'calisthenics';
-      }
-      
-      payloadRows.push({
-        user_id: currentUser.id,
-        log_date: todayDateString,
-        category: logCategory,
-        exercise_name: exName,
-        routine_focus: selectedDay, 
-        metrics: { sets: structuredSetsArray }
-      });
+    if (payloadRows.length === 0) {
+      showStatus("Please fill out at least one exercise step to submit progress.", "error");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('workout_logs').insert(payloadRows);
+      if (error) throw error;
+      showStatus("Success! Progress saved.", "success");
+      workoutLoggingForm.reset();
+      workoutLoggingForm.classList.add('hidden');
+      await fetchWorkoutCache();
+      fetchAndRenderHistory(selectedDay);
+    } catch (err) {
+      showStatus(`Failed to save: ${err.message}`, "error");
     }
   });
-  // 2. Validate
-  if (payloadRows.length === 0) {
-    showStatus("Please fill out at least one exercise step to submit progress.", "error");
-    return;
-  }
+}
 
-  // 3. Try Save
-  try {
-    const { data, error } = await supabase
-      .from('workout_logs')
-      .insert(payloadRows);
-
-    if (error) {
-      console.error("Supabase Error Message:", error.message);
-      console.error("Supabase Error Details:", error.details);
-      throw error;
-    }
-    
-    showStatus("Success! Progress saved.", "success");
-    workoutLoggingForm.reset();
-    workoutLoggingForm.classList.add('hidden');
-    await fetchWorkoutCache();
-    fetchAndRenderHistory(selectedDay);
-    
-  } catch (err) {
-    showStatus(`Save failed: ${err.message}`, "error");
-    console.error("Full Catch Error:", err);
-  }
-}); // <--- THIS CLOSES THE WORKOUT SUBMIT FUNCTION // <--- THIS IS THE CRITICAL LINE: Closes the submit function
-
-// NOW start the next block
 if (cardioLoggingForm) {
   cardioLoggingForm.addEventListener('submit', async (e) => {
-    // ...
     e.preventDefault();
     if (isTrialExpired) return showStatus("Trial expired.", "error");
     try {
@@ -539,7 +633,7 @@ if (dietLoggingForm) {
       const payload = [{
         user_id: currentUser.id,
         log_date: todayDateString,
-        category: 'weight_training', 
+        category: 'weight_training',
         exercise_name: 'Daily Nutritional Matrix',
         routine_focus: selectedDay,
         metrics: { diet_rating: dietRating }
@@ -632,11 +726,11 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
       sortedDates = sortedDates.filter(dateKey => {
         const masterDayGroup = groupedByDate[dateKey];
         const matchingLifts = cachedWorkouts.filter(log => {
-          return log.log_date === dateKey && 
-                 log.category !== 'cardio' && 
-                 log.exercise_name !== 'Daily Nutritional Matrix' && 
-                 log.exercise_name !== 'Biometric Snapshot Engine' && 
-                 allowedExercises.includes(log.exercise_name);
+          return log.log_date === dateKey &&
+            log.category !== 'cardio' &&
+            log.exercise_name !== 'Daily Nutritional Matrix' &&
+            log.exercise_name !== 'Biometric Snapshot Engine' &&
+            allowedExercises.includes(log.exercise_name);
         });
         if (matchingLifts.length > 0) {
           masterDayGroup.lifts = matchingLifts;
@@ -675,11 +769,11 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
       const dayCard = document.createElement('div');
       dayCard.className = 'history-day-card';
       dayCard.style.cssText = "background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.2s ease;";
-      
+
       const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
       const liftCount = dayGroup.lifts.length;
       const cardioLogged = dayGroup.cardio ? "🏃 Cardio" : "";
-      
+
       const headerHTML = `
         <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
           <div>
@@ -734,36 +828,32 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
             <div style="font-size: 0.8rem; color: #38bdf8;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
           </div>`;
       }
-      
-      // INSERT COMMENT BUCKET HERE
-      detailsHTML += `
-        <div class="workout-comments-feed" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-          <div id="commentsList-${dayGroup.date}" class="comments-list" style="max-height: 120px; overflow-y: auto;">
-          </div>
-        </div>
-      `;
 
-      detailsHTML += `</div>`; // Close day-card-details
-
+      detailsHTML += `</div>`;
       dayCard.innerHTML = headerHTML + detailsHTML;
-      
-      // Now add the event listener
+
       dayCard.addEventListener('click', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         const detailsBlock = dayCard.querySelector('.day-card-details');
         const isHidden = detailsBlock.classList.contains('hidden');
-        
-        document.querySelectorAll('.day-card-details').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.day-card-details').forEach(el => {
+          el.classList.add('hidden');
+        });
 
         if (isHidden) {
           detailsBlock.classList.remove('hidden');
           dayCard.style.borderColor = "var(--accent-neon)";
-          
-          // Populate comments when opened
-          const feedContainer = dayCard.querySelector(`#commentsList-${dayGroup.date}`);
-          if (feedContainer) {
-            feedContainer.innerHTML = '';
-            // Fetch and append comments here...
+          if (liftCount > 0) {
+            dayGroup.lifts.forEach(workout => {
+              const feedContainer = document.getElementById(`commentsList-${workout.id}`);
+              if (feedContainer) {
+                feedContainer.innerHTML = '';
+                const workoutComments = commentsByWorkout[workout.id] || [];
+                workoutComments.forEach(comment => {
+                  appendSingleCommentToFeed(feedContainer, comment);
+                });
+              }
+            });
           }
         } else {
           detailsBlock.classList.add('hidden');
@@ -774,7 +864,7 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
       historyGrid.appendChild(dayCard);
     });
   }
-}         
+}
 
 // ==========================================================================
 // BIOMETRIC ENGINE MATH & PROGRESSIVE OVERLOAD VISUALS
@@ -811,11 +901,11 @@ if (biometricForm) {
       targetCalories = Math.round(tdee - 500);
     } else if (goal === 'hypertrophy') {
       if (bmi < 18.5) {
-        targetCalories = Math.round(tdee + 500); 
+        targetCalories = Math.round(tdee + 500);
       } else if (bmi >= 18.5 && bmi < 25) {
-        targetCalories = Math.round(tdee + 250); 
+        targetCalories = Math.round(tdee + 250);
       } else {
-        targetCalories = Math.round(tdee); 
+        targetCalories = Math.round(tdee);
       }
     }
 
@@ -833,36 +923,36 @@ if (biometricForm) {
       fontColor = "#ef4444";
     }
 
-    
+
     function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
 
-setText('resBMI', bmi.toFixed(1));
-setText('resBMR', `${Math.round(bmr)} kcal`);
-setText('resTDEE', `${Math.round(tdee)} kcal`);
-setText('resWHR', whr.toFixed(2));
+    setText('resBMI', bmi.toFixed(1));
+    setText('resBMR', `${Math.round(bmr)} kcal`);
+    setText('resTDEE', `${Math.round(tdee)} kcal`);
+    setText('resWHR', whr.toFixed(2));
 
-const riskContainer = document.getElementById('resRisk');
-if (riskContainer) {
-  riskContainer.textContent = riskText;
-  riskContainer.style.backgroundColor = riskColor;
-  riskContainer.style.color = fontColor;
-}
+    const riskContainer = document.getElementById('resRisk');
+    if (riskContainer) {
+      riskContainer.textContent = riskText;
+      riskContainer.style.backgroundColor = riskColor;
+      riskContainer.style.color = fontColor;
+    }
 
-setText('resDietTarget', `${targetCalories} Calories / day`);
+    setText('resDietTarget', `${targetCalories} Calories / day`);
 
-if (biometricResults) {
-  biometricResults.classList.remove('hidden');
-}
-    
+    if (biometricResults) {
+      biometricResults.classList.remove('hidden');
+    }
+
 
     const todayDateString = new Date().toISOString().split('T')[0];
     const payload = [{
       user_id: currentUser.id,
       log_date: todayDateString,
-      category: 'weight_training', 
+      category: 'weight_training',
       exercise_name: 'Biometric Snapshot Engine',
       routine_focus: programSelect ? programSelect.value : 'Biometrics Log',
       metrics: {
@@ -916,12 +1006,12 @@ async function fetchAndRenderBiometricHistory() {
 // ==========================================================================
 // TWO STATIC GRAPHS FOR CLIENTS (Body & Nutrition Journey + Performance Volume)
 // ==========================================================================
-bodyChartInstance = null;
-performanceChartInstance = null;
+let bodyChartInstance = null;
+let performanceChartInstance = null;
 
 async function renderAnalyticsChart() {
   if (!currentUser) return;
-  
+
   const bodyCtx = document.getElementById('bodyChart');
   const performanceCtx = document.getElementById('performanceChart');
   if (!bodyCtx || !performanceCtx) return;
@@ -942,7 +1032,7 @@ async function renderAnalyticsChart() {
     .select('*')
     .eq('user_id', currentUser.id)
     .eq('exercise_name', 'Biometric Snapshot Engine')
-    .gte('log_date', cutoffDateString) 
+    .gte('log_date', cutoffDateString)
     .order('log_date', { ascending: true });
 
   // Fetch workout sessions
@@ -951,7 +1041,7 @@ async function renderAnalyticsChart() {
     .select('*')
     .eq('user_id', currentUser.id)
     .eq('category', 'weight_training')
-    .gte('log_date', cutoffDateString) 
+    .gte('log_date', cutoffDateString)
     .order('log_date', { ascending: true });
 
   // 📈 GRAPH 1: Render Body Journey (Weight, Waist, and BMI over time)
@@ -1077,7 +1167,7 @@ tabButtons.forEach(button => {
       btn.classList.remove('active');
       btn.style.color = "var(--text-muted)";
     });
-    
+
     // Set currently selected target tab to active styling
     button.classList.add('active');
     button.style.color = "#ffffff";
@@ -1116,43 +1206,6 @@ if (logoutBtn) {
     window.location.href = '/login/';
   });
 }
-
-// Universal click handler for the whole app
-document.addEventListener('click', (e) => {
-  const header = e.target.closest('.accordion-header');
-  
-  // If we clicked a header
-  if (header) {
-    const content = header.nextElementSibling;
-    
-    // Toggle THIS specific block ONLY
-    content.classList.toggle('active');
-    
-    // Stop the event from bubbling up to any other listeners
-    e.stopPropagation(); 
-    e.preventDefault();
-    return;
-  }
-
-  
-  // Handle Add Set button
-  if (e.target.classList.contains('add-set-btn')) {
-    e.preventDefault();
-    const index = e.target.getAttribute('data-index');
-    const container = document.getElementById(`sets-${index}`);
-    if (container) {
-      const count = container.children.length + 1;
-      const row = document.createElement('div');
-      row.className = 'set-row';
-      row.innerHTML = `
-        <span>Set ${count}</span>
-        <input type="number" placeholder="Reps" class="workout-input reps-input" style="width: 80px;">
-        <input type="number" placeholder="lbs" class="workout-input weight-input" style="width: 80px;">
-      `;
-      container.appendChild(row);
-    }
-  }
-});
 
 initDashboard();
 

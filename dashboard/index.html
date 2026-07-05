@@ -1,4 +1,3 @@
-<!-- dashboard/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -31,7 +30,7 @@
             </button>
             <div id="coachContactCard" class="coach-card-dropdown hidden">
               <h4 id="coachCardName" style="margin-bottom: 0.5rem; color: #fff;">Trainer Name</h4>
-              <p id="coachCardEmail" style="font-size: 0.8rem; color: var(--accent-neon); margin-bottom: 0.25rem;">
+              <p id="coachCardEmail" style="font-size: 0.8rem; color: var(--brand-primary); margin-bottom: 0.25rem;">
                 email@trainer.com</p>
               <p id="coachCardPhone" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">(555)
                 555-5555</p>
@@ -43,7 +42,7 @@
           </div>
 
           <button id="smallUpgradeBtn" class="btn-upgrade hidden"
-            style="background: var(--accent-neon); color: #000000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">👑
+            style="background: var(--brand-primary); color: #000000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">👑
             Upgrade Now</button>
           <button id="logoutBtn" class="btn-logout"
             style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: #ffffff; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🚪
@@ -72,7 +71,7 @@
           and continue tracking.</p>
       </div>
       <button id="restartTrialBtn" class="btn-primary"
-        style="background-color: var(--accent-neon); color: #000000; font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+        style="background-color: var(--brand-primary); color: #000000; font-size: 0.85rem; padding: 0.6rem 1.2rem;">
         Restart Your Progress, SIGN UP!
       </button>
     </div>
@@ -167,41 +166,61 @@
 
         </section>
 
-        <!-- COLUMN 2: Target PR Sidebar & Historical Workout Feed -->
-        <section class="card" style="align-self: flex-start;">
-          <h3>Target PR Sidebars</h3>
+        <!-- COLUMN 2: Target PR Sidebar & Historical Workout Feed (Split into independent cards) -->
+        <section style="display: flex; flex-direction: column; gap: 2rem;">
 
-          <!-- Dynamic Strength PR List -->
-          <div style="margin-top: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
-            <h4 style="color: #ffffff; font-size: 0.95rem; margin-bottom: 0.75rem;">🏋️ Strength PR Targets</h4>
-            <div id="strengthPRContainer"
-              style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto;">
-              <p style="font-size: 0.8rem; color: var(--text-muted);">No logged strength PRs recorded yet.</p>
+          <!-- Card A: Target PR Sidebars -->
+          <div class="card">
+            <h3 style="margin-bottom: 1.5rem;">Target PR Sidebars</h3>
+
+            <!-- Dynamic Strength PR List -->
+            <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
+              <h4 style="color: #ffffff; font-size: 0.95rem; margin-bottom: 0.75rem;">🏋️ Strength PR Targets</h4>
+              <div id="strengthPRContainer"
+                style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto;">
+                <p style="font-size: 0.8rem; color: var(--text-muted);">No logged strength PRs recorded yet.</p>
+              </div>
+            </div>
+
+            <!-- Cardio Milestones -->
+            <div>
+              <h4 style="color: #ffffff; font-size: 0.95rem; margin-bottom: 0.75rem;">🏃 Cardio Milestones</h4>
+              <div id="cardioPRContainer"
+                style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 150px; overflow-y: auto;">
+                <p style="font-size: 0.8rem; color: var(--text-muted);">No logged cardio records recorded yet.</p>
+              </div>
             </div>
           </div>
 
-          <!-- Cardio Milestones -->
-          <div style="margin-top: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
-            <h4 style="color: #ffffff; font-size: 0.95rem; margin-bottom: 0.75rem;">🏃 Cardio Milestones</h4>
-            <div id="cardioPRContainer"
-              style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 150px; overflow-y: auto;">
-              <p style="font-size: 0.8rem; color: var(--text-muted);">No logged cardio records recorded yet.</p>
-            </div>
-          </div>
-
-          <!-- Workout History Feed -->
-          <div style="margin-top: 2rem;">
+          <!-- Card B: Workout History Feed (Scrollable) -->
+          <div class="card">
             <h3 style="margin-bottom: 1rem;">Your Workout History</h3>
-            <div id="historyGrid" class="workout-history-grid">
+            <div id="historyGrid" class="workout-history-grid" style="max-height: 350px; overflow-y: auto;">
               <p id="noHistoryMsg" style="color: var(--text-muted);">No logged workouts found yet.</p>
             </div>
           </div>
+
+          <!-- Card C: Dedicated Message Center (1:1 Chat) -->
+          <div class="card">
+            <h3 style="margin-bottom: 1rem;">Coach Communication</h3>
+            <div id="mainCommentFeed"
+              style="max-height: 200px; overflow-y: auto; background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-subtle);">
+              <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem 0;">Loading
+                conversation...</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="coachMessageInput" placeholder="Write a message to your coach..."
+                class="workout-input">
+              <button id="sendCoachMessageBtn" class="btn-primary">Send</button>
+            </div>
+          </div>
+
         </section>
 
       </div>
     </div>
 
-    <!-- TAB 2: Calculations and dual analytics module -->
+    <!-- TAB 2: Calculations and dual analytics module (Kept untouched) -->
     <div id="calculatorTab" class="tab-content hidden" style="display: none;">
       <div class="analytics-grid"
         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
@@ -293,7 +312,7 @@
             </div>
 
             <button type="submit" class="btn-secondary"
-              style="width: 100%; font-weight: bold; padding: 0.75rem; background: var(--accent-neon); color: #000; border: none; border-radius: 4px; cursor: pointer;">
+              style="width: 100%; font-weight: bold; padding: 0.75rem; background: var(--brand-primary); color: #000; border: none; border-radius: 4px; cursor: pointer;">
               Calculate Biometrics & Save Log
             </button>
           </form>
@@ -345,7 +364,7 @@
           <div class="card"
             style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
             <div
-              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
               <h3 style="color: #ffffff; margin: 0;">💪 Performance Volume Journey</h3>
             </div>
             <div
