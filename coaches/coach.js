@@ -132,6 +132,7 @@ async function fetchRoster() {
 
 
 
+// Routing Security Guard: Only allow valid coaches in this directory and apply white-label branding
 async function initCoachDashboard() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -145,9 +146,10 @@ async function initCoachDashboard() {
       userEmailDisplay.textContent = session.user.email;
     }
 
+    // FIX: Retrieve ALL white-label branding columns from the database on load
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('full_name, role, theme_primary_color, theme_secondary_color, trial_ends_at, subscription_status')
+      .select('full_name, role, theme_primary_color, theme_secondary_color, background_color, theme_mode, logo_url, contact_phone, contact_address, trial_ends_at, subscription_status')
       .eq('id', currentCoachId)
       .single();
 
@@ -156,39 +158,48 @@ async function initCoachDashboard() {
       return;
     }
 
+    // Apply branding settings visually to the coach's own dashboard
     applyCoachBranding(profile);
 
-    const trialEndsDate = new Date(profile.trial_ends_at || Date.now());
+    // Check coach trial/billing expiration with a safe date fallback
+    const trialEndsDate = profile.trial_ends_at
+      ? new Date(profile.trial_ends_at)
+      : new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
+
     const now = new Date();
     const isPaid = profile.subscription_status === 'active';
     const isTrialActive = profile.subscription_status === 'trial' && (trialEndsDate >= now);
 
     if (!isPaid && !isTrialActive) {
-      if (coachExpirationBanner) {
-        coachExpirationBanner.classList.remove('hidden');
-      }
-      if (coachUpgradeBtn) {
-        coachUpgradeBtn.classList.add('hidden');
-      }
+      if (coachExpirationBanner) coachExpirationBanner.classList.remove('hidden');
+      if (coachUpgradeBtn) coachUpgradeBtn.classList.add('hidden');
     } else {
-      if (coachUpgradeBtn) {
-        coachUpgradeBtn.classList.remove('hidden');
-      }
+      if (coachUpgradeBtn) coachUpgradeBtn.classList.remove('hidden');
     }
 
-    if (brandPrimaryColor) {
-      brandPrimaryColor.value = profile.theme_primary_color || '#39ff14';
-    }
-    if (brandSecondaryColor) {
-      brandSecondaryColor.value = profile.theme_secondary_color || '#29d609';
-    }
-    if (inviteLinkContainer) {
-      inviteLinkContainer.textContent = `${window.location.origin}/signup/?coach=${currentCoachId}`;
-    }
+    // Populate invite referral link
+    const inviteLink = `${window.location.origin}/signup/?coach=${currentCoachId}`;
+    if (inviteLinkContainer) inviteLinkContainer.textContent = inviteLink;
 
-    await fetchRoster();
+    // FIX: Pre-populate ALL brand customization form inputs so saved states are preserved
+    const brandAppNameInput = document.getElementById('brandAppName');
+    const brandBgColorInput = document.getElementById('brandBgColor');
+    const brandThemeModeInput = document.getElementById('brandThemeMode');
+
+    if (brandAppNameInput) brandAppNameInput.value = profile.full_name || '';
+    if (brandPrimaryColor) brandPrimaryColor.value = profile.theme_primary_color || '#39ff14';
+    if (brandSecondaryColor) brandSecondaryColor.value = profile.theme_secondary_color || '#29d609';
+    if (brandBgColorInput) brandBgColorInput.value = profile.background_color || '#0c0d10';
+    if (brandThemeModeInput) brandThemeModeInput.value = profile.theme_mode || 'dark';
+    if (brandLogoUrl) brandLogoUrl.value = profile.logo_url || '';
+    if (brandPhone) brandPhone.value = profile.contact_phone || '';
+    if (brandAddress) brandAddress.value = profile.contact_address || '';
+
+    // Fetch team roster
+    fetchRoster();
     setupRealtimeComments();
 
+    // FIX: Grab the correct dropdown element and call the active chart drawer
     const selector = document.getElementById('coachChartSelector');
     if (selector) {
       selector.addEventListener('change', () => {
@@ -588,50 +599,126 @@ async function loadAuditFeedWidget(clientId) {
     return;
   }
 
-  grid.innerHTML = ''; // Clear loading state
-
   if (!workouts || workouts.length === 0) {
-    grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No history logged yet.</p>';
+    grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">No history logged yet.</p>';
     return;
   }
 
-  workouts.forEach(workout => {
-    let logDetail = '';
-
-    // Format the details cleanly depending on what type of log it is
-    if (workout.exercise_name === 'Daily Nutritional Matrix') {
-      logDetail = `Diet Quality Rating: <strong>${workout.metrics?.diet_rating || '-'}/5</strong>`;
-    } else if (workout.exercise_name === 'Biometric Snapshot Engine') {
-      const m = workout.metrics || {};
-      logDetail = `Weight: <strong>${m.weight || '-'}</strong> lbs | Waist: <strong>${m.waist || '-'}</strong>" | Target: <strong>${m.target_calories || '-'}</strong> cal`;
-    } else if (workout.category === 'cardio') {
-      const sets = Array.isArray(workout.metrics?.sets) ? workout.metrics.sets : [];
-      logDetail = sets.map(s => `${s.duration || '-'} mins (${s.distance || '-'} mi)`).join(', ');
-    } else {
-      const sets = Array.isArray(workout.metrics?.sets) ? workout.metrics.sets : [];
-      logDetail = sets.map(s => `Set ${s.set}: ${s.reps || '-'} reps @ ${s.weight || '-'} lbs/kg`).join(' | ');
+  // 1. Grouping Phase (Consolidate separate logs by date)
+  const groupedByDate = {};
+  workouts.forEach(log => {
+    if (!groupedByDate[log.log_date]) {
+      groupedByDate[log.log_date] = {
+        date: log.log_date,
+        lifts: [],
+        cardio: null,
+        diet: null,
+        routine_focus: log.routine_focus || ''
+      };
     }
+    if (log.category === 'cardio') {
+      groupedByDate[log.log_date].cardio = log;
+    } else if (log.exercise_name === 'Daily Nutritional Matrix') {
+      groupedByDate[log.log_date].diet = log;
+    } else if (log.exercise_name !== 'Biometric Snapshot Engine') {
+      groupedByDate[log.log_date].lifts.push(log);
+    }
+    if (log.routine_focus && !groupedByDate[log.log_date].routine_focus) {
+      groupedByDate[log.log_date].routine_focus = log.routine_focus;
+    }
+  });
 
-    // Determine a clean tag for the right side of the row
-    const displayTag = workout.exercise_name === 'Daily Nutritional Matrix'
-      ? 'NUTRITION'
-      : (workout.exercise_name === 'Biometric Snapshot Engine' ? 'BIOMETRICS' : workout.category.toUpperCase().replace('_', ' '));
+  const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
-    const row = document.createElement('div');
-    row.style.cssText = "padding: 1rem; border-bottom: 1px solid var(--border-subtle); background: rgba(255,255,255,0.01);";
-    row.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-        <span style="font-weight: 700; color: var(--brand-primary); font-size: 0.8rem;">${workout.log_date}</span>
-        <span style="font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted); text-transform: uppercase;">
-          ${displayTag}
-        </span>
-      </div>
-      <div style="font-size: 0.9rem; color: #fff; font-weight: 600; margin-bottom: 0.25rem;">${workout.exercise_name}</div>
-      <div style="font-size: 0.8rem; color: var(--text-muted);">${logDetail}</div>
+  // 2. Render Selector Dropdown and Active Audit Card Container
+  grid.innerHTML = `
+    <div style="margin-bottom: 0.75rem;">
+      <label style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem; letter-spacing: 0.5px;">Select Session Date</label>
+      <select id="coachAuditDateSelect" style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.5rem; border-radius: 6px; width: 100%; font-size: 0.85rem; font-weight: 600; cursor: pointer;"></select>
+    </div>
+    <div id="coachAuditDisplayCard" style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem; max-height: 220px; overflow-y: auto;">
+      <p style="color: var(--text-muted); font-size: 0.8rem;">Select a date to audit session.</p>
+    </div>
+  `;
+
+  const coachAuditDateSelect = document.getElementById('coachAuditDateSelect');
+  const coachAuditDisplayCard = document.getElementById('coachAuditDisplayCard');
+
+  // Populate Dropdown Options
+  sortedDates.forEach(dateStr => {
+    const opt = document.createElement('option');
+    opt.value = dateStr;
+    opt.textContent = dateStr;
+    coachAuditDateSelect.appendChild(opt);
+  });
+
+  // 3. Sub-Renderer: Updates display box instantly on date select
+  function renderAuditDateDetails(dateStr) {
+    if (!coachAuditDisplayCard) return;
+
+    const dayGroup = groupedByDate[dateStr];
+    const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
+    const liftCount = dayGroup.lifts.length;
+    const hasCardio = dayGroup.cardio !== null;
+    const focusName = dayGroup.routine_focus || (liftCount > 0 ? "Strength Training" : (hasCardio ? "Cardio Session" : "Nutrition Log"));
+
+    let cardHTML = `
+      <div style="font-size: 0.75rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.4rem;">📋 ${focusName}</div>
     `;
 
-    grid.appendChild(row);
+    // Display Weight Training Exercises
+    if (liftCount > 0) {
+      const exercisesOnThisDay = {};
+      dayGroup.lifts.forEach(workout => {
+        if (!exercisesOnThisDay[workout.exercise_name]) {
+          exercisesOnThisDay[workout.exercise_name] = [];
+        }
+        const setsData = Array.isArray(workout.metrics?.sets) ? workout.metrics.sets : [];
+        exercisesOnThisDay[workout.exercise_name].push(...setsData);
+      });
+
+      Object.keys(exercisesOnThisDay).forEach(exerciseName => {
+        const setsList = exercisesOnThisDay[exerciseName].map(s => `Set ${s.set}: ${s.reps} reps @ ${s.weight} lbs/kg`).join(' | ');
+        cardHTML += `
+          <div style="margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">${exerciseName}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">${setsList}</div>
+          </div>`;
+      });
+    }
+
+    // Display Cardio Summary
+    if (dayGroup.cardio) {
+      const cardioSets = Array.isArray(dayGroup.cardio.metrics?.sets) ? dayGroup.cardio.metrics.sets : [];
+      const topCardio = cardioSets[0] || { duration: 0, distance: 0 };
+      cardHTML += `
+        <div style="margin-top: 0.6rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">🏃 Cardio Session</div>
+          <div style="font-size: 0.75rem; color: #38bdf8; margin-top: 0.1rem;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
+        </div>`;
+    }
+
+    // Display Diet Metric
+    if (dietVal) {
+      cardHTML += `
+        <div style="margin-top: 0.6rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05);">
+          <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">🍏 Diet Quality</div>
+          <div style="font-size: 0.75rem; color: #39ff14; margin-top: 0.1rem;">Rating: ${dietVal}/5</div>
+        </div>`;
+    }
+
+    coachAuditDisplayCard.innerHTML = cardHTML;
+  }
+
+  // 4. Connect Event Listener
+  coachAuditDateSelect.addEventListener('change', (e) => {
+    renderAuditDateDetails(e.target.value);
   });
+
+  // Default: Display latest session immediately on load
+  if (sortedDates.length > 0) {
+    renderAuditDateDetails(sortedDates[0]);
+  }
 }
 
 async function loadMessageCenterWidget(clientId) {
