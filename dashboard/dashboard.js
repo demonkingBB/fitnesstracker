@@ -87,16 +87,29 @@ async function initDashboard() {
 
     // MULTI-TENANT ACCESS ENGINE
     // MULTI-TENANT ACCESS ENGINE
+    // MULTI-TENANT ACCESS ENGINE
     if (profile.coach_id) {
+      // FIX: Added 'email' to the select statement to display the coach's email address
       const { data: coach, error: coachError } = await supabase
         .from('profiles')
-        .select('full_name, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at, background_color, theme_mode')
+        .select('full_name, email, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at, background_color, theme_mode')
         .eq('id', profile.coach_id)
         .single();
 
       if (!coachError && coach) {
         activeCoachProfile = coach;
         applyCoachBranding(coach);
+
+        // FIX: Reveal the hidden "Contact Coach" button wrapper in the header
+        if (coachContactWrapper) {
+          coachContactWrapper.classList.remove('hidden');
+        }
+
+        // FIX: Pre-populate the dropdown contact card elements with your coach's custom details
+        if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
+        if (coachCardEmail) coachCardEmail.textContent = coach.email || 'No email registered';
+        if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'No phone registered';
+        if (coachCardAddress) coachCardAddress.textContent = coach.contact_address || 'No office location';
 
         const coachTrialEnds = new Date(coach.trial_ends_at);
         const now = new Date();
