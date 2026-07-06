@@ -731,393 +731,187 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
     if (noHistoryMsg) noHistoryMsg.style.display = 'none';
 
     const groupedByDate = {};
-    cachedWorkouts.forEach(log` file [1]. 
-
-This implementation deletes the old `slice(0, 5)` limit, immediately unlocking the vertical scrollbox inside your card [252, 501]. It also contains the **Multi-Level program logic** so that selecting your overall program on login automatically displays all of your connected routine days together, along with your cardio and diet history [144, 252]!
-
-### The Completed, Scroll-Enabled `fetchAndRenderHistory` Function => {
+    cachedWorkouts.forEach(log => {
       if (!groupedByDate[log.log_date]) {
-        groupedByDate
-
-```javascript
-async function fetchAndRenderHistory(selectedDayFilter = null) {
-        if (historyGrid[log.log_date] = {
+        groupedByDate[log.log_date] = {
           date: log.log_date,
           lifts: [],
           cardio: null,
           diet: null,
           routine_focus: log.routine_focus || ''
         };
-      }) {
-      historyGrid.innerHTML = '';
-      if (!cachedWorkouts || cachedWorkouts.length === 0) {
-        if (noHistoryMsg) {
-          noHistoryMsg.style.display = 'block';
-          historyGrid.appendChild(noHistoryMsg);
-        }
-        return;
       }
-      if (noHistoryMsg) noHistoryMsg.
-        if(log.category === 'cardio') {
+      if (log.category === 'cardio') {
         groupedByDate[log.log_date].cardio = log;
       } else if (log.exercise_name === 'Daily Nutritional Matrix') {
-        style.display = 'none';
-
-        const groupedByDate = {};
-        cachedWorkouts.forEach(log
         groupedByDate[log.log_date].diet = log;
-      } else if (log. => {
-        if (!groupedByDate[log.log_date]) {
-          groupedByDateexercise_name !== 'Biometric Snapshot Engine') {
-            groupedByDate[log.log_date].lifts[log.log_date] = {
-              date: log.log_date,
-              lifts: [],
-          .push(log);
-            }
-            if (log.routine_focus && !groupedByDate[log.log_date].routine_focus) {
-              groupedByDate[log.log_date].routine_focus = log.routine_focuscardio: null,
-                diet: null,
-                  routine_focus: log.routine_focus || ''
-            };
-          };
-        }
-      });
+      } else if (log.exercise_name !== 'Biometric Snapshot Engine') {
+        groupedByDate[log.log_date].lifts.push(log);
+      }
+      if (log.routine_focus && !groupedByDate[log.log_date].routine_focus) {
+        groupedByDate[log.log_date].routine_focus = log.routine_focus;
+      }
+    });
 
-      let sortedDates = Object.keys(groupedByDate).sort((a
-      if (log.category === 'cardio') {
-        groupedByDate, b) => new Date(b) - new Date(a));
+    let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
-        // Multi-Level Filtering: Combines all routine days under an[log.log_date].cardio = log;
-      } else if (log.exercise_name === 'Daily Nutritional Matrix') { overall split name
-        if (selectedDayFilter && selectedDayFilter !== "") {
-          let allowedExercises = [];
-          if (PROGRAMS[selectedDayFilter]) {
-            allowedExercises = PROGRAMS[selectedDayFilter];
-          } else if (ROUTINES[selectedDayFilter]) {
-            const subDays = ROUTINES[selectedDayFilter];
-            subDays.forEach(day => {
-              if (PROGRAMS[day]) {
-                allowedExercises = allowedExercises.concat(PROGRAMS[day]);
-              }
-            });
-          }
-
-          sortedDates = sortedDates.filter(dateKey => {
-            const masterDayGroup = groupedByDate[dateKey];
-            const matching
-            groupedByDate[log.log_date].diet = log;
-          } else if (log.exercise_name !== 'Biometric Snapshot Engine') {
-            groupedByDate[log.log_date].lifts.push(log);
-          }
-          if (log.routine_focus && !groupedByDate[log.log_date].routine_focus) {
-            groupedByDate[log.log_date].routine_focus = log.routine_focus;
-          }
-        });
-
-        let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-
-        if (selectedDayFilter && selectedDayFilter !== "") {
-          Lifts = cachedWorkouts.filter(log => {
-            return log.log_date === dateKey &&
-              log.category !== 'cardio' &&
-              log.exercise_name !== 'Daily Nutritional Matrix' &&
-              loglet allowedExercises = [];
-            if (PROGRAMS[selectedDayFilter]) {
-              allowedExercises = PROGRAMS[selectedDayFilter];
-            } else if (ROUTINES[selectedDayFilter]) {
-              const subDays.exercise_name !== 'Biometric Snapshot Engine' &&
-                allowedExercises.includes(log.exercise_ = ROUTINES[selectedDayFilter];
-              subDays.forEach(day => {
-                if (PROGRAMSname);
-              });
-              if (matchingLifts.length > 0) {
-                masterDayGroup[day]) {
+    // Multi-Level Filtering: Combines all routine days under an overall split name
+    if (selectedDayFilter && selectedDayFilter !== "") {
+      let allowedExercises = [];
+      if (PROGRAMS[selectedDayFilter]) {
+        allowedExercises = PROGRAMS[selectedDayFilter];
+      } else if (ROUTINES[selectedDayFilter]) {
+        const subDays = ROUTINES[selectedDayFilter];
+        subDays.forEach(day => {
+          if (PROGRAMS[day]) {
             allowedExercises = allowedExercises.concat(PROGRAMS[day]);
           }
-        .lifts = matchingLifts;
+        });
+      }
+
+      sortedDates = sortedDates.filter(dateKey => {
+        const masterDayGroup = groupedByDate[dateKey];
+        const matchingLifts = cachedWorkouts.filter(log => {
+          return log.log_date === dateKey &&
+            log.category !== 'cardio' &&
+            log.exercise_name !== 'Daily Nutritional Matrix' &&
+            log.exercise_name !== 'Biometric Snapshot Engine' &&
+            allowedExercises.includes(log.exercise_name);
+        });
+        if (matchingLifts.length > 0) {
+          masterDayGroup.lifts = matchingLifts;
           return true;
         }
         return false;
       });
     }
 
-    // MAP});
-  }
-
-  sortedDates = sortedDates.filter(dateKey => {
-    const masterDayGroup = groupedByDate ALL SORTED DATES DIRECTLY: No limit, enabling vertical scrolling inside the box
+    // Map all sorted dates directly to enable infinite vertical scrolling inside your card limits
     const latestDates = sortedDates;
 
-    if (latest[dateKey];
-    const matchingLifts = cachedWorkouts.filter(log => {
-      return log.log_date === dateKeyDates.length === 0) {
-        historyGrid.innerHTML = `<p style="color: var(--text && 
-                 log.category !== 'cardio' && 
-                 log.exercise_name !== 'Daily-muted); padding: 1rem;">No matching logs found for ${selectedDayFilter || 'this filter'}. Nutritional Matrix' && 
-                 log.exercise_name !== 'Biometric Snapshot Engine' && 
-                 allowed</p>`;
-    return;
-  }
-
-    const workoutIdsOnScreen = cachedWorkouts.filter(w => latestDates.includesExercises.includes(log.exercise_name);
-});
-if (matchingLifts.length > 0) {
-  masterDayGroup.lifts = matchingLifts;
-  return true;
-}
-return false;
-      }); (w.log_date)).map(w => w.id);
-let commentsByWorkout = {};
-if (workout
+    if (latestDates.length === 0) {
+      historyGrid.innerHTML = `<p style="color: var(--text-muted); padding: 1rem;">No matching logs found for ${selectedDayFilter || 'this filter'}.</p>`;
+      return;
     }
 
-const latestDates = sortedDates;
-
-if (latestDates.length === 0) {
-  historyGrid.innerHTML = `<p style="color: var(--text-muted); padding: 1IdsOnScreen.length > 0) {
-      const { data: dbComments } = await supabase
-        .from('comments')
-        .select('*')
-        .in('workout_id', workoutIdsOnScreen)
-        rem;">No matching logs found for ${selectedDayFilter || 'this filter'}.</p>`;
-  return;.order('created_at', { ascending: true });
-
-  if (dbComments) {
-    dbComments.forEach(
-    }
-
-  const workoutIdsOnScreen = cachedWorkouts.filter(w => latestDates.includes(w.log_date)).mapc => {
-    if (!commentsByWorkout[c.workout_id]) commentsByWorkout[c.workout_id] = []; (w => w.id);
+    const workoutIdsOnScreen = cachedWorkouts.filter(w => latestDates.includes(w.log_date)).map(w => w.id);
     let commentsByWorkout = {};
     if (workoutIdsOnScreen.length > 0) {
       const { data: dbComments } = await supabase
         .from('comments')
         .select('*')
         .in('workout_id', workoutIdsOnScreen)
-        .order('created_at', {
+        .order('created_at', { ascending: true });
+
+      if (dbComments) {
+        dbComments.forEach(c => {
+          if (!commentsByWorkout[c.workout_id]) commentsByWorkout[c.workout_id] = [];
           commentsByWorkout[c.workout_id].push(c);
         });
+      }
     }
-  }
 
-  latestDates.forEach(dateStr => {
-    const dayGroup = groupedByDate[dateStr];
-    const dayCard = document.createElement('div');
-    dayCard.className = 'history-day ascending: true });
+    latestDates.forEach(dateStr => {
+      const dayGroup = groupedByDate[dateStr];
+      const dayCard = document.createElement('div');
+      dayCard.className = 'history-day-card';
+      dayCard.style.cssText = "background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.2s ease;";
 
-    if (dbComments) {
-      dbComments.forEach(c => {
-        -card';
-        dayCard.style.cssText = "background: #111a2e;if (!commentsByWorkout[c.workout_id]) commentsByWorkout[c.workout_id] = [];
-        commentsByWorkout[c.workout_id].push(c);
-      });
-    }
-  }
+      const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
+      const liftCount = dayGroup.lifts.length;
+      const hasCardio = dayGroup.cardio !== null;
+      const focusName = dayGroup.routine_focus || (liftCount > 0 ? "Strength Training" : (hasCardio ? "Cardio Session" : "Nutrition Log"));
 
-    latestDates.border: 1px solid var(--border - subtle); border - radius: 8px; margin - bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.2sforEach(dateStr => {
-    const dayGroup = groupedByDate[dateStr];
-    const dayCard ease; ";
-
-    const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
-    const liftCount = dayGroup.lifts.length;
-    const hasCardio = dayGroup.cardio !== null;
-    const focusName = = document.createElement('div');
-    dayCard.className = 'history-day-card';
-    dayCard.style.cssText = "background: #111a2e; border: 1px solid dayGroup.routine_focus || (liftCount > 0 ? "Strength Training" : (hasCardio ? var(--border-subtle); border-radius: 8px; margin-bottom: 0.75 "Cardio Session" : "Nutrition Log"));
-
-    // Sleek Date Block Header (Only Date + Dropdown indicatorrem; overflow: hidden; cursor: pointer; transition: all 0.2s ease;";
-
-    const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
-    const liftCount = dayGroup.lifts.length;
-    const hasCardio = dayGroup.cardio !== null;
-    const)
-  const headerHTML = `
-        <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: focusName = dayGroup.routine_focus || (liftCount > 0 ? "Strength Training" : (has rgba(255,255,255,0.02);">
-          <span styleCardio ? "Cardio Session" : "Nutrition Log"));
-
+      // Sleek Date Block Header (Only Date + Dropdown indicator)
       const headerHTML = `
-    < div="font-weight: 700; color: #ffffff; font-size: 0.95rem;" > ${ dateStr }</span >
-      <span style="color: var(--text-muted); font-size: 0.8rem;">▼</span>
-        </div >
-    `;
+        <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+          <span style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${dateStr}</span>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">▼</span>
+        </div>
+      `;
 
-      // Expanded Body Area containing the actual class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
-          <span style="font-weight: 700; color: formatted data cards
-      let detailsHTML = `< div class="day-card-details hidden" style = "padding: 1rem; border-top: 1px solid rgba(255,255,25 #ffffff; font-size: 0.95rem;" > ${ dateStr }</span >
-    <span style="color: var(--text-muted); font-size: 0.8rem;">▼</span>
-        </div > 5, 0.05); background: rgba(0, 0, 0, 0.15); ">`;
+      // Expanded Body Area containing the actual formatted data cards
+      let detailsHTML = `<div class="day-card-details hidden" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">`;
 
-
-    `;
-
-      let detailsHTML = `< div class="day-card-details hidden" style = "padding: 1rem; border-top: 1px solid rgba(255,255,25      // Display the dynamic Routine Focus Name
-  detailsHTML += `<div style="font-size: 0.8rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.5px;">📋 ${focusName}</div>`; 5, 0.05); background: rgba(0, 0, 0, 0.15); ">`;
-
-  detailsHTML += `<div style="font-size: 0.8rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 1rem; letter-
+      // Display the dynamic Routine Focus Name
+      detailsHTML += `<div style="font-size: 0.8rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.5px;">📋 ${focusName}</div>`;
 
       // Render Lifts inside details
       if (liftCount > 0) {
         const exercisesOnThisDay = {};
         dayGroup.lifts.forEach(workout => {
-          if (!exercisesOnThisDayspacing: 0.5px;">📋 ${focusName}</div>`;
-
-  if (liftCount > 0[workout.exercise_name]) {
-    exercisesOnThisDay[workout.exercise_name] = [];
-  }
-  const setsData) {
-    const exercisesOnThisDay = {};
-  dayGroup.lifts.forEach(workout => {
- = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
-    exercisesOnThisDay[workout.exercise_name].push(...setsData);
-  });
-
-  Object.keys(exercisesOn          if (!exercisesOnThisDay[workout.exercise_name]) {
-    exercisesOnThisDay[workout.exercise_name] = [];
-  }
-  const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.ThisDay).forEach(exerciseName => {
-    const allSetsForThisExercise = exercisesOnThisDay[exerciseName];
-    const setsListsets: [];
-    exercisesOnThisDay[workout.exercise_name].push(...setsData);
-  }); = allSetsForThisExercise.map(s => `Set ${s.set}: ${s.reps} reps @ ${s.weight} lbs/kg`).join(' | ');
-  detailsHTML += `
-            <div style="margin-bottom
+          if (!exercisesOnThisDay[workout.exercise_name]) {
+            exercisesOnThisDay[workout.exercise_name] = [];
+          }
+          const setsData = Array.isArray(workout.metrics.sets) ? workout.metrics.sets : [];
+          exercisesOnThisDay[workout.exercise_name].push(...setsData);
+        });
 
         Object.keys(exercisesOnThisDay).forEach(exerciseName => {
           const allSetsForThisExercise = exercisesOnThisDay[exerciseName];
-          const setsList = allSetsForThisExercise.map(s => `Set ${ s.set }: ${ s.reps } reps @${ s.weight } lbs / kg`).join(' | ');
+          const setsList = allSetsForThisExercise.map(s => `Set ${s.set}: ${s.reps} reps @ ${s.weight} lbs/kg`).join(' | ');
           detailsHTML += `
-: 0.75rem; padding - bottom: 0.5rem; border - bottom: 1px solid rgba(255, 255, 255, 0.02); ">
-    < div style = "font-            <div style="margin - bottom: 0.75rem; padding - bottom: 0.5size: 0.85rem; font - weight: 600; color: var(--text - rem; border - bottom: 1px solid rgba(255, 255, 255, primary); ">${exerciseName}</div>
-      < div style = "font-size: 0.8rem; color0.02);" >
-        <div style="font-size: 0.85rem; font-: var(--text-muted); margin-top: 0.15rem;">
-          ${setsList}
-        </div>
-            </div > `;
+            <div style="margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${exerciseName}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
+                ${setsList}
+              </div>
+            </div>`;
         });
       }
 
       // Render Cardio inside details
-      if (weight: 600; color: var(--text-primary);">${exerciseName}</div>
-              <divdayGroup.cardio) {
-        const cardioSets = Array.isArray(dayGroup.cardio.metrics.sets) ? dayGroup.cardio.metrics.sets : [];
-        const topCardio = cardioSets style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
-                ${setsList}
-              </div>
-            </div>`;
-});
-[0] || { duration: 0, distance: 0 };
-detailsHTML += `
-          <div style="margin-top:      }
-
       if (dayGroup.cardio) {
-        const cardioSets = Array.isArray(dayGroup.cardio.metrics. 0.75rem; padding-top: 0.5rem; border-top: 1pxsets) ? dayGroup.cardio.metrics.sets : [];
-        const topCardio = cardioSets[0] || { duration:  solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.85rem; font-weight: 600; color:0, distance: 0 };
+        const cardioSets = Array.isArray(dayGroup.cardio.metrics.sets) ? dayGroup.cardio.metrics.sets : [];
+        const topCardio = cardioSets[0] || { duration: 0, distance: 0 };
         detailsHTML += `
-  < div style = "margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255, var(--text-primary);" >🏃 Cardio Session</div >
-    <div style="font-size: 0.8rem; color: #380.05);">
-      <div style="font-size: 0.85rem; font-bdf8; margin-top: 0.15rem;">${topCardio.distance} miles/weight: 600; color: var(--text-primary);">🏃 Cardio Session</div>
-      <div stylekm in ${topCardio.duration} mins</div>
-          </div > `;
+          <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🏃 Cardio Session</div>
+            <div style="font-size: 0.8rem; color: #38bdf8; margin-top: 0.15rem;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
+          </div>`;
       }
 
       // Render Diet inside details
       if (dietVal) {
         detailsHTML += `
-  < div style = "margin-top: 0.75rem="font - size: 0.8rem; color: #38bdf8; margin - top: 0.15rem; ">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
-          </div > `;
-      }
-
-      if (dietVal) {
-        detailsHTML += `
-  < div style = "margin; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);" >
-            <div style="font-size:-top: 0.75rem; padding-top: 0.5rem; border-top: 0.85rem; font-weight: 600; color: var(--text-primary);"> 1px solid rgba(255,255,255,0.05);">
-🍏 Diet Quality</div>
-            <div style="font-size: 0.8rem; color: #39ff14; margin-top: 0.15rem;">Rating: ${dietVal}/5</div>            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🍏 Diet Quality</div>
-            <div style="font-size: 0.8rem; color: #39ff14; margin-top: 0.15rem
+          <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🍏 Diet Quality</div>
+            <div style="font-size: 0.8rem; color: #39ff14; margin-top: 0.15rem;">Rating: ${dietVal}/5</div>
           </div>`;
       }
 
       // Create unique feedback containers for comment-sync
       let commentsListHTML = '';
       if (liftCount > 0) {
-        dayGroup.lifts.forEach(workout =>;">Rating: ${dietVal}/5</div>
-          </div > `;
-      }
-
-      let commentsListHTML = ''; {
-          commentsListHTML += `< div id = "commentsList-${workout.id}" class="comments-list" ></div > `;
+        dayGroup.lifts.forEach(workout => {
+          commentsListHTML += `<div id="commentsList-${workout.id}" class="comments-list"></div>`;
         });
       }
       detailsHTML += commentsListHTML;
 
-      detailsHTML += `</div >
-      if (liftCount > 0) {
-  dayGroup.lifts.forEach(workout => {
-    commentsListHTML += `<div id="commentsList-${workout.id}" class="comments-list"></div>`; `;
+      detailsHTML += `</div>`;
       dayCard.innerHTML = headerHTML + detailsHTML;
 
-      dayCard.addEventListener('click', (
-        });
-      }
-      detailsHTML += commentsListHTML;
-
-      detailsHTML += `</div > `;
-      dayCard.innerHTML = headerHTML + detailsHTML;
-
-      dayCard.addEventListener('click', (e)e) => {
+      dayCard.addEventListener('click', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         const detailsBlock = dayCard.querySelector('.day-card-details');
         const isHidden = detailsBlock.classList.contains('hidden');
-        document.querySelectorAll('.day-card-details => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-        const detailsBlock = dayCard.querySelector('.day-card-details');
-        const is').forEach(el => {
-          el.classList.add('hidden');
-        });
-
-        if (isHiddenHidden = detailsBlock.classList.contains('hidden');
         document.querySelectorAll('.day-card-details').forEach(el => {
           el.classList.add('hidden');
         });
 
-        if (isHidden) {) {
+        if (isHidden) {
           detailsBlock.classList.remove('hidden');
           dayCard.style.borderColor = "var(--brand-primary)";
           if (liftCount > 0) {
-            dayGroup.lifts.forEach
-          detailsBlock.classList.remove('hidden');
-          dayCard.style.borderColor = "var(--brand-primary)";
-          if(workout => {
-              const feedContainer = document.getElementById(`commentsList - ${ workout.id } `);
+            dayGroup.lifts.forEach(workout => {
+              const feedContainer = document.getElementById(`commentsList-${workout.id}`);
               if (feedContainer) {
                 feedContainer.innerHTML = '';
-                const workoutComments = commentsByWorkout (liftCount > 0) {
-            dayGroup.lifts.forEach(workout => {
-              const feedContainer = document.getElementById(`commentsList - ${ workout.id } `);
-              if (feedContainer) {
-                feed[workout.id] || [];
-                workoutComments.forEach(comment => {
-                  appendSingleCommentToFeed(feedContainer.innerHTML = '';
                 const workoutComments = commentsByWorkout[workout.id] || [];
                 workoutComments.forEach(comment => {
                   appendSingleCommentToFeed(feedContainer, comment);
                 });
-Container, comment);
-                });
-              }
-            });
-          }
-        } else {
-          detailsBlock.classList.add('hidden');
-          dayCard.style.borderColor = "var(--border-subtle)";
-        }
-      });
-
-      historyGrid.appendChild(dayCard);
-    });
-  }
-}
               }
             });
           }
@@ -1196,8 +990,8 @@ if (biometricForm) {
     }
 
     setText('resBMI', bmi.toFixed(1));
-    setText('resBMR', `${ Math.round(bmr) } kcal`);
-    setText('resTDEE', `${ Math.round(tdee) } kcal`);
+    setText('resBMR', `${Math.round(bmr)} kcal`);
+    setText('resTDEE', `${Math.round(tdee)} kcal`);
     setText('resWHR', whr.toFixed(2));
 
     const riskContainer = document.getElementById('resRisk');
@@ -1207,7 +1001,7 @@ if (biometricForm) {
       riskContainer.style.color = fontColor;
     }
 
-    setText('resDietTarget', `${ targetCalories } Calories / day`);
+    setText('resDietTarget', `${targetCalories} Calories / day`);
 
     if (biometricResults) {
       biometricResults.classList.remove('hidden');
@@ -1233,7 +1027,7 @@ if (biometricForm) {
       fetchAndRenderBiometricHistory();
       renderAnalyticsChart();
     } catch (err) {
-      showStatus(`Biometric save failure: ${ err.message } `, "error");
+      showStatus(`Biometric save failure: ${err.message}`, "error");
     }
   });
 }
@@ -1259,10 +1053,10 @@ async function fetchAndRenderBiometricHistory() {
     const logItem = document.createElement('div');
     logItem.style.cssText = "background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;";
     logItem.innerHTML = `
-      < div >
+      <div>
         <strong style="color:#ffffff;">${rec.log_date}</strong> 
         <span style="color:var(--text-muted); margin-left: 0.5rem;">Scale: ${m.weight} lbs | Waist: ${m.waist}"</span>
-      </div >
+      </div>
       <span style="color: var(--accent-neon); font-weight: bold;">Target: ${m.target_calories} cal</span>
     `;
     biometricHistoryList.appendChild(logItem);
@@ -1330,7 +1124,7 @@ async function renderAnalyticsChart() {
       options: getCommonChartOptions()
     });
   } else {
-    drawEmptyChartPlaceholder(bodyCtx, `No biometric logs found in the last ${ timeframeDays } days.`);
+    drawEmptyChartPlaceholder(bodyCtx, `No biometric logs found in the last ${timeframeDays} days.`);
   }
 
   // 📈 GRAPH 2: Render Strength Volume Overload Chart
@@ -1365,7 +1159,7 @@ async function renderAnalyticsChart() {
       options: getCommonChartOptions()
     });
   } else {
-    drawEmptyChartPlaceholder(performanceCtx, `No strength volume records found in the last ${ timeframeDays } days.`);
+    drawEmptyChartPlaceholder(performanceCtx, `No strength volume records found in the last ${timeframeDays} days.`);
   }
 }
 
