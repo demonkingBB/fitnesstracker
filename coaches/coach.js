@@ -1093,7 +1093,7 @@ function applyCoachBranding(coach) {
     document.body.classList.remove('light-mode');
   }
 
-  // Apply visual overrides if color pickers are explicitly customized (otherwise falls back to theme default)
+  // Apply visual overrides if color pickers are explicitly customized
   if (coach.theme_primary_color) {
     document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
   }
@@ -1106,10 +1106,17 @@ function applyCoachBranding(coach) {
 
   const logoEl = document.getElementById('logoElement');
   if (logoEl) {
+    const logoName = coach.full_name || 'EliteTrack';
     if (coach.logo_url) {
-      logoEl.innerHTML = `<img src="${coach.logo_url}" alt="Logo" style="max-height: 40px; width: auto; object-fit: contain;">`;
+      // FIX: Render BOTH the uploaded logo image and the custom workspace title side-by-side
+      logoEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="${coach.logo_url}" alt="Logo" style="max-height: 38px; width: auto; object-fit: contain;">
+          <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #ffffff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🚀 ${logoName}</h2>
+        </div>
+      `;
     } else {
-      logoEl.innerHTML = `<h2>🚀 ${coach.full_name || 'EliteTrack'}</h2>`;
+      logoEl.innerHTML = `<h2>🚀 ${logoName}</h2>`;
     }
   }
 }

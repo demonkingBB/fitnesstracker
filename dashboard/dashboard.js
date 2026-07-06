@@ -42,7 +42,7 @@ const coachCardName = document.getElementById('coachCardName');
 const coachCardEmail = document.getElementById('coachCardEmail');
 const coachCardPhone = document.getElementById('coachCardPhone');
 const coachCardAddress = document.getElementById('coachCardAddress');
-
+const coachCommunicationCard = document.getElementById('coachCommunicationCard');
 const strengthPRContainer = document.getElementById('strengthPRContainer');
 const cardioPRContainer = document.getElementById('cardioPRContainer');
 
@@ -59,6 +59,8 @@ await loadMessageCenterWidget();
 
 // Initialize Session, Check Expiration and Load Preferences
 
+// Complete, error-free initialization sequence for your client dashboard
+// Complete, error-free initialization sequence for your client dashboard
 async function initDashboard() {
   const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -86,10 +88,13 @@ async function initDashboard() {
     }
 
     // MULTI-TENANT ACCESS ENGINE
-    // MULTI-TENANT ACCESS ENGINE
-    // MULTI-TENANT ACCESS ENGINE
     if (profile.coach_id) {
-      // FIX: Added 'email' to the select statement to display the coach's email address
+      // Reveal the coach communication card since this client belongs to a team
+      if (coachCommunicationCard) {
+        coachCommunicationCard.classList.remove('hidden');
+      }
+
+      // Retrieve coach's complete white-label profile configurations
       const { data: coach, error: coachError } = await supabase
         .from('profiles')
         .select('full_name, email, contact_phone, contact_address, theme_primary_color, theme_secondary_color, logo_url, subscription_status, trial_ends_at, background_color, theme_mode')
@@ -100,12 +105,12 @@ async function initDashboard() {
         activeCoachProfile = coach;
         applyCoachBranding(coach);
 
-        // FIX: Reveal the hidden "Contact Coach" button wrapper in the header
+        // Reveal the hidden "Contact Coach" button wrapper in the header
         if (coachContactWrapper) {
           coachContactWrapper.classList.remove('hidden');
         }
 
-        // FIX: Pre-populate the dropdown contact card elements with your coach's custom details
+        // Pre-populate the dropdown contact card elements with your coach's custom details
         if (coachCardName) coachCardName.textContent = coach.full_name || 'Your Coach';
         if (coachCardEmail) coachCardEmail.textContent = coach.email || 'No email registered';
         if (coachCardPhone) coachCardPhone.textContent = coach.contact_phone || 'No phone registered';
@@ -144,6 +149,17 @@ async function initDashboard() {
         if (smallUpgradeBtn) smallUpgradeBtn.classList.add('hidden');
         if (trialExpirationBanner) trialExpirationBanner.classList.remove('hidden');
         lockLoggingInputs('Trial Expired - Sign Up Required');
+      }
+    } else {
+      // FIX: Strictly hide the coach communication widget for clients with no coach
+      if (coachCommunicationCard) {
+        coachCommunicationCard.classList.add('hidden');
+      }
+
+      // FIX: Unlock logging and hide trial warnings for direct, non-coach clients
+      isTrialExpired = false;
+      if (trialExpirationBanner) {
+        trialExpirationBanner.classList.add('hidden');
       }
     }
   }
@@ -282,10 +298,17 @@ function applyCoachBranding(coach) {
 
   const logoEl = document.getElementById('logoElement');
   if (logoEl) {
+    const logoName = coach.full_name || 'Coach';
     if (coach.logo_url) {
-      logoEl.innerHTML = `<img src="${coach.logo_url}" alt="Logo" style="max-height: 40px; width: auto; object-fit: contain;">`;
+      // FIX: Render BOTH the uploaded logo image and the custom workspace title side-by-side
+      logoEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="${coach.logo_url}" alt="Logo" style="max-height: 38px; width: auto; object-fit: contain;">
+          <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #ffffff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🚀 ${logoName} Track</h2>
+        </div>
+      `;
     } else {
-      logoEl.innerHTML = `<h2>🚀 ${coach.full_name || 'Coach'} Track</h2>`;
+      logoEl.innerHTML = `<h2>🚀 ${logoName} Track</h2>`;
     }
   }
 }
