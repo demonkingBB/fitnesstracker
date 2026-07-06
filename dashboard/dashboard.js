@@ -730,6 +730,7 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
     }
     if (noHistoryMsg) noHistoryMsg.style.display = 'none';
 
+    // 1. Grouping Phase (Aggregate all logs by date)
     const groupedByDate = {};
     cachedWorkouts.forEach(log => {
       if (!groupedByDate[log.log_date]) {
@@ -755,9 +756,9 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
 
     let sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
-    // Multi-Level Filtering: Combines all routine days under an overall split name
+    // 2. Multi-Level Filtering (Dropdown filter matches selected split/routine)
+    let allowedExercises = [];
     if (selectedDayFilter && selectedDayFilter !== "") {
-      let allowedExercises = [];
       if (PROGRAMS[selectedDayFilter]) {
         allowedExercises = PROGRAMS[selectedDayFilter];
       } else if (ROUTINES[selectedDayFilter]) {
@@ -769,74 +770,62 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
         });
       }
 
+      // Filter dates list: strictly retain dates containing matching lifts for this routine focus
       sortedDates = sortedDates.filter(dateKey => {
-        const masterDayGroup = groupedByDate[dateKey];
-        const matchingLifts = cachedWorkouts.filter(log => {
-          return log.log_date === dateKey &&
-            log.category !== 'cardio' &&
-            log.exercise_name !== 'Daily Nutritional Matrix' &&
-            log.exercise_name !== 'Biometric Snapshot Engine' &&
-            allowedExercises.includes(log.exercise_name);
-        });
-        if (matchingLifts.length > 0) {
-          masterDayGroup.lifts = matchingLifts;
-          return true;
-        }
-        return false;
+        const dayGroup = groupedByDate[dateKey];
+        const matchingLifts = dayGroup.lifts.filter(lift => allowedExercises.includes(lift.exercise_name));
+
+        // Mutate day group lifts to ONLY show those belonging to the active routine focus
+        dayGroup.lifts = matchingLifts;
+
+        // STRICT FIX: Only keep this date in the dropdown if we actually logged a matching lift
+        return matchingLifts.length > 0;
       });
     }
 
-    // Map all sorted dates directly to enable infinite vertical scrolling inside your card limits
-    const latestDates = sortedDates;
-
-    if (latestDates.length === 0) {
+    if (sortedDates.length === 0) {
       historyGrid.innerHTML = `<p style="color: var(--text-muted); padding: 1rem;">No matching logs found for ${selectedDayFilter || 'this filter'}.</p>`;
       return;
     }
 
-    const workoutIdsOnScreen = cachedWorkouts.filter(w => latestDates.includes(w.log_date)).map(w => w.id);
-    let commentsByWorkout = {};
-    if (workoutIdsOnScreen.length > 0) {
-      const { data: dbComments } = await supabase
-        .from('comments')
-        .select('*')
-        .in('workout_id', workoutIdsOnScreen)
-        .order('created_at', { ascending: true });
+    // 3. Render Dropdown Header and Active Display Card Shell
+    historyGrid.innerHTML = `
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; letter-spacing: 0.5px;">Select History Date</label>
+        <select id="historyDateSelect" class="program-select-dropdown" style="width: 100%; font-weight: 600;"></select>
+      </div>
+      <div id="activeHistoryCard" class="history-day-card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; max-height: 250px; overflow-y: auto;">
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Loading day logs...</p>
+      </div>
+    `;
 
-      if (dbComments) {
-        dbComments.forEach(c => {
-          if (!commentsByWorkout[c.workout_id]) commentsByWorkout[c.workout_id] = [];
-          commentsByWorkout[c.workout_id].push(c);
-        });
-      }
-    }
+    const historyDateSelect = document.getElementById('historyDateSelect');
+    const activeHistoryCard = document.getElementById('activeHistoryCard');
 
-    latestDates.forEach(dateStr => {
+    // Populate Selector Dropdown Options
+    sortedDates.forEach(dateStr => {
+      const opt = document.createElement('option');
+      opt.value = dateStr;
+      opt.textContent = dateStr;
+      historyDateSelect.appendChild(opt);
+    });
+
+    // 4. Sub-Renderer: Dynamically updates the active display card synchronously (Instant)
+    function renderSelectedDateDetails(dateStr) {
+      if (!activeHistoryCard) return;
+
       const dayGroup = groupedByDate[dateStr];
-      const dayCard = document.createElement('div');
-      dayCard.className = 'history-day-card';
-      dayCard.style.cssText = "background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.2s ease;";
-
       const dietVal = dayGroup.diet?.metrics?.diet_rating || null;
       const liftCount = dayGroup.lifts.length;
       const hasCardio = dayGroup.cardio !== null;
       const focusName = dayGroup.routine_focus || (liftCount > 0 ? "Strength Training" : (hasCardio ? "Cardio Session" : "Nutrition Log"));
 
-      // Sleek Date Block Header (Only Date + Dropdown indicator)
-      const headerHTML = `
-        <div class="day-card-header" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
-          <span style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">${dateStr}</span>
-          <span style="color: var(--text-muted); font-size: 0.8rem;">▼</span>
-        </div>
+      // Build Details HTML Card Content
+      let cardHTML = `
+        <div style="font-size: 0.8rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">📋 ${focusName}</div>
       `;
 
-      // Expanded Body Area containing the actual formatted data cards
-      let detailsHTML = `<div class="day-card-details hidden" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">`;
-
-      // Display the dynamic Routine Focus Name
-      detailsHTML += `<div style="font-size: 0.8rem; font-weight: bold; color: var(--brand-primary); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.5px;">📋 ${focusName}</div>`;
-
-      // Render Lifts inside details
+      // Display Weight Training Lifts
       if (liftCount > 0) {
         const exercisesOnThisDay = {};
         dayGroup.lifts.forEach(workout => {
@@ -848,81 +837,48 @@ async function fetchAndRenderHistory(selectedDayFilter = null) {
         });
 
         Object.keys(exercisesOnThisDay).forEach(exerciseName => {
-          const allSetsForThisExercise = exercisesOnThisDay[exerciseName];
-          const setsList = allSetsForThisExercise.map(s => `Set ${s.set}: ${s.reps} reps @ ${s.weight} lbs/kg`).join(' | ');
-          detailsHTML += `
+          const setsList = exercisesOnThisDay[exerciseName].map(s => `Set ${s.set}: ${s.reps} reps @ ${s.weight} lbs/kg`).join(' | ');
+          cardHTML += `
             <div style="margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
               <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">${exerciseName}</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
-                ${setsList}
-              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">${setsList}</div>
             </div>`;
         });
       }
 
-      // Render Cardio inside details
+      // Display Cardio Session
       if (dayGroup.cardio) {
         const cardioSets = Array.isArray(dayGroup.cardio.metrics.sets) ? dayGroup.cardio.metrics.sets : [];
         const topCardio = cardioSets[0] || { duration: 0, distance: 0 };
-        detailsHTML += `
+        cardHTML += `
           <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🏃 Cardio Session</div>
             <div style="font-size: 0.8rem; color: #38bdf8; margin-top: 0.15rem;">${topCardio.distance} miles/km in ${topCardio.duration} mins</div>
           </div>`;
       }
 
-      // Render Diet inside details
+      // Display Diet Metric
       if (dietVal) {
-        detailsHTML += `
+        cardHTML += `
           <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">🍏 Diet Quality</div>
             <div style="font-size: 0.8rem; color: #39ff14; margin-top: 0.15rem;">Rating: ${dietVal}/5</div>
           </div>`;
       }
 
-      // Create unique feedback containers for comment-sync
-      let commentsListHTML = '';
-      if (liftCount > 0) {
-        dayGroup.lifts.forEach(workout => {
-          commentsListHTML += `<div id="commentsList-${workout.id}" class="comments-list"></div>`;
-        });
-      }
-      detailsHTML += commentsListHTML;
+      // Paint content to UI instantly
+      activeHistoryCard.innerHTML = cardHTML;
+    }
 
-      detailsHTML += `</div>`;
-      dayCard.innerHTML = headerHTML + detailsHTML;
-
-      dayCard.addEventListener('click', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-        const detailsBlock = dayCard.querySelector('.day-card-details');
-        const isHidden = detailsBlock.classList.contains('hidden');
-        document.querySelectorAll('.day-card-details').forEach(el => {
-          el.classList.add('hidden');
-        });
-
-        if (isHidden) {
-          detailsBlock.classList.remove('hidden');
-          dayCard.style.borderColor = "var(--brand-primary)";
-          if (liftCount > 0) {
-            dayGroup.lifts.forEach(workout => {
-              const feedContainer = document.getElementById(`commentsList-${workout.id}`);
-              if (feedContainer) {
-                feedContainer.innerHTML = '';
-                const workoutComments = commentsByWorkout[workout.id] || [];
-                workoutComments.forEach(comment => {
-                  appendSingleCommentToFeed(feedContainer, comment);
-                });
-              }
-            });
-          }
-        } else {
-          detailsBlock.classList.add('hidden');
-          dayCard.style.borderColor = "var(--border-subtle)";
-        }
-      });
-
-      historyGrid.appendChild(dayCard);
+    // 5. Connect Dropdown Selection Change Listener
+    historyDateSelect.addEventListener('change', (e) => {
+      renderSelectedDateDetails(e.target.value);
     });
+
+    // Default: Display latest available date immediately on load
+    if (sortedDates.length > 0) {
+      renderSelectedDateDetails(sortedDates[0]);
+    }
   }
 }
 
