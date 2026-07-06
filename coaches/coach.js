@@ -1005,6 +1005,18 @@ if (logoutBtn) {
 function applyCoachBranding(coach) {
   if (!coach) return;
 
+  // Apply Preset Theme via body data-theme attribute
+  const activeTheme = coach.theme_mode || 'classic';
+  document.body.setAttribute('data-theme', activeTheme);
+
+  // Maintain Legacy Light/Dark and Minimalist light-compatibility classes
+  if (activeTheme === 'light' || activeTheme === 'minimalist') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
+  }
+
+  // Apply visual overrides if color pickers are explicitly customized (otherwise falls back to theme default)
   if (coach.theme_primary_color) {
     document.documentElement.style.setProperty('--brand-primary', coach.theme_primary_color);
   }
@@ -1013,12 +1025,6 @@ function applyCoachBranding(coach) {
   }
   if (coach.background_color) {
     document.documentElement.style.setProperty('--bg-main', coach.background_color);
-  }
-
-  if (coach.theme_mode === 'light') {
-    document.body.classList.add('light-mode');
-  } else {
-    document.body.classList.remove('light-mode');
   }
 
   const logoEl = document.getElementById('logoElement');
