@@ -338,3 +338,85 @@ body.light-mode .day-card-header {
 body.light-mode .day-card-details {
   background: rgba(0, 0, 0, 0.04) !important;
 }
+
+
+/* ==========================================================================
+   7 Custom White-Label Preset Themes (Coaches & Clients)
+   ========================================================================== */
+
+/* 1. Classic Obsidian (Default) */
+[data-theme="classic"] {
+  --bg-main: #0c0d10;
+  --bg-surface: #16181d;
+  --border-subtle: #242730;
+  --text-primary: #f3f4f6;
+  --text-muted: #8a8f98;
+  --brand-primary: #39ff14;
+  --brand-hover: #29d609;
+}
+
+/* 2. Sleek (Slate & Blue) */
+[data-theme="sleek"] {
+  --bg-main: #0f172a;
+  --bg-surface: #1e293b;
+  --border-subtle: #334155;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --brand-primary: #38bdf8;
+  --brand-hover: #0ea5e9;
+}
+
+/* 3. Modern (Electric Indigo) */
+[data-theme="modern"] {
+  --bg-main: #09090b;
+  --bg-surface: #18181b;
+  --border-subtle: #27272a;
+  --text-primary: #fafafa;
+  --text-muted: #a1a1aa;
+  --brand-primary: #6366f1;
+  --brand-hover: #4f46e5;
+}
+
+/* 4. Minimalist (Monochrome Warm Light-Mode) */
+[data-theme="minimalist"] {
+  --bg-main: #f5f5f4;
+  --bg-surface: #ffffff;
+  --border-subtle: #e7e5e4;
+  --text-primary: #1c1917;
+  --text-muted: #78716c;
+  --brand-primary: #292524;
+  --brand-hover: #44403c;
+}
+
+/* 5. Functional (Steel & Teal) */
+[data-theme="functional"] {
+  --bg-main: #111827;
+  --bg-surface: #1f2937;
+  --border-subtle: #374151;
+  --text-primary: #f9fafb;
+  --text-muted: #9ca3af;
+  --brand-primary: #0d9488;
+  --brand-hover: #0f766e;
+}
+
+/* 6. Elegant (Midnight Navy & Luxury Gold) */
+[data-theme="elegant"] {
+  --bg-main: #090d16;
+  --bg-surface: #111726;
+  --border-subtle: #1d273b;
+  --text-primary: #f1f5f9;
+  --text-muted: #64748b;
+  --brand-primary: #fbbf24;
+  --brand-hover: #f59e0b;
+}
+
+/* 7. Innovative (Synthwave Purple & Pink) */
+[data-theme="innovative"] {
+  --bg-main: #120024;
+  --bg-surface: #22003c;
+  --border-subtle: #380061;
+  --text-primary: #ffffff;
+  --text-muted: #b58cd6;
+  --brand-primary: #ff007f;
+  --brand-hover: #d6006a;
+}
