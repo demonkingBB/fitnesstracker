@@ -209,9 +209,21 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="brandLogoUrl">Custom Logo Image URL</label>
-            <input type="url" id="brandLogoUrl" class="workout-input" placeholder="https://...">
+            <label for="brandLogoFile">Upload Custom Logo Icon</label>
+            <input type="file" id="brandLogoFile" class="workout-input" accept="image/*"
+              style="padding: 0.6rem; cursor: pointer;">
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Maximum
+              file size: 500 KB. Natively supports PNG, JPG, SVG, and GIF.</span>
+
+            <!-- Live Preview Element (Revealed only if a logo exists or is uploaded) -->
+            <div id="brandLogoPreviewContainer" class="hidden"
+              style="margin-top: 0.75rem; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.5rem; display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.02);">
+              <img id="brandLogoPreview" src="" alt="Preview"
+                style="max-height: 40px; width: auto; object-fit: contain;">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Logo Preview</span>
+            </div>
           </div>
+
           <div class="form-group">
             <label for="brandPhone">Public Contact Phone</label>
             <input type="tel" id="brandPhone" class="workout-input" placeholder="(555) 555-5555">

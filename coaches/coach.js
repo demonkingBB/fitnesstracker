@@ -31,6 +31,10 @@ const brandLogoUrl = document.getElementById('brandLogoUrl');
 const brandPhone = document.getElementById('brandPhone');
 const brandAddress = document.getElementById('brandAddress');
 const brandStatusMsg = document.getElementById('brandStatusMsg');
+// --- NEW BRAND LOGO DOM SELECTORS ---
+const brandLogoFile = document.getElementById('brandLogoFile');
+const brandLogoPreview = document.getElementById('brandLogoPreview');
+const brandLogoPreviewContainer = document.getElementById('brandLogoPreviewContainer');
 
 
 let currentCoachId = null;
@@ -133,6 +137,7 @@ async function fetchRoster() {
 
 
 // Routing Security Guard: Only allow valid coaches in this directory and apply white-label branding
+// Routing Security Guard: Only allow valid coaches in this directory and apply white-label branding
 async function initCoachDashboard() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -191,9 +196,36 @@ async function initCoachDashboard() {
     if (brandSecondaryColor) brandSecondaryColor.value = profile.theme_secondary_color || '#29d609';
     if (brandBgColorInput) brandBgColorInput.value = profile.background_color || '#0c0d10';
     if (brandThemeModeInput) brandThemeModeInput.value = profile.theme_mode || 'dark';
-    if (brandLogoUrl) brandLogoUrl.value = profile.logo_url || '';
     if (brandPhone) brandPhone.value = profile.contact_phone || '';
     if (brandAddress) brandAddress.value = profile.contact_address || '';
+
+    // FIX: Render currently saved Base64 logo in preview container on load
+    if (profile.logo_url && brandLogoPreview && brandLogoPreviewContainer) {
+      brandLogoPreview.src = profile.logo_url;
+      brandLogoPreviewContainer.classList.remove('hidden');
+    }
+
+    // FIX: Connect real-time local file preview rendering and constraints checking
+    if (brandLogoFile) {
+      brandLogoFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 500 * 1024) {
+            alert("This file is too large. Logo must be under 500 KB.");
+            brandLogoFile.value = ''; // Reset uploader value
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (brandLogoPreview && brandLogoPreviewContainer) {
+              brandLogoPreview.src = event.target.result;
+              brandLogoPreviewContainer.classList.remove('hidden');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
     // Fetch team roster
     fetchRoster();
@@ -218,6 +250,8 @@ async function initCoachDashboard() {
 document.addEventListener('DOMContentLoaded', initCoachDashboard);
 
 // --- BRANDING FORM ---
+// --- BRANDING FORM ---
+// --- STANDALONE WHITE-LABEL BRANDING FORM HANDLER ---
 if (brandForm) {
   brandForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -227,33 +261,76 @@ if (brandForm) {
       brandStatusMsg.textContent = "";
     }
 
-    // Capture values from the NEW HTML inputs
-    const updates = {
-      full_name: document.getElementById('brandAppName').value.trim(),
-      theme_primary_color: brandPrimaryColor.value,
-      theme_secondary_color: brandSecondaryColor.value,
-      background_color: document.getElementById('brandBgColor').value,
-      theme_mode: document.getElementById('brandThemeMode').value,
-      logo_url: brandLogoUrl.value.trim() || null,
-      contact_phone: brandPhone.value.trim() || null,
-      contact_address: brandAddress.value.trim() || null
+    const primary = brandPrimaryColor.value;
+    const secondary = brandSecondaryColor.value;
+    const bg = document.getElementById('brandBgColor').value;
+    const mode = document.getElementById('brandThemeMode').value;
+    const phone = brandPhone.value.trim();
+    const address = brandAddress.value.trim();
+    const logoFileInput = document.getElementById('brandLogoFile');
+
+    // Handle logo file preservation or update
+    let finalLogoUrl = null;
+
+    // Fetch the currently loaded preview source to determine if there's an existing image
+    const previewImg = document.getElementById('brandLogoPreview');
+    if (previewImg && previewImg.src) {
+      finalLogoUrl = previewImg.src; // Preserves existing Base64 string if no new file chosen
+    }
+
+    const file = logoFileInput?.files[0];
+
+    // Helper update function to query Supabase
+    const executeUpdate = async (logoData) => {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: document.getElementById('brandAppName').value.trim(),
+            theme_primary_color: primary,
+            theme_secondary_color: secondary,
+            background_color: bg,
+            theme_mode: mode,
+            logo_url: logoData ? logoData : null,
+            contact_phone: phone ? phone : null,
+            contact_address: address ? address : null
+          })
+          .eq('id', currentCoachId);
+
+        if (error) throw error;
+
+        // Apply branding settings visually to the coach dashboard instantly
+        applyCoachBranding({
+          full_name: document.getElementById('brandAppName').value.trim(),
+          theme_primary_color: primary,
+          theme_secondary_color: secondary,
+          background_color: bg,
+          theme_mode: mode,
+          logo_url: logoData
+        });
+
+        showBrandStatus("Brand configurations updated successfully!", "success");
+      } catch (err) {
+        showBrandStatus("Failed to update configurations: " + err.message, "error");
+      }
     };
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', currentCoachId);
+    // If a new file is uploaded, convert and save it. Otherwise, save current state.
+    if (file) {
+      if (file.size > 500 * 1024) {
+        showBrandStatus("Failed to save: Logo file size exceeds 500 KB limit.", "error");
+        return;
+      }
 
-      if (error) throw error;
-
-      // Apply the branding changes visually
-      applyCoachBranding(updates);
-    } catch (err) {
-      // Optional: surface the error to the user
-      console.error('Brand update failed:', err);
-    }                               // ← close `try…catch`
-  });                              // ← close `brandForm.addEventListener`
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        await executeUpdate(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      await executeUpdate(finalLogoUrl);
+    }
+  });
 }                                 // ← close `if (brandForm)`
 
 
