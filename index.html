@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EliteTrack | Modern Fitness Tracking</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
 </head>
+
 <body>
     <header>
         <nav>
@@ -29,18 +33,33 @@
 
         <section class="features">
             <div class="card-grid">
-                <div class="card"><h3>Training Tracking</h3><p>Log weights, cardio, and calisthenics with ease.</p></div>
-                <div class="card"><h3>Progress Analytics</h3><p>Automatic PR detection and history comparison.</p></div>
-                <div class="card"><h3>Nutrition Focus</h3><p>Intuitive guidance without the clutter.</p></div>
+                <div class="card">
+                    <h3>Training Tracking</h3>
+                    <p>Log weights, cardio, and calisthenics with ease.</p>
+                </div>
+                <div class="card">
+                    <h3>Progress Analytics</h3>
+                    <p>Automatic PR detection and history comparison.</p>
+                </div>
+                <div class="card">
+                    <h3>Nutrition Focus</h3>
+                    <p>Intuitive guidance without the clutter.</p>
+                </div>
             </div>
         </section>
 
         <section class="how-it-works">
             <h2>How it works</h2>
             <div class="steps">
-                <div class="step"><span>01</span><p>Create your account</p></div>
-                <div class="step"><span>02</span><p>Select your program</p></div>
-                <div class="step"><span>03</span><p>Track and evolve</p></div>
+                <div class="step"><span>01</span>
+                    <p>Create your account</p>
+                </div>
+                <div class="step"><span>02</span>
+                    <p>Select your program</p>
+                </div>
+                <div class="step"><span>03</span>
+                    <p>Track and evolve</p>
+                </div>
             </div>
         </section>
     </main>
@@ -49,5 +68,19 @@
         <h2>Start your transformation.</h2>
         <a href="/signup/" class="btn-primary">Get Started</a>
     </footer>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/sw.js")
+                    .then((registration) => {
+                        console.log("Service Worker registered:", registration);
+                    })
+                    .catch((error) => {
+                        console.log("Service Worker registration failed:", error);
+                    });
+            });
+        }
+    </script>
 </body>
+
 </html>
