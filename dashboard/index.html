@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/dashboard/dashboard.css"> <!-- Absolute path -->
   <!-- Load Chart.js CDN for Analytics engine rendering -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
 </head>
 
 <body>
@@ -390,6 +392,11 @@
   </main>
 
   <script src="/dashboard/dashboard.js" type="module"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
 </body>
 
 </html>
