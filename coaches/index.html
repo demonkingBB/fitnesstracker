@@ -1,177 +1,253 @@
-``html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coach Workspace | EliteTrack</title>
-  <link rel="stylesheet" href="/styles.css"> <!-- Absolute path -->
-  <link rel="stylesheet" href="/coaches/coach.css"> <!-- Absolute path -->
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/coaches/coach.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
 </head>
+
 <body>
   <header>
     <nav>
-      <div class="main-app-header" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+      <div class="main-app-header"
+        style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
         <div class="header-branding">
           <h2>👑 EliteTrack Coach Workspace</h2>
           <span class="user-email-display" id="userEmail">coach@email.com</span>
         </div>
-        
         <div class="header-actions" style="display: flex; gap: 0.75rem; align-items: center;">
-          <button id="coachUpgradeBtn" class="btn-upgrade hidden" style="background: var(--accent-neon); color: #000000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">👑 Upgrade Plan</button>
-          <button id="logoutBtn" class="btn-logout" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: #ffffff; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🚪 Log Out</button>
+          <button id="coachUpgradeBtn" class="btn-upgrade hidden"
+            style="background: var(--accent-neon); color: #000000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">👑
+            Upgrade Plan</button>
+          <button id="logoutBtn" class="btn-logout"
+            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: #ffffff; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">🚪
+            Log Out</button>
         </div>
       </div>
     </nav>
   </header>
 
-  <nav class="dashboard-tabs-nav" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-subtle); padding-bottom: 0.5rem; max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 2rem; padding-right: 2rem;">
-    <button type="button" class="tab-nav-btn active" data-target="rosterTab" style="background: none; border: none; color: #ffffff; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem;">👥 Athlete Roster</button>
-    <button type="button" class="tab-nav-btn" data-target="brandTab" style="background: none; border: none; color: var(--text-muted); font-weight: bold; cursor: pointer; padding: 0.5rem 1rem;">🎨 Brand Settings</button>
+  <nav class="dashboard-tabs-nav"
+    style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-subtle); padding-bottom: 0.5rem; max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 2rem; padding-right: 2rem;">
+    <button type="button" class="tab-nav-btn active" data-target="rosterTab"
+      style="background: none; border: none; color: #ffffff; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem;">👥
+      Athlete Roster</button>
+    <button type="button" class="tab-nav-btn" data-target="brandTab"
+      style="background: none; border: none; color: var(--text-muted); font-weight: bold; cursor: pointer; padding: 0.5rem 1rem;">🎨
+      Brand Settings</button>
   </nav>
 
   <main style="padding-top: 1rem;">
-    <!-- Active Coach Trial Warning Banner -->
     <div id="coachExpirationBanner" class="expiration-banner hidden">
       <div>
         <h4 style="font-weight: 800; margin-bottom: 0.25rem;">Your Coach Subscription Has Expired</h4>
-        <p style="font-size: 0.9rem; color: var(--text-muted);">Please renew your account. All client tracking portfolios are currently locked.</p>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Please renew your account. All client tracking
+          portfolios are currently locked.</p>
       </div>
-      <button id="restartCoachBtn" class="btn-primary" style="background-color: var(--accent-neon); color: #000000; font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+      <button id="restartCoachBtn" class="btn-primary"
+        style="background-color: var(--accent-neon); color: #000000; font-size: 0.85rem; padding: 0.6rem 1.2rem;">
         Upgrade Team Account
       </button>
     </div>
 
-    <!-- TAB 1: Athlete Roster Directory -->
     <div id="rosterTab" class="tab-content">
-      <div class="dashboard-grid">
-        
-        <!-- COLUMN 1: Athlete roster directory -->
-        <section class="card" style="align-self: flex-start; padding: 1.5rem;">
-          <h3 style="margin-bottom: 0.5rem;">Athlete Group</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Share your invite link to register clients directly: <br>
-          <code id="inviteLinkContainer" style="color: var(--accent-neon); font-size: 0.75rem; word-break: break-all; display: block; margin-top: 0.5rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">Loading invite link...</code></p>
-          
-          <div id="athleteList" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
-            <p style="color: var(--text-muted); font-size: 0.85rem;">No athletes on your roster yet.</p>
+      <!-- ZONE 1: Horizontal Athlete Roster (Always Visible on Top) -->
+      <section class="card" style="margin-bottom: 2rem; padding: 1.5rem;">
+        <h3 style="margin-bottom: 0.5rem;">Athlete Group</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Share your invite link to register
+          clients directly: <code id="inviteLinkContainer"
+            style="color: var(--accent-neon); font-size: 0.75rem; word-break: break-all; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">Loading invite link...</code>
+        </p>
+        <div id="athleteList" style="display: flex; gap: 1rem; overflow-x: auto; padding: 1rem 0;">
+          <p style="color: var(--text-muted); font-size: 0.85rem;">No athletes on your roster yet.</p>
+        </div>
+      </section>
+
+      <!-- Placeholder shown when NO athlete is selected -->
+      <div id="inactiveInspector" class="card" style="text-align: center; padding: 4rem 0;">
+        <span style="font-size: 3rem;">🔍</span>
+        <h4 style="margin-top: 1rem; color: var(--text-primary);">No Athlete Selected</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Select an athlete from the roster
+          list to audit their logs, change status, and send comments.</p>
+      </div>
+
+      <!-- WORKSPACE: Hidden until an athlete is selected -->
+      <div id="activeInspector" class="hidden">
+
+        <!-- Athlete Header (Name, Email, Status) -->
+        <!-- Athlete Header (Name, Email, Status Card) -->
+        <div class="card"
+          style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem;">
+          <div>
+            <h3 id="inspectAthleteName" style="margin: 0; color: #fff;">Athlete Name</h3>
+            <p id="inspectAthleteEmail" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+              athlete@email.com</p>
           </div>
-        </section>
-
-        <!-- COLUMN 2: Selected Athlete detailed history and feedback comments -->
-        <section class="card" style="align-self: flex-start;">
-          <div id="inactiveInspector" style="text-align: center; padding: 4rem 0;">
-            <span style="font-size: 3rem;">🔍</span>
-            <h4 style="margin-top: 1rem; color: var(--text-primary);">No Athlete Selected</h4>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Select an athlete from the roster list to audit their logs, change status, and send comments.</p>
+          <div style="text-align: right;">
+            <label for="athleteStatusSelect"
+              style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Athlete
+              Status</label>
+            <!-- FIXED SELECT TAG: Uses var(--text-primary) to dynamically adapt text color on theme switch -->
+            <select id="athleteStatusSelect"
+              style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+              <option value="active" style="background: var(--bg-surface); color: var(--text-primary);">Active</option>
+              <option value="suspended" style="background: var(--bg-surface); color: var(--text-primary);">Suspended
+              </option>
+              <option value="closed" style="background: var(--bg-surface); color: var(--text-primary);">Closed / Archive
+              </option>
+            </select>
           </div>
+        </div>
 
-          <div id="activeInspector" class="hidden">
-            <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <h3 id="inspectAthleteName" style="margin: 0; color: #fff;">Athlete Name</h3>
-                <p id="inspectAthleteEmail" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">athlete@email.com</p>
-              </div>
+        <!-- The Bento Grid (Two Columns side-by-side) -->
+        <div class="dashboard-grid">
 
-              <!-- ACCOUNT SUSPENSION CONTROL SELECTOR -->
-              <div style="text-align: right;">
-                <label for="athleteStatusSelect" style="display: block; font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Athlete Status</label>
-                <select id="athleteStatusSelect" style="background: var(--bg-main); color: #fff; border: 1px solid var(--border-subtle); padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="closed">Closed / Archive</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Dynamic Graph Suite for Coaches -->
-            <div class="card" style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+          <!-- LEFT COLUMN: Analytics & Biometrics -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Zone 2: Charts Card -->
+            <div class="card"
+              style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
                 <h4 style="font-size: 0.85rem; color: #fff; text-transform: uppercase;">📈 Coach Analytics Matrix</h4>
-                <select id="coachChartSelector" style="background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
+                <select id="coachChartSelector"
+                  style="background: #0b111e; color: #ffffff; border: 1px solid var(--border-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
                   <option value="volume" selected>Strength Volume Over Time</option>
                   <option value="cardio">Cardio Output Over Time</option>
                   <option value="diet">BMI vs. Diet Quality rating</option>
                 </select>
               </div>
-              <div style="position: relative; width: 100%; height: 180px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 0.5rem;">
+              <div
+                style="position: relative; width: 100%; height: 200px; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 0.5rem;">
                 <canvas id="coachAnalyticsChart"></canvas>
               </div>
             </div>
 
-            <!-- Athlete biometrics quick lookup -->
-            <div id="inspectBiometricsBlock" class="hidden" style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-              <h4 style="font-size: 0.85rem; color: var(--accent-neon); margin-bottom: 0.5rem; text-transform: uppercase;">Latest Weight & Biometrics</h4>
+            <!-- Zone 3: Biometrics Card -->
+            <div id="inspectBiometricsBlock" class="card hidden"
+              style="background: rgba(0,0,0,0.15); border: 1px solid var(--border-subtle); padding: 1.5rem; border-radius: 6px;">
+              <h4
+                style="font-size: 0.85rem; color: var(--accent-neon); margin-bottom: 0.5rem; text-transform: uppercase;">
+                Latest Weight & Biometrics</h4>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
                 <div><strong>Weight:</strong> <span id="inspectBioWeight">-</span> lbs</div>
                 <div><strong>Waist:</strong> <span id="inspectBioWaist">-</span>"</div>
                 <div><strong>Calories:</strong> <span id="inspectBioCal">-</span> cal</div>
               </div>
             </div>
+          </div>
 
-            <h4 style="margin-bottom: 1rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; color: var(--text-muted);">Session Audits</h4>
-            <div id="athleteHistoryGrid" class="workout-history-grid">
-              <!-- Dynamically populated from JS -->
+          <!-- RIGHT COLUMN: Session Audit Feed & Message Center -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Zone 4: Audit Feed Card -->
+            <div class="card"
+              style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+              <h4 style="margin-bottom: 1rem; color: #fff;">Session Audit Feed</h4>
+              <div id="athleteHistoryGrid" class="workout-history-grid" style="max-height: 300px; overflow-y: auto;">
+              </div>
+            </div>
+
+            <!-- Zone 5: Message Center Card -->
+            <div class="card"
+              style="background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+              <h4 style="margin-bottom: 1rem; color: #fff;">Client Communication</h4>
+              <div id="mainCommentFeed"
+                style="max-height: 200px; overflow-y: auto; background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-subtle);">
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Select an athlete to start a conversation.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="coachMessageInput" placeholder="Write a message..." class="workout-input">
+                <button id="sendCoachMessageBtn" class="btn-primary">Send</button>
+              </div>
             </div>
           </div>
-        </section>
 
-      </div>
-    </div>
+        </div> <!-- Closes dashboard-grid -->
+      </div> <!-- Closes activeInspector -->
+    </div> <!-- Closes rosterTab -->
 
     <!-- TAB 2: Brand Settings customization -->
     <div id="brandTab" class="tab-content hidden" style="display: none;">
       <div style="max-width: 600px; margin: 0 auto;" class="card">
         <h3 style="margin-bottom: 0.5rem;">White-Label Settings</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Customized branding options apply directly to all clients on your roster instantly on login.</p>
-        
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Customized branding options
+          apply directly to all clients on your roster instantly on login.</p>
+
         <form id="brandForm">
           <div class="form-group">
-            <label for="brandPrimaryColor">Theme Primary Accent Color</label>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <input type="color" id="brandPrimaryColor" style="width: 50px; height: 40px; background: none; border: 1px solid var(--border-subtle); cursor: pointer;" value="#39ff14">
-              <span style="font-size: 0.85rem; color: var(--text-muted);">Pick colors that accent buttons and highlights (e.g. Neon green)</span>
-            </div>
+            <label for="brandAppName">App Name (Workspace Title)</label>
+            <input type="text" id="brandAppName" class="workout-input" placeholder="e.g. Coach Ab's Track">
           </div>
-
+          <div class="form-group">
+            <label for="brandPrimaryColor">Theme Primary Accent Color</label>
+            <input type="color" id="brandPrimaryColor" class="workout-input" style="height: 40px; cursor: pointer;">
+          </div>
           <div class="form-group">
             <label for="brandSecondaryColor">Theme Hover Accent Color</label>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <input type="color" id="brandSecondaryColor" style="width: 50px; height: 40px; background: none; border: 1px solid var(--border-subtle); cursor: pointer;" value="#29d609">
-              <span style="font-size: 0.85rem; color: var(--text-muted);">Pick slightly darker colors for hover interactions</span>
-            </div>
+            <input type="color" id="brandSecondaryColor" class="workout-input" style="height: 40px; cursor: pointer;">
           </div>
-
           <div class="form-group">
-            <label for="brandLogoUrl">Custom Logo Image URL</label>
-            <input type="url" id="brandLogoUrl" class="workout-input" placeholder="e.g. https://yourdomain.com/logo.png">
+            <label for="brandBgColor">Dashboard Background Color</label>
+            <input type="color" id="brandBgColor" class="workout-input" style="height: 40px; cursor: pointer;">
           </div>
+          <div class="form-group">
+            <label for="brandThemeMode">Workspace Preset Theme</label>
+            <select id="brandThemeMode" class="program-select-dropdown">
+              <option value="classic">Classic Obsidian (Default)</option>
+              <option value="sleek">Sleek (Slate & Blue)</option>
+              <option value="modern">Modern (Electric Indigo)</option>
+              <option value="minimalist">Minimalist (Warm Light-Mode)</option>
+              <option value="functional">Functional (Steel & Teal)</option>
+              <option value="elegant">Elegant (Navy & Luxury Gold)</option>
+              <option value="innovative">Innovative (Synthwave Pink & Purple)</option>
+              <option value="light">Legacy Light Mode</option>
+              <option value="dark">Legacy Dark Mode</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="brandLogoFile">Upload Custom Logo Icon</label>
+            <input type="file" id="brandLogoFile" class="workout-input" accept="image/*"
+              style="padding: 0.6rem; cursor: pointer;">
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Maximum
+              file size: 500 KB. Natively supports PNG, JPG, SVG, and GIF.</span>
 
-          <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-top: 1.5rem; margin-bottom: 1rem;">
-            <h4 style="color: #fff; margin-bottom: 1rem; font-size: 1rem;">Public Trainer Contact Card</h4>
+            <!-- Live Preview Element (Revealed only if a logo exists or is uploaded) -->
+            <div id="brandLogoPreviewContainer" class="hidden"
+              style="margin-top: 0.75rem; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.5rem; display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.02);">
+              <img id="brandLogoPreview" src="" alt="Preview"
+                style="max-height: 40px; width: auto; object-fit: contain;">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Logo Preview</span>
+            </div>
           </div>
 
           <div class="form-group">
             <label for="brandPhone">Public Contact Phone</label>
-            <input type="tel" id="brandPhone" class="workout-input" placeholder="e.g. (555) 555-5555">
+            <input type="tel" id="brandPhone" class="workout-input" placeholder="(555) 555-5555">
           </div>
-
           <div class="form-group">
-            <label for="brandAddress">Public Gym Address / Info</label>
-            <input type="text" id="brandAddress" class="workout-input" placeholder="e.g. 123 Elite Athletics Gym, Suite A">
+            <label for="brandAddress">Public Address</label>
+            <input type="text" id="brandAddress" class="workout-input" placeholder="123 Gym St">
           </div>
-
-          <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
-            Save Brand Configurations
-          </button>
+          <button type="submit" class="btn-primary" style="width: 100%;">Save Brand Configurations</button>
         </form>
-
-        <div id="brandStatusMsg" class="hidden" style="margin-top: 1.5rem; padding: 1rem; border-radius: 6px; text-align: center;"></div>
+        <div id="brandStatusMsg" class="hidden"
+          style="margin-top: 1.5rem; padding: 1rem; border-radius: 6px; text-align: center;"></div>
       </div>
     </div>
-
   </main>
 
   <script src="/coaches/coach.js" type="module"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
 </body>
+
 </html>

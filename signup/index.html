@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="/styles.css"> <!-- Absolute path -->
   <link rel="stylesheet" href="/signup/signup.css"> <!-- Absolute path -->
 </head>
+
 <body>
   <!-- Centering Container wrapper -->
   <div class="auth-container">
@@ -25,7 +27,8 @@
       <form id="signupForm" class="auth-form">
         <div class="input-group">
           <label for="regRole">I am registering as a:</label>
-          <select id="regRole" style="padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; outline: none; transition: border-color 0.2s ease;">
+          <select id="regRole"
+            style="padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-subtle); background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; outline: none; transition: border-color 0.2s ease;">
             <option value="client">Client</option>
             <option value="coach">Coach / Personal Trainer</option>
           </select>
@@ -45,10 +48,11 @@
           <label for="regEmail">Email Address</label>
           <input type="email" id="regEmail" required placeholder="name@example.com" autocomplete="email">
         </div>
-        
+
         <div class="input-group">
           <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" required placeholder="Minimum 6 characters" autocomplete="new-password">
+          <input type="password" id="regPassword" required placeholder="Minimum 6 characters"
+            autocomplete="new-password">
         </div>
 
         <button type="submit" id="submitBtn" class="btn-primary auth-submit">
@@ -64,5 +68,11 @@
   </div>
 
   <script src="/signup/signup.js" type="module"></script> <!-- Absolute path -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
 </body>
+
 </html>

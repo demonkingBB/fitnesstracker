@@ -1,44 +1,43 @@
-
-  :root {
+:root {
   --bg-main: #0c0d10;
   --bg-surface: #16181d;
   --border-subtle: #242730;
   --text-primary: #f3f4f6;
   --text-muted: #8a8f98;
-  --accent-neon: #39ff14;
-  --accent-hover: #29d609;
+  --brand-primary: #39ff14;
+  --brand-hover: #29d609;
 }
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
-  font-family: -apple-system,
-    BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
-  -webkit-font-smoothing:
-    antialiased;
+  -webkit-font-smoothing: antialiased;
 }
+
 main {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
 }
+
 header {
-  border-bottom: 1px solid
-    var(--border-subtle);
-  background-color:
-    rgba(12, 13, 16, 0.8);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: rgba(12, 13, 16, 0.8);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
 }
+
 nav {
   max-width: 1200px;
   margin: 0 auto;
@@ -47,22 +46,22 @@ nav {
   align-items: center;
   padding: 1.25rem 2rem;
 }
+
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(
-    90deg, #ffffff, var(--text-muted)
-  );
+  background: linear-gradient(90deg, #ffffff, var(--text-muted));
   -webkit-background-clip: text;
-  -webkit-text-fill-color:
-    transparent;
+  -webkit-text-fill-color: transparent;
 }
+
 .nav-links {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
+
 .nav-links a:not(.btn-primary) {
   color: var(--text-muted);
   text-decoration: none;
@@ -70,9 +69,11 @@ nav {
   font-size: 0.95rem;
   transition: color 0.2s ease;
 }
+
 .nav-links a:not(.btn-primary):hover {
   color: var(--text-primary);
 }
+
 .hero {
   display: flex;
   flex-direction: column;
@@ -84,6 +85,7 @@ nav {
   max-width: 800px;
   margin: 0 auto;
 }
+
 .hero h1 {
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 800;
@@ -91,12 +93,14 @@ nav {
   letter-spacing: -1.5px;
   margin-bottom: 1.5rem;
 }
+
 .hero p {
   font-size: clamp(1.1rem, 2vw, 1.3rem);
   color: var(--text-muted);
   max-width: 600px;
   margin-bottom: 2.5rem;
 }
+
 .hero-actions {
   display: flex;
   align-items: center;
@@ -104,99 +108,101 @@ nav {
   gap: 1rem;
   width: 100%;
 }
+
 .btn-primary {
-  background-color: var(--accent-neon);
+  background-color: var(--brand-primary);
   color: #000000;
   padding: 0.85rem 1.75rem;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
-  transition:
-    background-color 0.2s ease,
-    transform 0.1s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease;
   display: inline-block;
   border: none;
   cursor: pointer;
 }
+
 .btn-primary:hover {
-  background-color: var(--accent-hover);
+  background-color: var(--brand-hover);
   transform: translateY(-1px);
 }
+
 .btn-secondary {
   background-color: transparent;
   color: var(--text-primary);
   padding: 0.85rem 1.75rem;
   border-radius: 8px;
-  border: 1px solid
-    var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   display: inline-block;
   cursor: pointer;
 }
+
 .btn-secondary:hover {
   background-color: var(--bg-surface);
   border-color: var(--text-muted);
 }
+
 .features {
   padding: 5rem 0;
-  border-top: 1px solid
-    var(--border-subtle);
+  border-top: 1px solid var(--border-subtle);
 }
+
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit, minmax(300px, 1fr)
-  );
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
+
 .card {
   background-color: var(--bg-surface);
   padding: 2.5rem;
   border-radius: 12px;
-  border: 1px solid
-    var(--border-subtle);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
+
 .card:hover {
   transform: translateY(-4px);
   border-color: rgba(57, 255, 20, 0.3);
 }
+
 .card h3 {
   font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
   letter-spacing: -0.3px;
 }
+
 .card p {
   color: var(--text-muted);
   font-size: 1rem;
 }
+
 .how-it-works {
   padding: 6rem 0;
-  border-top: 1px solid
-    var(--border-subtle);
+  border-top: 1px solid var(--border-subtle);
   text-align: center;
 }
+
 .how-it-works h2 {
   font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.8px;
   margin-bottom: 4rem;
 }
+
 .steps {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 3rem;
 }
+
 .step {
   flex: 1;
   display: flex;
@@ -204,14 +210,13 @@ nav {
   align-items: center;
   text-align: center;
 }
+
 .step span {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--accent-neon);
-  background-color:
-    rgba(57, 255, 20, 0.08);
-  border: 1px solid
-    rgba(57, 255, 20, 0.2);
+  color: var(--brand-primary);
+  background-color: rgba(57, 255, 20, 0.08);
+  border: 1px solid rgba(57, 255, 20, 0.2);
   width: 48px;
   height: 48px;
   display: flex;
@@ -220,27 +225,30 @@ nav {
   border-radius: 50%;
   margin-bottom: 1.25rem;
 }
+
 .step p {
   font-size: 1.15rem;
   font-weight: 500;
   color: var(--text-primary);
 }
+
 footer {
   padding: 7rem 0;
-  border-top: 1px solid
-    var(--border-subtle);
+  border-top: 1px solid var(--border-subtle);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
+
 footer h2 {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -1px;
   margin-bottom: 2rem;
 }
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -248,39 +256,167 @@ footer h2 {
   width: 100%;
   margin: 0 auto;
 }
+
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1.2fr 0.8fr;
   }
 }
+
 .hidden {
   display: none !important;
 }
+
 @media (max-width: 768px) {
   nav {
     padding: 1rem;
   }
+
   main {
     padding: 0 1.25rem;
   }
+
   .hero {
     min-height: 60vh;
     padding: 3rem 0;
   }
+
   .hero-actions {
     flex-direction: column;
     gap: 0.75rem;
   }
-  .btn-primary, .btn-secondary {
+
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
     text-align: center;
   }
+
   .steps {
     flex-direction: column;
     align-items: center;
     gap: 2.5rem;
   }
+
   .step {
     width: 100%;
   }
+}
+
+/* ==========================================================================
+   Light Mode Theme Overrides (For both Clients & Coaches)
+   ========================================================================== */
+body.light-mode {
+  --bg-main: #f9fafb;
+  --bg-surface: #ffffff;
+  --border-subtle: #e5e7eb;
+  --text-primary: #111827;
+  --text-muted: #6b7280;
+}
+
+body.light-mode .card,
+body.light-mode .athlete-roster-item,
+body.light-mode .history-day-card {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode strong,
+body.light-mode label,
+body.light-mode span:not(.category-tag) {
+  color: var(--text-primary) !important;
+}
+
+body.light-mode .day-card-header {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+body.light-mode .day-card-details {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+
+/* ==========================================================================
+   7 Custom White-Label Preset Themes (Coaches & Clients)
+   ========================================================================== */
+
+/* 1. Classic Obsidian (Default) */
+[data-theme="classic"] {
+  --bg-main: #0c0d10;
+  --bg-surface: #16181d;
+  --border-subtle: #242730;
+  --text-primary: #f3f4f6;
+  --text-muted: #8a8f98;
+  --brand-primary: #39ff14;
+  --brand-hover: #29d609;
+}
+
+/* 2. Sleek (Slate & Blue) */
+[data-theme="sleek"] {
+  --bg-main: #0f172a;
+  --bg-surface: #1e293b;
+  --border-subtle: #334155;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --brand-primary: #38bdf8;
+  --brand-hover: #0ea5e9;
+}
+
+/* 3. Modern (Electric Indigo) */
+[data-theme="modern"] {
+  --bg-main: #09090b;
+  --bg-surface: #18181b;
+  --border-subtle: #27272a;
+  --text-primary: #fafafa;
+  --text-muted: #a1a1aa;
+  --brand-primary: #6366f1;
+  --brand-hover: #4f46e5;
+}
+
+/* 4. Minimalist (Monochrome Warm Light-Mode) */
+[data-theme="minimalist"] {
+  --bg-main: #f5f5f4;
+  --bg-surface: #ffffff;
+  --border-subtle: #e7e5e4;
+  --text-primary: #1c1917;
+  --text-muted: #78716c;
+  --brand-primary: #292524;
+  --brand-hover: #44403c;
+}
+
+/* 5. Functional (Steel & Teal) */
+[data-theme="functional"] {
+  --bg-main: #111827;
+  --bg-surface: #1f2937;
+  --border-subtle: #374151;
+  --text-primary: #f9fafb;
+  --text-muted: #9ca3af;
+  --brand-primary: #0d9488;
+  --brand-hover: #0f766e;
+}
+
+/* 6. Elegant (Midnight Navy & Luxury Gold) */
+[data-theme="elegant"] {
+  --bg-main: #090d16;
+  --bg-surface: #111726;
+  --border-subtle: #1d273b;
+  --text-primary: #f1f5f9;
+  --text-muted: #64748b;
+  --brand-primary: #fbbf24;
+  --brand-hover: #f59e0b;
+}
+
+/* 7. Innovative (Synthwave Purple & Pink) */
+[data-theme="innovative"] {
+  --bg-main: #120024;
+  --bg-surface: #22003c;
+  --border-subtle: #380061;
+  --text-primary: #ffffff;
+  --text-muted: #b58cd6;
+  --brand-primary: #ff007f;
+  --brand-hover: #d6006a;
 }
