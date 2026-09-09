@@ -54,11 +54,14 @@ export const PROGRAMS = {
   "Leg-Ham-Dom Day": [
     "Stiff Leg Deadlift", "Dead Lift", "Seated Leg Curl", "Prone Leg Curl",
     "Step Ups", "Hip Adductor", "Wide leg far leg press"
+  ],
+  "Bella Upper": ["Lateral raises", "Front raises", "Shoulder press", "Face pulls", "Rear delt fly", "Incline chest press", "chest press", "Lat pulldown", "Lat pullover", "Back Row", "Low row", "Shrugs", "Tricep pulldow", "Tricep press", "Tricep extension","Bicep curls", "Low back extension", "Cable twists"
   ]
 };
 
 // 2. Parent-to-Child Mapping Matrix
 export const ROUTINES = {
+  "Bella lifts": ["Bella Upper"],
   "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day"],
   "Upper Lower Body": ["Upper Body Day", "Lower Body Day"],
   "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day"],
