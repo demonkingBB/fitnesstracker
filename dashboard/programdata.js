@@ -61,7 +61,8 @@ export const PROGRAMS = {
 
 // 2. Parent-to-Child Mapping Matrix
 export const ROUTINES = {
-  "Bella lifts": ["Bella Upper"],
+  "Bella lifts": ["Bella Upper", "Leg Day"],
+  "Angel lifts": ["Push Day", "Pull Day", "Leg Day"],
   "Push Pull Legs": ["Push Day", "Pull Day", "Leg Day"],
   "Upper Lower Body": ["Upper Body Day", "Lower Body Day"],
   "Bro Split": ["Chest-Biceps Day", "Back-Triceps Day", "Leg-Quad-Dom Day", "Leg-Ham-Dom Day"],
